@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 
 import {getCRMLead ,updateCRMLead} from "../crm.api";
 
-import { CRMLead, CRMLead } from "../crm.types";
+import { CRMLead } from "../crm.types";
 import { CRM_STATUS } from "../crm.constants";
 
 interface Props {
