@@ -8,12 +8,16 @@ import { HomePageProps } from "../home.types";
 
 export default function HomePage({
   categories,
+  services,
 }: HomePageProps) {
   return (
     <>
       <Hero />
 
-      <ServicesSection categories={categories} />
+      <ServicesSection
+  categories={categories}
+  services={services}
+/>
 
       <HowItWorks />
 

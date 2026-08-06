@@ -12,19 +12,30 @@ import { Category } from "@/modules/category/category.types";
 
 interface Props {
   categories: Category[];
+  services: Service[];
 }
 
 export default function ServicesSection({
   categories,
+  services,
 }: Props) {
   const [search, setSearch] = useState("");
 
 const [selectedServices, setSelectedServices] = useState<Service[]>([]);
 const [openCategories, setOpenCategories] = useState<string[]>([]);
-  const filteredCategories = useMemo(() => {
-    if (!search.trim()) return categories;
+const groupedCategories = useMemo(() => {
+  return categories.map((category) => ({
+    ...category,
+    services: services.filter(
+      (service) => service.category._id === category._id
+    ),
+  }));
+}, [categories, services]);
 
-    return categories
+  const filteredCategories = useMemo(() => {
+    if (!search.trim()) return groupedCategories;
+
+return groupedCategories
       .map((category) => ({
         ...category,
         services: category.services.filter((service) =>
