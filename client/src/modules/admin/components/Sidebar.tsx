@@ -81,7 +81,7 @@ export default function Sidebar() {
 >
       {/* Header */}
       <div className="border-b border-blue-800 p-6">
-        <h2 className="text-2xl font-bold">I-Vantage</h2>
+        <h2 className="text-2xl font-bold">i-VANTAGE</h2>
 
         <p className="text-sm text-blue-200">Admin Panel</p>
       </div>
@@ -110,7 +110,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="border-t border-blue-800 p-4">
+      <div className="border-t pt-10 border-blue-800 p-4">
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-blue-900"
