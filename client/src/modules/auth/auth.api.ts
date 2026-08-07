@@ -8,7 +8,7 @@ export const login = async (payload: unknown) => {
       withCredentials: true,
     }
   );
-
+ console.log("login data", data);
   return data;
 };
 
@@ -19,7 +19,7 @@ export const getCurrentUser = async () => {
       withCredentials: true,
     }
   );
-
+console.log("getCurrentUser data", data);
   return data;
 };
 

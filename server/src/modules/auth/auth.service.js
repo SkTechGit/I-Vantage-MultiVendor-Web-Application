@@ -1,7 +1,7 @@
 import Auth from "./auth.model.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
 import { generateAccessToken } from "../../utils/jwt.js";
-import ApiError from "../../utils/ApiError.js";
+
 
 export const login = async ({ email, password }) => {
   // Find user with password
@@ -32,6 +32,8 @@ export const login = async ({ email, password }) => {
     id: user._id,
     email: user.email,
   });
+
+  
 
   // Remove password before sending response
   user.password = undefined;

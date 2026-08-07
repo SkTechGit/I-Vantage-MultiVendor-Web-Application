@@ -13,7 +13,7 @@ export const login = async (req, res, next) => {
     const { user, token } = await loginService(validatedData);
 
     setAuthCookie(res, token);
-
+    console.log("NEW ACCESS TOKEN:", token);
     res.status(200).json({
       success: true,
       message: AUTH_MESSAGES.LOGIN_SUCCESS,

@@ -39,11 +39,11 @@ export default function LoginForm() {
       try {
        await login(values);
 
-toast.success("Login successful.");
+        toast.success("Login successful.");
 
-router.refresh();
+        router.refresh();
 
-router.push("/admin/dashboard");
+        router.push("/admin/dashboard");
 
       } catch (error: any) {
 

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken")?.value;
+  console.log("Token from middleware:", token);
 
   const { pathname } = request.nextUrl;
 
-  const isLoginPage = pathname === "/admin/login";
+  const isLoginPage = pathname === "/login";
 
   const isProtectedRoute =
     pathname.startsWith("/admin/dashboard") ||
@@ -15,6 +16,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/admin/crm");
 
   if (!token && isProtectedRoute) {
+    console.log("Redirecting to login page");
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
