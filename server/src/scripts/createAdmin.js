@@ -9,7 +9,7 @@ const createAdmin = async () => {
     await connectDB();
 
     const exists = await Auth.findOne({
-      email: "rj7075yadav@gmail.com",
+      email: "sandeep@assetsense.co.in",
     });
 
     if (exists) {
@@ -19,8 +19,8 @@ const createAdmin = async () => {
 
     await Auth.create({
       fullName: "Administrator",
-      email: "rj7075yadav@gmail.com",
-      password: "Admin@123",
+      email: "sandeep.assetsense@gmail.com",
+      password: "Admin@assetsense9958",
     });
 
     console.log("Admin created successfully.");

@@ -1,11 +1,6 @@
 import Link from "next/link";
 
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Clock,
-} from "lucide-react";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 import {
   FaFacebookF,
@@ -23,176 +18,160 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="mt-24 border-t-4 border-[#D89A17] bg-white">
-
+    <footer className="overflow-hidden border-t border-[#1E5BFF] bg-white">
       <Container>
-
-        <div className="grid gap-12 py-20 md:grid-cols-2 lg:grid-cols-4">
-
+        {/* Main Footer */}
+        <div className="grid gap-9 py-10 sm:gap-10 sm:py-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-12 lg:py-16">
           {/* Company */}
+          <div className="min-w-0">
+            {/* Responsive Logo */}
+            <div className="w-[140px] sm:w-[170px] lg:w-[190px]">
+              <Logo width={220} height={70} />
+            </div>
 
-          <div>
-
-            <Logo width={220} height={70} />
-
-            <p className="mt-6 leading-7 text-slate-600">
-              I-Vantage Business Hub provides premium coworking
-              spaces and 100+ business support services to help
-              startups, entrepreneurs and enterprises work,
-              connect and grow.
+            <p className="mt-4 max-w-md text-sm leading-6 text-slate-600 sm:mt-5 sm:text-base sm:leading-7">
+              I-Vantage Business Hub provides premium coworking spaces and
+              100+ business support services to help startups, entrepreneurs
+              and enterprises work, connect and grow.
             </p>
 
-            <div className="mt-8 flex gap-4">
-
+            {/* Social Links */}
+            <div className="mt-5 flex gap-3 sm:mt-6 sm:gap-4">
               <Link
                 href="#"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1E5BFF] text-white transition-all duration-300 hover:bg-[#D89A17]"
+                aria-label="Facebook"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >
                 <FaFacebookF />
               </Link>
 
               <Link
                 href="#"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1E5BFF] text-white transition-all duration-300 hover:bg-[#D89A17]"
+                aria-label="Instagram"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >
                 <FaInstagram />
               </Link>
 
               <Link
                 href="#"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1E5BFF] text-white transition-all duration-300 hover:bg-[#D89A17]"
+                aria-label="LinkedIn"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >
                 <FaLinkedinIn />
               </Link>
-
             </div>
-
           </div>
 
           {/* Quick Links */}
-
           <div>
-
-            <h3 className="mb-6 text-xl font-bold text-[#0A1F66]">
+            <h3 className="mb-4 text-base font-bold text-[#0A1F66] sm:mb-5 sm:text-lg">
               Quick Links
             </h3>
 
-            <div className="space-y-4">
-
+            <div className="space-y-2.5 sm:space-y-3">
               {NAVIGATION.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block text-slate-600 transition hover:translate-x-1 hover:text-[#1E5BFF]"
+                  className="block text-sm text-slate-600 transition hover:translate-x-1 hover:text-[#1E5BFF] sm:text-base"
                 >
                   {item.label}
                 </Link>
               ))}
-
             </div>
-
           </div>
 
           {/* Services */}
-
           <div>
-
-            <h3 className="mb-6 text-xl font-bold text-[#0A1F66]">
+            <h3 className="mb-4 text-base font-bold text-[#0A1F66] sm:mb-5 sm:text-lg">
               Business Services
             </h3>
 
-            <div className="space-y-4">
-
+            <div className="space-y-2.5 sm:space-y-3">
               {FOOTER_SERVICES.map((service) => (
                 <p
                   key={service}
-                  className="cursor-pointer text-slate-600 transition hover:translate-x-1 hover:text-[#1E5BFF]"
+                  className="cursor-pointer text-sm text-slate-600 transition hover:translate-x-1 hover:text-[#1E5BFF] sm:text-base"
                 >
                   {service}
                 </p>
               ))}
-
             </div>
-
           </div>
 
           {/* Contact */}
-
           <div>
-
-            <h3 className="mb-6 text-xl font-bold text-[#0A1F66]">
+            <h3 className="mb-4 text-base font-bold text-[#0A1F66] sm:mb-5 sm:text-lg">
               Contact Us
             </h3>
 
-            <div className="space-y-5">
-
-              <div className="flex gap-4">
-
+            <div className="space-y-4 sm:space-y-5">
+              {/* Address */}
+              <div className="flex items-start gap-3">
                 <MapPin
-                  className="mt-1 text-[#D89A17]"
-                  size={20}
+                  className="mt-0.5 shrink-0 text-[#D89A17]"
+                  size={18}
                 />
 
-                <p className="text-slate-600">
+                <p className="text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
                   I-Vantage Business Hub
                   <br />
                   Gurugram, Haryana
                 </p>
-
               </div>
 
-              <div className="flex gap-4">
-
+              {/* Phone */}
+              <div className="flex items-center gap-3">
                 <Phone
-                  className="text-[#D89A17]"
-                  size={20}
+                  className="shrink-0 text-[#D89A17]"
+                  size={18}
                 />
 
-                <p className="text-slate-600">
+                <a
+                  href="tel:+919907800600"
+                  className="text-sm text-slate-600 transition hover:text-[#1E5BFF] sm:text-base"
+                >
                   +91 99078 00600
-                </p>
-
+                </a>
               </div>
 
-              <div className="flex gap-4">
-
+              {/* Email */}
+              <div className="flex items-start gap-3">
                 <Mail
-                  className="text-[#D89A17]"
-                  size={20}
+                  className="mt-0.5 shrink-0 text-[#D89A17]"
+                  size={18}
                 />
 
-                <p className="text-slate-600">
+                <a
+                  href="mailto:info@i-vantage.in"
+                  className="break-all text-sm text-slate-600 transition hover:text-[#1E5BFF] sm:text-base"
+                >
                   info@i-vantage.in
-                </p>
-
+                </a>
               </div>
 
-              <div className="flex gap-4">
-
+              {/* Working Hours */}
+              <div className="flex items-start gap-3">
                 <Clock
-                  className="text-[#D89A17]"
-                  size={20}
+                  className="mt-0.5 shrink-0 text-[#D89A17]"
+                  size={18}
                 />
 
-                <p className="text-slate-600">
+                <p className="text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
                   Monday - Saturday
                   <br />
                   09:00 AM - 07:00 PM
                 </p>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
 
         {/* Bottom */}
-
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 py-8 text-sm md:flex-row">
-
-          <p className="text-slate-500">
+        <div className="flex flex-col gap-4 border-t border-[#1E5BFF]/30 py-5 sm:py-6 md:flex-row md:items-center md:justify-between">
+          {/* Copyright */}
+          <p className="text-center text-xs leading-5 text-slate-500 sm:text-sm md:text-left">
             © {new Date().getFullYear()}{" "}
             <span className="font-semibold text-[#0A1F66]">
               I-Vantage Business Hub
@@ -200,8 +179,8 @@ export default function Footer() {
             . All Rights Reserved.
           </p>
 
-          <div className="flex flex-wrap items-center gap-6">
-
+          {/* Legal Links */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs sm:gap-x-6 sm:text-sm md:justify-end">
             <Link
               href="/privacy-policy"
               className="text-slate-500 transition hover:text-[#1E5BFF]"
@@ -222,13 +201,9 @@ export default function Footer() {
             >
               Refund Policy
             </Link>
-
           </div>
-
         </div>
-
       </Container>
-
     </footer>
   );
 }
