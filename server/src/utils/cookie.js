@@ -6,7 +6,11 @@ export const setAuthCookie = (res, token) => {
     httpOnly: true,
     secure: env.nodeEnv === "production",
     sameSite: "strict",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 Days
+    domain: env.nodeEnv === "production"
+      ? ".i-vantage.in"
+      : undefined,
+    path: "/",
+    maxAge: 1000 * 60 * 60 * 24 * 7,
   });
 };
 
@@ -15,5 +19,9 @@ export const clearAuthCookie = (res) => {
     httpOnly: true,
     secure: env.nodeEnv === "production",
     sameSite: "strict",
+    domain: env.nodeEnv === "production"
+      ? ".i-vantage.in"
+      : undefined,
+    path: "/",
   });
 };
