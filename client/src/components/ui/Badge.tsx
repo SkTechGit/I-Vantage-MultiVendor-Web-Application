@@ -17,30 +17,36 @@ export default function Badge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center justify-center rounded-full font-semibold tracking-wide transition-all duration-300",
+        // Base
+        "inline-flex max-w-full min-w-0 items-center justify-center rounded-full border font-semibold tracking-wide transition-all duration-300",
+
+        // Prevent overflow on very small screens
+        "whitespace-normal break-words text-center leading-tight",
 
         // Sizes
         size === "sm"
-          ? "px-3 py-1 text-xs"
-          : "px-4 py-1.5 text-sm",
+          ? "px-2.5 py-1 text-[10px] sm:px-3 sm:text-xs"
+          : "px-3 py-1.5 text-xs sm:px-4 sm:text-sm",
 
         // Variants
         variant === "primary" &&
-          "bg-[#1E5BFF]/10 text-[#1E5BFF] border border-[#1E5BFF]/20",
+          "border-[#1E5BFF]/20 bg-[#1E5BFF]/10 text-[#1E5BFF]",
 
         variant === "gold" &&
-          "bg-[#C8942C]/10 text-[#C8942C] border border-[#C8942C]/20",
+          "border-[#C8942C]/20 bg-[#C8942C]/10 text-[#C8942C]",
 
         variant === "success" &&
-          "bg-emerald-100 text-emerald-700 border border-emerald-200",
+          "border-emerald-200 bg-emerald-100 text-emerald-700",
 
         variant === "outline" &&
-          "bg-white text-[#0A1F66] border border-[#D9E4F5]",
+          "border-[#D9E4F5] bg-white text-[#0A1F66]",
 
         className
       )}
     >
-      {children}
+      <span className="min-w-0 max-w-full">
+        {children}
+      </span>
     </span>
   );
 }

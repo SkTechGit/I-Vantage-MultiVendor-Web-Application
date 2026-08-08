@@ -5,6 +5,7 @@ import WhyChooseUs from "./WhyChooseUs";
 import CTASection from "./Ctasection";
 
 import { HomePageProps } from "../home.types";
+import WorkspaceShowcase from "./WorkspaceShowcase";
 
 export default function HomePage({
   categories,
@@ -20,7 +21,7 @@ export default function HomePage({
 />
 
       <HowItWorks />
-
+     <WorkspaceShowcase />
       <WhyChooseUs />
 
       <CTASection />

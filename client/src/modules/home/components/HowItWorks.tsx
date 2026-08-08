@@ -40,7 +40,7 @@ export default function HowItWorks() {
       <Container>
         <SectionHeading
           title="How It Works"
-          subtitle="Getting started with I-Vantage Business Hub is quick and easy."
+          subtitle="Getting started with i-VANTAGE Business Hub is quick and easy."
         />
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">

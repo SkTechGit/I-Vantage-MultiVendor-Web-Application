@@ -24,7 +24,7 @@ export default function CTASection() {
           </div>
 
           {/* Heading */}
-          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-4xl md:text-5xl lg:text-6xl">
+          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-4xl md:text-4xl lg:text-4xl">
             Ready to Find the Perfect Workspace
 
             <span className="mt-2 block text-[#F7D78A]">
@@ -63,7 +63,7 @@ export default function CTASection() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full border-white bg-white/10 text-white hover:border-white hover:bg-white hover:text-[#0A1F66] sm:min-w-[220px]"
+                className="w-full border-white bg-white/10 text-white hover:border-white hover:text-[#0A1F66] sm:min-w-[220px]"
               >
                 Explore Services
               </Button>

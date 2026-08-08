@@ -39,7 +39,7 @@ export default function WhyChooseUs() {
     <section className="bg-gray-50 py-24">
       <Container>
         <SectionHeading
-          title="Why Choose I-Vantage?"
+          title="Why Choose i-VANTAGE?"
           subtitle="A complete business ecosystem designed to help your company succeed."
         />
 

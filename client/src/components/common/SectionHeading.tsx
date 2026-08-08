@@ -8,20 +8,20 @@ export default function SectionHeading({
   subtitle,
 }: Props) {
   return (
-    <div className="mx-auto mb-16 max-w-4xl text-center">
-      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C8942C]/20 bg-[#C8942C]/10 px-4 py-1">
-        <span className="h-2 w-2 rounded-full bg-[#C8942C]" />
-        <span className="text-sm font-semibold uppercase tracking-widest text-[#C8942C]">
-          i-VANTAGE BUSINESS HUB
-        </span>
-      </div>
+    <div className="mx-auto w-full min-w-0 max-w-3xl px-2 text-center sm:px-0">
+      {/* Brand Label */}
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5BFF] sm:text-xs sm:tracking-[0.22em]">
+        i-VANTAGE BUSINESS HUB
+      </p>
 
-      <h2 className="text-3xl font-bold leading-tight tracking-tight text-[#0A1F66] sm:text-4xl lg:text-5xl">
+      {/* Heading */}
+      <h2 className="mt-2.5 text-2xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-3 sm:text-3xl lg:text-4xl">
         {title}
       </h2>
 
+      {/* Subtitle */}
       {subtitle && (
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-4 sm:text-base sm:leading-7">
           {subtitle}
         </p>
       )}

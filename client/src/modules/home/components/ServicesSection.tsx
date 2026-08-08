@@ -218,9 +218,16 @@ const toggleCategory = (categoryId: string) => {
         </div>
 <LeadForm
   services={selectedServices}
-  onSuccess={() =>
-    setSelectedServices([])
-  }
+  onRemoveService={(serviceId) => {
+    setSelectedServices((prev) =>
+      prev.filter(
+        (service) => service._id !== serviceId
+      )
+    );
+  }}
+  onSuccess={() => {
+    setSelectedServices([]);
+  }}
 />
       </Container>
 

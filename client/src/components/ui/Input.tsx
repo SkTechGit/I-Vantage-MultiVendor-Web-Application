@@ -13,26 +13,53 @@ interface InputProps
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className, ...props }, ref) => {
     return (
-      <div className="space-y-2">
+      <div className="min-w-0 w-full">
+        {/* Label */}
         {label && (
-          <label className="text-sm font-medium text-gray-700">
+          <label
+            htmlFor={props.id}
+            className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
+          >
             {label}
           </label>
         )}
 
+        {/* Input */}
         <input
           ref={ref}
           {...props}
           className={clsx(
-            "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition-all",
-            "focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100",
-            error && "border-red-500",
+            // Base
+            "w-full min-w-0 rounded-xl border bg-white",
+            "border-gray-300 outline-none",
+            "text-sm text-gray-900",
+            "transition-all duration-200",
+
+            // Responsive height
+            "h-11 px-3.5",
+            "sm:h-12 sm:px-4",
+
+            // Placeholder
+            "placeholder:text-gray-400",
+
+            // Focus
+            "focus:border-[#1E5BFF]",
+            "focus:ring-4 focus:ring-blue-100",
+
+            // Error
+            error &&
+              "border-red-500 focus:border-red-500 focus:ring-red-100",
+
+            // Disabled
+            "disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500",
+
             className
           )}
         />
 
+        {/* Error */}
         {error && (
-          <p className="text-sm text-red-500">
+          <p className="mt-1.5 text-xs leading-4 text-red-500 sm:text-sm">
             {error}
           </p>
         )}

@@ -73,7 +73,7 @@ export default function ContactPage() {
           {/* Main CTA */}
           <div className="mt-7 flex w-full flex-col gap-3 sm:mt-9 sm:w-auto sm:flex-row sm:justify-center sm:gap-4">
             <a href="tel:+919907800600" className="w-full sm:w-auto">
-              <Button className="flex w-full items-center justify-center gap-2 sm:w-auto">
+              <Button className="flex w-full items-center justify-center gap-1 sm:w-auto">
                 <Phone size={18} />
                 +91 99078 00600
               </Button>
