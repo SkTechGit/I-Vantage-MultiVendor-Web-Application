@@ -113,7 +113,7 @@ export default function Hero() {
                     100+
                   </p>
 
-                  <p className="mt-1 truncate text-[9px] font-medium text-slate-600 sm:text-[11px]">
+                  <p className="mt-1  text-[9px] font-medium text-slate-600 sm:text-[11px]">
                     Business Support Services
                   </p>
                 </div>
@@ -130,7 +130,7 @@ export default function Hero() {
                     One
                   </p>
 
-                  <p className="mt-1 truncate text-[9px] font-medium text-slate-600 sm:text-[11px]">
+                  <p className="mt-1 text-[9px] font-medium text-slate-600 sm:text-[11px]">
                     Business Ecosystem
                   </p>
                 </div>

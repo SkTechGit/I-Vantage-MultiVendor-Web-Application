@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 
 export default function CTASection() {
   return (
-    <section className="py-16 sm:py-20 lg:py-28">
+    <section className="py-13 sm:py-26 lg:py-22">
       <Container>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0A1F66] via-[#1447C5] to-[#1E5BFF] px-5 py-12 text-center text-white shadow-2xl sm:rounded-3xl sm:px-8 sm:py-16 lg:rounded-[32px] lg:px-16 lg:py-20">
 
@@ -24,7 +24,7 @@ export default function CTASection() {
           </div>
 
           {/* Heading */}
-          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-4xl md:text-4xl lg:text-4xl">
+          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-4xl md:text-3xl lg:text-4xl">
             Ready to Find the Perfect Workspace
 
             <span className="mt-2 block text-[#F7D78A]">

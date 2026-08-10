@@ -5,71 +5,106 @@ import {
   MousePointerClick,
   FileText,
   CheckCircle,
+  ArrowRight,
 } from "lucide-react";
 
 const steps = [
   {
     icon: Search,
-    title: "Search Services",
-    description:
-      "Find the workspace or business support services you need using our smart search.",
+    title: "Find Services",
+    description: "Search and explore the services you need.",
   },
   {
     icon: MousePointerClick,
     title: "Select Services",
-    description:
-      "Choose one or multiple services from different business categories.",
+    description: "Choose one or more services that fit your needs.",
   },
   {
     icon: FileText,
-    title: "Submit Enquiry",
-    description:
-      "Fill in your contact details and business requirements in a simple enquiry form.",
+    title: "Share Details",
+    description: "Tell us your requirements and contact details.",
   },
   {
     icon: CheckCircle,
-    title: "Our Team Contacts You",
-    description:
-      "Our experts will connect with you quickly to understand your needs and provide the right solution.",
+    title: "Get Connected",
+    description: "Our team will contact you with the right solution.",
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-16 sm:py-20">
       <Container>
         <SectionHeading
           title="How It Works"
-          subtitle="Getting started with i-VANTAGE Business Hub is quick and easy."
+          subtitle="Get the right business support in just a few simple steps."
         />
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
+        <div className="mx-auto mt-10 max-w-6xl">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-3">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              const isLast = index === steps.length - 1;
 
-            return (
-              <div
-                key={step.title}
-                className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm transition hover:-translate-y-2 hover:shadow-lg"
-              >
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-[#1E5BFF]">
-                  <Icon size={30} />
+              return (
+                <div
+                  key={step.title}
+                  className="flex flex-1 items-stretch lg:items-center"
+                >
+                  {/* Step Card */}
+                  <div className="flex w-full items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 transition-all hover:border-blue-200 hover:bg-blue-50/40 sm:p-6 lg:min-h-[220px] lg:flex-col lg:items-center lg:justify-center lg:p-5 lg:text-center">
+                    {/* Icon */}
+                    <div className="relative shrink-0">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white text-[#1E5BFF] shadow-sm ring-1 ring-slate-200">
+                        <Icon size={25} strokeWidth={2} />
+                      </div>
+
+                      {/* Step Number */}
+                      <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#1E5BFF] text-[10px] font-bold text-white shadow-sm">
+                        {index + 1}
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#D99000]">
+                        Step {index + 1}
+                      </p>
+
+                      <h3 className="mt-1 text-base font-bold text-[#0A1F66] sm:text-lg">
+                        {step.title}
+                      </h3>
+
+                      <p className="mx-auto mt-2 max-w-[210px] text-xs leading-5 text-slate-500 sm:text-sm">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Connector */}
+                  {!isLast && (
+                    <>
+                      {/* Desktop Arrow */}
+                      <div className="hidden w-8 shrink-0 items-center justify-center lg:flex">
+                        <ArrowRight
+                          size={17}
+                          className="text-slate-800"
+                        />
+                      </div>
+
+                      {/* Mobile Arrow */}
+                      <div className="flex h-4 shrink-0 items-center justify-center lg:hidden">
+                        <ArrowRight
+                          size={16}
+                          className="rotate-90 text-slate-300"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                <span className="text-sm font-semibold text-[#D99000]">
-                  Step {index + 1}
-                </span>
-
-                <h3 className="mt-3 text-xl font-bold text-[#0A1F66]">
-                  {step.title}
-                </h3>
-
-                <p className="mt-4 text-gray-600">
-                  {step.description}
-                </p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </Container>
     </section>

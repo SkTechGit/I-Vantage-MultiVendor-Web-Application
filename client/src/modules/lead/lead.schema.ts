@@ -15,6 +15,8 @@ export const leadSchema = z.object({
 
   companyName: z.string().optional(),
 
+  location: z.string().optional(),
+
   message: z
     .string()
     .min(10, "Please describe your requirement."),

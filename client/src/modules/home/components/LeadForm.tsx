@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { X, Check, ShoppingBag } from "lucide-react";
 
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
@@ -19,17 +20,22 @@ import { createLead } from "@/modules/lead/lead.api";
 import { Service } from "@/modules/service/service.types";
 
 interface Props {
+  open: boolean;
   services: Service[];
   onRemoveService: (serviceId: string) => void;
+  onClose: () => void;
   onSuccess: () => void;
 }
 
 export default function LeadForm({
+  open,
   services,
   onRemoveService,
+  onClose,
   onSuccess,
 }: Props) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] =
+    useTransition();
 
   const {
     register,
@@ -42,7 +48,9 @@ export default function LeadForm({
 
   const onSubmit = (values: LeadFormData) => {
     if (!services.length) {
-      toast.error("Please select at least one service.");
+      toast.error(
+        "Please select at least one service."
+      );
       return;
     }
 
@@ -50,14 +58,17 @@ export default function LeadForm({
       try {
         await createLead({
           ...values,
-          services: services.map((service) => service._id),
+          services: services.map(
+            (service) => service._id
+          ),
         });
 
-        toast.success("Enquiry submitted successfully.");
+        toast.success(
+          "Enquiry submitted successfully."
+        );
 
         reset();
 
-        // Clear selected services in parent component
         onSuccess();
       } catch (error: any) {
         toast.error(
@@ -68,149 +79,228 @@ export default function LeadForm({
     });
   };
 
+  if (!open) return null;
+
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mx-auto mt-10 w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 md:p-8"
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
-      {/* =========================================================
-          FORM HEADING
-      ========================================================= */}
-      <div>
-        <h2 className="text-xl font-bold text-[#0A1F66] sm:text-2xl">
-          Tell us your Requirement
-        </h2>
 
-        <p className="mt-1 text-sm text-slate-500">
-          Share your details and we&apos;ll help you find the right
-          solution.
-        </p>
-      </div>
+      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl">
 
-      {/* =========================================================
-          SELECTED SERVICES
-      ========================================================= */}
-      <div className="mt-6">
-        {services.length > 0 ? (
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:p-5">
-            {/* Header */}
-            <div className="mb-4">
-              <h3 className="text-sm font-bold text-[#0A1F66] sm:text-base">
-                Services you&apos;re interested in
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6">
+
+          <div className="min-w-0">
+
+            <div className="flex items-center gap-2">
+
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF]">
+                <ShoppingBag size={16} />
+              </div>
+
+              <h2 className="text-base font-bold text-[#0A1F66] sm:text-lg">
+                Tell us your Requirement
+              </h2>
+
+            </div>
+
+            <p className="mt-1 pl-10 text-[11px] text-slate-500 sm:text-xs">
+              Share your details and we&apos;ll help you find the right solution.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+            aria-label="Close"
+          >
+            <X size={17} />
+          </button>
+
+        </div>
+
+        {/* =====================================================
+            SCROLLABLE CONTENT
+        ===================================================== */}
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="overflow-y-auto"
+        >
+
+          <div className="space-y-6 p-4 sm:p-6">
+
+            {/* =================================================
+                SELECTED SERVICES
+            ================================================= */}
+
+            <div>
+
+              <div className="mb-3 flex items-center justify-between">
+
+                <div>
+
+                  <h3 className="text-xs font-bold text-[#0A1F66] sm:text-sm">
+                    Services you&apos;re interested in
+                  </h3>
+
+                  <p className="mt-0.5 text-[10px] text-slate-500 sm:text-xs">
+                    {services.length}{" "}
+                    {services.length === 1
+                      ? "service"
+                      : "services"}{" "}
+                    selected
+                  </p>
+
+                </div>
+
+              </div>
+
+              {services.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+
+                  {services.map((service) => (
+
+                    <div
+                      key={service._id}
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[10px] font-medium text-[#0A1F66] sm:text-xs"
+                    >
+
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1E5BFF] text-white">
+                        <Check size={9} />
+                      </span>
+
+                      <span className="max-w-[180px] truncate sm:max-w-none">
+                        {service.name}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onRemoveService(
+                            service._id
+                          )
+                        }
+                        className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        aria-label={`Remove ${service.name}`}
+                      >
+                        <X size={11} />
+                      </button>
+
+                    </div>
+
+                  ))}
+
+                </div>
+              ) : (
+                <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+                  No services selected.
+                </p>
+              )}
+
+            </div>
+
+            {/* =================================================
+                YOUR DETAILS
+            ================================================= */}
+
+            <div>
+
+              <h3 className="mb-3 text-xs font-bold text-[#0A1F66] sm:text-sm">
+                Your Details
               </h3>
 
-              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                {services.length}{" "}
-                {services.length === 1 ? "service" : "services"} selected
-              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+
+                <Input
+                  label="Full Name"
+                  {...register("fullName")}
+                  error={errors.fullName?.message}
+                />
+
+                <Input
+                  label="Email"
+                  type="email"
+                  {...register("email")}
+                  error={errors.email?.message}
+                />
+
+                <Input
+                  label="Mobile"
+                  type="tel"
+                  {...register("mobile")}
+                  error={errors.mobile?.message}
+                />
+             <Input
+                  label="Preferred office Location"
+                  {...register("location")}
+                  error={
+                    errors.location?.message
+                  }
+                />
+                <Input
+                  label="Company"
+                  {...register("companyName")}
+                  error={
+                    errors.companyName?.message
+                  }
+                />
+ 
+              </div>
+
             </div>
 
-            {/* Selected Services */}
-            <div className="flex flex-wrap gap-2">
-              {services.map((service) => (
-                <div
-                  key={service._id}
-                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-2 text-xs font-medium text-[#0A1F66] shadow-sm sm:text-sm"
-                >
-                  {/* Check */}
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1E5BFF] text-[9px] font-bold text-white">
-                    ✓
-                  </span>
+            {/* =================================================
+                REQUIREMENT
+            ================================================= */}
 
-                  {/* Service Name */}
-                  <span className="max-w-[180px] truncate sm:max-w-none">
-                    {service.name}
-                  </span>
+            <div>
 
-                  {/* Remove */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onRemoveService(service._id)
-                    }
-                    aria-label={`Remove ${service.name}`}
-                    className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-sm leading-none text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+              <Textarea
+                label="Requirement"
+                {...register("message")}
+                error={errors.message?.message}
+              />
+
             </div>
+
           </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-5">
-            <p className="text-sm font-semibold text-slate-600">
-              No services selected yet.
-            </p>
 
-            <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
-              Select one or more services above to include them in
-              your enquiry.
-            </p>
+          {/* =================================================
+              FOOTER
+          ================================================= */}
+
+          <div className="sticky bottom-0 border-t border-slate-100 bg-white p-4 sm:px-6">
+
+            <Button
+              type="submit"
+              disabled={
+                isPending || services.length === 0
+              }
+              className="w-full"
+            >
+              {isPending
+                ? "Submitting..."
+                : "Submit Enquiry"}
+            </Button>
+
           </div>
-        )}
+
+        </form>
+
       </div>
 
-      {/* =========================================================
-          YOUR DETAILS
-      ========================================================= */}
-      <div className="mt-7">
-        <h3 className="mb-4 text-sm font-bold text-[#0A1F66] sm:text-base">
-          Your Details
-        </h3>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <Input
-            label="Full Name"
-            {...register("fullName")}
-            error={errors.fullName?.message}
-          />
-
-          <Input
-            label="Email"
-            type="email"
-            {...register("email")}
-            error={errors.email?.message}
-          />
-
-          <Input
-            label="Mobile"
-            type="tel"
-            {...register("mobile")}
-            error={errors.mobile?.message}
-          />
-
-          <Input
-            label="Company"
-            {...register("companyName")}
-            error={errors.companyName?.message}
-          />
-        </div>
-      </div>
-
-      {/* =========================================================
-          REQUIREMENT
-      ========================================================= */}
-      <div className="mt-6">
-        <Textarea
-          label="Requirement"
-          {...register("message")}
-          error={errors.message?.message}
-        />
-      </div>
-
-      {/* =========================================================
-          SUBMIT
-      ========================================================= */}
-      <div className="mt-7">
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="w-full sm:w-auto"
-        >
-          {isPending ? "Submitting..." : "Submit Enquiry"}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 }

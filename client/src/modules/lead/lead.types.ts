@@ -8,6 +8,7 @@ export interface Lead {
   mobile: string;
 
   companyName: string;
+  location: string;
 
   message: string;
 

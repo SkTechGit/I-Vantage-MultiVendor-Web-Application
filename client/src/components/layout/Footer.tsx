@@ -30,7 +30,7 @@ export default function Footer() {
             </div>
 
             <p className="mt-4 max-w-md text-sm leading-6 text-slate-600 sm:mt-5 sm:text-base sm:leading-7">
-              I-Vantage Business Hub provides premium coworking spaces and
+              i-VANTAGE Business Hub provides premium coworking spaces and
               100+ business support services to help startups, entrepreneurs
               and enterprises work, connect and grow.
             </p>
@@ -38,7 +38,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="mt-5 flex gap-3 sm:mt-6 sm:gap-4">
               <Link
-                href="#"
+                href="https://www.facebook.com/iVANTAGEBusinessHub"
                 aria-label="Facebook"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >
@@ -46,7 +46,7 @@ export default function Footer() {
               </Link>
 
               <Link
-                href="#"
+                href="https://www.instagram.com/i_vantage_business_hub/"
                 aria-label="Instagram"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >
@@ -54,7 +54,7 @@ export default function Footer() {
               </Link>
 
               <Link
-                href="#"
+                href="https://linkedin.com/company/i-vantage-business-hub"
                 aria-label="LinkedIn"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E5BFF] text-sm text-white transition-all duration-300 hover:bg-[#D89A17] sm:h-10 sm:w-10"
               >

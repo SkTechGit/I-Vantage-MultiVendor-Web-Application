@@ -10,7 +10,7 @@ export default function SectionHeading({
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl px-2 text-center sm:px-0">
       {/* Brand Label */}
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E5BFF] sm:text-xs sm:tracking-[0.22em]">
+      <p className="text-[10px] font-bold tracking-[0.18em] text-[#1E5BFF] sm:text-xs sm:tracking-[0.22em]">
         i-VANTAGE BUSINESS HUB
       </p>
 

@@ -14,13 +14,13 @@ export default function HomePage({
   return (
     <>
       <Hero />
-
+ <HowItWorks />
       <ServicesSection
   categories={categories}
   services={services}
 />
 
-      <HowItWorks />
+     
      <WorkspaceShowcase />
       <WhyChooseUs />
 

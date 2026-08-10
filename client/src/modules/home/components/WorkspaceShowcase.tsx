@@ -11,11 +11,11 @@ export default function WorkspaceShowcase() {
             SECTION HEADER
         ===================================================== */}
         <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1E5BFF] sm:text-sm">
+          <p className="text-xs font-semibold tracking-[0.2em] text-[#1E5BFF] sm:text-sm">
             i-VANTAGE Business Hub
           </p>
 
-          <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-[#0A1F66] sm:text-3xl md:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-[#0A1F66] sm:text-2xl md:text-4xl">
             Spaces Designed for
             <span className="block text-[#1E5BFF]">
               Business & Growth
