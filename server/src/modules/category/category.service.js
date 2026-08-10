@@ -55,7 +55,7 @@ export const getPublicCategories = async () => {
   const categories = await Category.find({
     isActive: true,
   })
-    .select("name slug")
+    .select("name slug description image")
     .sort({
       sortOrder: 1,
     })
@@ -64,7 +64,7 @@ export const getPublicCategories = async () => {
   const services = await Service.find({
     isActive: true,
   })
-    .select("name category")
+    .select("name category slug description image")
     .sort({
       sortOrder: 1,
     })

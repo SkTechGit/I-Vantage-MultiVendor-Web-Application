@@ -72,6 +72,9 @@ export default function ServicesSection({
         (category) => category.services.length > 0
       );
   }, [search, groupedCategories]);
+  console.log("filteredCategories", filteredCategories);
+  console.log("groupedCategories", groupedCategories);
+  console.log("categories", categories);
 
   const handleSelectService = (service: Service) => {
     const exists = selectedServices.some(
