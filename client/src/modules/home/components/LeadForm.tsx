@@ -47,12 +47,12 @@ export default function LeadForm({
   });
 
   const onSubmit = (values: LeadFormData) => {
-    if (!services.length) {
-      toast.error(
-        "Please select at least one service."
-      );
-      return;
-    }
+    // if (!services.length) {
+    //   toast.error(
+    //     "Please select at least one service."
+    //   );
+    //   return;
+    // }
 
     startTransition(async () => {
       try {
@@ -204,9 +204,10 @@ export default function LeadForm({
 
                 </div>
               ) : (
-                <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-                  No services selected.
-                </p>
+                <p className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+  No specific service selected. We&apos;ll understand your
+  requirement and suggest the right solution.
+</p>
               )}
 
             </div>
@@ -284,16 +285,14 @@ export default function LeadForm({
           <div className="sticky bottom-0 border-t border-slate-100 bg-white p-4 sm:px-6">
 
             <Button
-              type="submit"
-              disabled={
-                isPending || services.length === 0
-              }
-              className="w-full"
-            >
-              {isPending
-                ? "Submitting..."
-                : "Submit Enquiry"}
-            </Button>
+  type="submit"
+  disabled={isPending}
+  className="w-full"
+>
+  {isPending
+    ? "Submitting..."
+    : "Submit Enquiry"}
+</Button>
 
           </div>
 

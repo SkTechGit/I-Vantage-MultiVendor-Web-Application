@@ -72,10 +72,7 @@ export default function ServicesSection({
         (category) => category.services.length > 0
       );
   }, [search, groupedCategories]);
-  console.log("filteredCategories", filteredCategories);
-  console.log("groupedCategories", groupedCategories);
-  console.log("categories", categories);
-
+  
   const handleSelectService = (service: Service) => {
     const exists = selectedServices.some(
       (item) => item._id === service._id
@@ -156,7 +153,7 @@ export default function ServicesSection({
 
   return (
     <>
-      <section>
+      <section id="serviceSection">
         <Container>
 
           {/* =====================================================
@@ -412,10 +409,14 @@ export default function ServicesSection({
                   {activeCategory.name}
                 </h2>
 
+                
+<p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-gray-700 sm:text-xs">
+                  {activeCategory.description}
+                </p>
+               
                 <p className="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
                   Select the services you need
                 </p>
-
               </div>
 
               <button

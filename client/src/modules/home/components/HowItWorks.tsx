@@ -17,17 +17,17 @@ const steps = [
   {
     icon: MousePointerClick,
     title: "Select Services",
-    description: "Choose one or more services that fit your needs.",
+    description: "Choose as many services that fit your needs.",
   },
   {
     icon: FileText,
     title: "Share Details",
-    description: "Tell us your requirements and contact details.",
+    description: "Submit your contact details and support services.",
   },
   {
     icon: CheckCircle,
     title: "Get Connected",
-    description: "Our team will contact you with the right solution.",
+    description: "Our team will contact you within 1 hour.",
   },
 ];
 

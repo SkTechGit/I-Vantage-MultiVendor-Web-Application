@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import {useState} from "react";
 
 import {
   ArrowRight,
@@ -19,6 +20,8 @@ import {
 
 import Container from "@/components/common/Container";
 import Button from "@/components/ui/Button";
+import { Service } from "@/modules/service/service.types";
+import LeadForm from "./LeadForm";
 
 const serviceHighlights = [
   {
@@ -55,6 +58,7 @@ const serviceHighlights = [
   },
 ];
 
+
 const trustPoints = [
   "Professional Spaces",
   "Expert Support",
@@ -63,6 +67,8 @@ const trustPoints = [
 ];
 
 export default function Hero() {
+  const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   return (
     <section className="relative overflow-hidden bg-white">
       {/* Soft Background */}
@@ -136,26 +142,29 @@ export default function Hero() {
                 </div>
               </div>
             </div>
-
+            
             {/* =========================================================
                 BUTTONS
             ========================================================= */}
             <div className="mt-6 flex w-full flex-col gap-3 sm:mt-7 sm:w-auto sm:flex-row">
-              <Link href="/services" className="w-full sm:w-auto">
+              <Link href="#serviceSection" className="w-full sm:w-auto">
                 <Button className="flex h-12 w-full items-center justify-center gap-2 px-6 sm:w-auto">
                   Explore Services
                   <ArrowRight size={17} />
                 </Button>
               </Link>
 
-              <Link href="/contact" className="w-full sm:w-auto">
+              
                 <Button
+                onClick={() => {
+    setSelectedServices([]);
+    setIsLeadFormOpen(true);
+  }}
                   variant="outline"
                   className="h-12 w-full px-6 sm:w-auto"
                 >
                   Book a Visit
                 </Button>
-              </Link>
             </div>
 
             {/* =========================================================
@@ -174,7 +183,7 @@ export default function Hero() {
                     strokeWidth={2}
                   />
 
-                  <span className="truncate text-[9px] font-medium text-slate-600 sm:text-[10px]">
+                  <span className="truncate text-[12px] font-medium text-slate-600 sm:text-[13px]">
                     {point}
                   </span>
                 </div>
@@ -286,7 +295,7 @@ export default function Hero() {
                 </p>
 
                 <p className="mt-1 text-[9px] font-medium text-slate-500 sm:text-[10px]">
-                  Business Services
+                  Business Support Services
                 </p>
               </div>
             </div>
@@ -326,6 +335,24 @@ export default function Hero() {
             </div>
           </div>
         </div>
+        <LeadForm
+  open={isLeadFormOpen}
+  services={selectedServices}
+  onRemoveService={(serviceId) => {
+    setSelectedServices((prev) =>
+      prev.filter(
+        (service) => service._id !== serviceId
+      )
+    );
+  }}
+  onClose={() => {
+    setIsLeadFormOpen(false);
+  }}
+  onSuccess={() => {
+    setSelectedServices([]);
+    setIsLeadFormOpen(false);
+  }}
+/>
       </Container>
     </section>
   );

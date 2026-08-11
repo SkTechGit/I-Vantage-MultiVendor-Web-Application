@@ -1,9 +1,15 @@
+"use client";
 import Link from "next/link";
 
 import Container from "@/components/common/Container";
 import Button from "@/components/ui/Button";
+import { Service } from "@/modules/service/service.types";
+import LeadForm from "@/modules/home/components/LeadForm";
+import { useState } from "react";
 
 export default function CTASection() {
+   const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
+      const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   return (
     <section className="py-13 sm:py-26 lg:py-22">
       <Container>
@@ -41,37 +47,62 @@ export default function CTASection() {
           </p>
 
           {/* Buttons */}
-          <div className="relative z-10 mt-10 flex flex-col gap-4 sm:mt-12 sm:flex-row sm:justify-center">
+          <div className="relative z-10 mt-8 flex w-full flex-col gap-3 sm:mt-10 sm:w-auto sm:flex-row sm:justify-center">
+  <Button
+    onClick={() => {
+      setSelectedServices([]);
+      setIsLeadFormOpen(true);
+    }}
+    size="lg"
+    variant="secondary"
+    className="w-full px-5 sm:w-auto sm:px-6"
+  >
+    Book a Free Consultation
+  </Button>
 
-            <Link
-              href="/contact"
-              className="w-full sm:w-auto"
-            >
-              <Button
-                size="lg"
-                variant="secondary"
-                className="w-full sm:min-w-[220px]"
-              >
-                Book a Free Consultation
-              </Button>
-            </Link>
-
-            <Link
-              href="/services"
-              className="w-full sm:w-auto"
-            >
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full border-white bg-white/10 text-white hover:border-white hover:text-[#0A1F66] sm:min-w-[220px]"
-              >
-                Explore Services
-              </Button>
-            </Link>
-
-          </div>
+  <Link
+    href="#serviceSection"
+    className="w-full sm:w-auto"
+  >
+    <Button
+      size="lg"
+      variant="outline"
+      className="
+        w-full
+        border-white
+        bg-white/10
+        px-5
+        text-white
+        hover:border-white
+        hover:text-[#0A1F66]
+        sm:w-auto
+        sm:px-6
+      "
+    >
+      Explore Services
+    </Button>
+  </Link>
+</div>
 
         </div>
+        <LeadForm
+                  open={isLeadFormOpen}
+                  services={selectedServices}
+                  onRemoveService={(serviceId) => {
+                    setSelectedServices((prev) =>
+                      prev.filter(
+                        (service) => service._id !== serviceId
+                      )
+                    );
+                  }}
+                  onClose={() => {
+                    setIsLeadFormOpen(false);
+                  }}
+                  onSuccess={() => {
+                    setSelectedServices([]);
+                    setIsLeadFormOpen(false);
+                  }}
+                />
       </Container>
     </section>
   );

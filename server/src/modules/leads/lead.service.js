@@ -3,16 +3,56 @@ import Service from "../services/service.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { LEAD_MESSAGES } from "./lead.constants.js";
 
-export const createLead = async (data) => {
-  const services = await Service.find({
-    _id: { $in: data.services },
-  });
+// export const createLead = async (data) => {
+//   const services = await Service.find({
+//     _id: { $in: data.services },
+//   });
 
-  if (services.length !== data.services.length) {
-    throw new ApiError(404, "One or more selected services not found.");
+//   if (services.length !== data.services.length) {
+//     throw new ApiError(404, "One or more selected services not found.");
+//   }
+
+//   return await Lead.create(data);
+// };
+
+export const createLead = async (data) => {
+  let serviceIds = data.services || [];
+
+  // If no service is selected,
+  // use the General Enquiry service
+  if (serviceIds.length === 0) {
+    const generalEnquiryService = await Service.findOne({
+      name: "General Enquiry",
+    }).select("_id");
+
+    if (!generalEnquiryService) {
+      throw new ApiError(
+        500,
+        'The "General Enquiry" service is not configured.'
+      );
+    }
+
+    serviceIds = [generalEnquiryService._id];
   }
 
-  return await Lead.create(data);
+  // Validate services
+  const services = await Service.find({
+    _id: { $in: serviceIds },
+  });
+
+  if (services.length !== serviceIds.length) {
+    throw new ApiError(
+      404,
+      "One or more selected services not found."
+    );
+  }
+
+  // Create lead with selected service(s)
+  // OR General Enquiry when no service was selected
+  return await Lead.create({
+    ...data,
+    services: serviceIds,
+  });
 };
 
 export const getAllLeads = async () => {

@@ -10,8 +10,10 @@ import Button from "../ui/Button";
 import NavLinks from "./NavLinks";
 import MobileMenu from "./MobileMenu";
 
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+ 
 
   return (
     <>
@@ -25,11 +27,12 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden lg:block">
-            <Link href="/contact">
+       
+            <Link href="/contact" className="w-full sm:w-auto"> 
               <Button>
                 Book a Visit
               </Button>
-            </Link>
+           </Link>
           </div>
 
           <button
@@ -43,6 +46,7 @@ export default function Navbar() {
           </button>
 
         </Container>
+         
       </header>
 
       <MobileMenu

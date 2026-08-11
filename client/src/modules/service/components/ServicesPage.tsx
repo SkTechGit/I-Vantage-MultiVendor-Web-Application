@@ -105,7 +105,7 @@ export default function ServicesPage() {
 
           {/* CTA */}
           <div className="mt-7 flex justify-center sm:mt-9">
-            <Link href="/" className="w-full sm:w-auto">
+            <Link href="/#serviceSection" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto">
                 Explore Services on Homepage
               </Button>

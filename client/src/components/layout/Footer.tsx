@@ -115,9 +115,9 @@ export default function Footer() {
                 />
 
                 <p className="text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-                  I-Vantage Business Hub
+                  i-VANTAGE Business Hub
                   <br />
-                  Gurugram, Haryana
+                  Unit no. 213-14 2nd Floor Welldone Tech Park Sector 48 Sohna Road Gurugram, Haryana
                 </p>
               </div>
 
@@ -159,9 +159,9 @@ export default function Footer() {
                 />
 
                 <p className="text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-                  Monday - Saturday
+                  Monday - Friday
                   <br />
-                  09:00 AM - 07:00 PM
+                  10:00 AM - 07:00 PM
                 </p>
               </div>
             </div>

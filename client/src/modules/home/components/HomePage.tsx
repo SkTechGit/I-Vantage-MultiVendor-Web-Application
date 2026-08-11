@@ -6,6 +6,8 @@ import CTASection from "./Ctasection";
 
 import { HomePageProps } from "../home.types";
 import WorkspaceShowcase from "./WorkspaceShowcase";
+import CategoryMarquee from "./CategoryMarquee";
+
 
 export default function HomePage({
   categories,
@@ -14,6 +16,9 @@ export default function HomePage({
   return (
     <>
       <Hero />
+      <CategoryMarquee categories={categories} />
+
+
  <HowItWorks />
       <ServicesSection
   categories={categories}

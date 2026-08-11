@@ -23,11 +23,9 @@ export const createLeadSchema = z.object({
     .trim()
     .optional(),
 
-  services: z
-    .array(
-      z.string().regex(objectIdRegex, "Invalid service id.")
-    )
-    .min(1, "Select at least one service."),
+  services: z.array(
+  z.string().regex(objectIdRegex, "Invalid service id.")
+),
 
   message: z
     .string()
