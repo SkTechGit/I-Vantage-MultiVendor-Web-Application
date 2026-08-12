@@ -57,7 +57,7 @@ export default function Button({
         // PRIMARY
         // =====================================================
         variant === "primary" && [
-          "bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF]",
+          "bg-gradient-to-r cursor-pointer from-[#0A1F66] to-[#1E5BFF]",
           "text-white shadow-lg",
           "hover:-translate-y-0.5 hover:shadow-xl",
           "focus-visible:ring-blue-200",
@@ -69,7 +69,7 @@ export default function Button({
         // =====================================================
         variant === "secondary" && [
           "bg-[#C8942C] text-white shadow-md",
-          "hover:-translate-y-0.5 hover:bg-[#B37F22] hover:shadow-lg",
+          "hover:-translate-y-0.5 cursor-pointer hover:bg-[#B37F22] hover:shadow-lg",
           "focus-visible:ring-amber-200",
           "active:translate-y-0 active:shadow-md",
         ],
@@ -80,7 +80,7 @@ export default function Button({
         variant === "outline" && [
           "border-[#1E5BFF]",
           "bg-white text-[#1E5BFF]",
-          "hover:bg-[#1E5BFF] hover:text-white",
+          "hover:bg-[#1E5BFF] cursor-pointer hover:text-white",
           "focus-visible:ring-blue-200",
         ],
 

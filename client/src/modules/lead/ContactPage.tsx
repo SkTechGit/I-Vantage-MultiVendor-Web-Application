@@ -22,14 +22,14 @@ const contactDetails = [
   {
     title: "Visit Us",
     description: "Come and explore our workspace",
-    value: "Gurugram, Haryana",
+    value: "Unit 213-14 Welldone Tech Park Sector 48 Sohna Road Gurugram, Haryana",
     href: "#location",
     icon: MapPin,
   },
   {
     title: "Working Hours",
     description: "We're available during",
-    value: "Mon - Sat, 09:00 AM - 07:00 PM",
+    value: "Mon - Fri, 10:00 AM - 07:00 PM",
     href: "#",
     icon: Clock,
   },
@@ -48,7 +48,7 @@ const supportAreas = [
 
 export default function ContactPage() {
   return (
-    <section className="overflow-hidden py-12 sm:py-16 lg:py-24">
+    <section className="overflow-hidden py-8 sm:py-12 lg:py-20">
       <Container>
         {/* Hero */}
         <div className="mx-auto max-w-4xl text-center">
@@ -58,7 +58,7 @@ export default function ContactPage() {
           </span>
 
           {/* Heading */}
-          <h1 className="mt-5 text-3xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-2xl md:text-4xl lg:text-4xl">
             Let&apos;s Build Your Business Together
           </h1>
 
@@ -81,7 +81,7 @@ export default function ContactPage() {
 
             <a href="mailto:info@i-vantage.in" className="w-full sm:w-auto">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="flex w-full items-center justify-center gap-2 sm:w-auto"
               >
                 <Mail size={18} />

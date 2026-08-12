@@ -30,7 +30,7 @@ export default function CTASection() {
           </div>
 
           {/* Heading */}
-          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-4xl md:text-3xl lg:text-4xl">
+          <h2 className="relative z-10 mx-auto mt-6 max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:mt-8 sm:text-2xl md:text-3xl lg:text-3xl">
             Ready to Find the Perfect Workspace
 
             <span className="mt-2 block text-[#F7D78A]">
@@ -39,7 +39,7 @@ export default function CTASection() {
           </h2>
 
           {/* Description */}
-          <p className="relative z-10 mx-auto mt-6 max-w-3xl text-base leading-7 text-blue-100 sm:mt-8 sm:text-lg sm:leading-8 md:text-xl">
+          <p className="relative z-10 mx-auto mt-6 max-w-3xl text-lg leading-7 text-blue-100 sm:mt-8 sm:text-lg sm:leading-8 md:text-lg">
             Whether you're a startup, growing team, or enterprise,
             i-VANTAGE Business Hub helps you discover premium coworking
             spaces, managed offices, commercial properties, and business

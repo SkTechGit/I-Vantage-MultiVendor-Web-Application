@@ -27,7 +27,7 @@ export default function MobileMenu({
 
         <div className="flex items-center justify-between border-b border-blue-100 p-6">
 
-          <Logo width={140} />
+          <Logo width={60} />
 
           <button
             onClick={onClose}

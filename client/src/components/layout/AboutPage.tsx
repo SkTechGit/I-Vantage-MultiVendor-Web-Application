@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 
 export default function AboutPage() {
   return (
-    <section className="overflow-hidden py-12 sm:py-16 lg:py-24">
+    <section className="overflow-hidden py-8 sm:py-12 lg:py-20">
       <Container>
         <div className="mx-auto max-w-5xl text-center">
           {/* Badge */}
@@ -14,7 +14,7 @@ export default function AboutPage() {
           </span>
 
           {/* Heading */}
-          <h1 className="mt-5 text-3xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-2xl md:text-4xl lg:text-4xl">
             Empowering Businesses to
             <br className="hidden sm:block" />
             <span className="sm:whitespace-nowrap"> Work, Connect &amp; Grow</span>
@@ -40,7 +40,7 @@ export default function AboutPage() {
             </Link>
 
             <Link href="/contact" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="secondary" className="w-full sm:w-auto">
                 Contact Us
               </Button>
             </Link>

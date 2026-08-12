@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {useState} from "react";
+import { useState } from "react";
 
 import {
   ArrowRight,
@@ -58,7 +58,6 @@ const serviceHighlights = [
   },
 ];
 
-
 const trustPoints = [
   "Professional Spaces",
   "Expert Support",
@@ -90,18 +89,14 @@ export default function Hero() {
             {/* Heading */}
             <h1 className="mt-5 max-w-2xl text-[27px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[#0A1F66] sm:mt-7 sm:text-3xl md:text-[45px] lg:text-[45px] xl:text-[50px]">
               Everything Your{" "}
-              <span className="text-[#1E5BFF]">
-                Business Needs
-              </span>{" "}
-              to Grow
+              <span className="text-[#1E5BFF]">Business Needs</span> to Grow
               <span className="text-[#F4A900]">.</span>
             </h1>
 
             {/* Description */}
             <p className="mt-5 max-w-xl text-sm leading-6 text-slate-600 sm:mt-6 sm:text-base sm:leading-7 lg:text-[15px] xl:text-base">
-              i-VANTAGE is a complete business hub combining workspace,
-              business setup, compliance and growth support — all under one
-              roof.
+              i-VANTAGE is a complete business hub combining workspace, business
+              setup, compliance and growth support — all under one roof.
             </p>
 
             {/* =========================================================
@@ -142,7 +137,7 @@ export default function Hero() {
                 </div>
               </div>
             </div>
-            
+
             {/* =========================================================
                 BUTTONS
             ========================================================= */}
@@ -154,17 +149,16 @@ export default function Hero() {
                 </Button>
               </Link>
 
-              
-                <Button
+              <Button
                 onClick={() => {
-    setSelectedServices([]);
-    setIsLeadFormOpen(true);
-  }}
-                  variant="outline"
-                  className="h-12 w-full px-6 sm:w-auto"
-                >
-                  Book a Visit
-                </Button>
+                  setSelectedServices([]);
+                  setIsLeadFormOpen(true);
+                }}
+                variant="secondary"
+                className="h-12 w-full px-6 sm:w-auto"
+              >
+                Book a Visit
+              </Button>
             </div>
 
             {/* =========================================================
@@ -172,10 +166,7 @@ export default function Hero() {
             ========================================================= */}
             <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
               {trustPoints.map((point) => (
-                <div
-                  key={point}
-                  className="flex min-w-0 items-center gap-1.5"
-                >
+                <div key={point} className="flex min-w-0 items-center gap-1.5">
                   <CheckCircle2
                     size={13}
                     className="shrink-0 text-[#1E5BFF]"
@@ -336,23 +327,21 @@ export default function Hero() {
           </div>
         </div>
         <LeadForm
-  open={isLeadFormOpen}
-  services={selectedServices}
-  onRemoveService={(serviceId) => {
-    setSelectedServices((prev) =>
-      prev.filter(
-        (service) => service._id !== serviceId
-      )
-    );
-  }}
-  onClose={() => {
-    setIsLeadFormOpen(false);
-  }}
-  onSuccess={() => {
-    setSelectedServices([]);
-    setIsLeadFormOpen(false);
-  }}
-/>
+          open={isLeadFormOpen}
+          services={selectedServices}
+          onRemoveService={(serviceId) => {
+            setSelectedServices((prev) =>
+              prev.filter((service) => service._id !== serviceId),
+            );
+          }}
+          onClose={() => {
+            setIsLeadFormOpen(false);
+          }}
+          onSuccess={() => {
+            setSelectedServices([]);
+            setIsLeadFormOpen(false);
+          }}
+        />
       </Container>
     </section>
   );

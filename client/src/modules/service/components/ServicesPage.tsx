@@ -81,7 +81,7 @@ const benefits = [
 
 export default function ServicesPage() {
   return (
-    <section className="overflow-hidden py-12 sm:py-16 lg:py-24">
+    <section className="overflow-hidden py-8 sm:py-12 lg:py-18">
       <Container>
         {/* Hero Content */}
         <div className="mx-auto max-w-4xl text-center">
@@ -91,7 +91,7 @@ export default function ServicesPage() {
           </span>
 
           {/* Heading */}
-          <h1 className="mt-5 text-3xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-[#0A1F66] sm:mt-6 sm:text-2xl md:text-4xl lg:text-4xl">
             100+ Business Support Services
           </h1>
 
@@ -209,7 +209,7 @@ export default function ServicesPage() {
             </Link>
 
             <Link href="/" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="secondary" className="w-full sm:w-auto">
                 Back to Homepage
               </Button>
             </Link>

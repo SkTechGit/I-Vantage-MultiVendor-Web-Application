@@ -86,7 +86,7 @@ export default function WorkspaceGallery({
         <button
           type="button"
           onClick={() => setSelectedIndex(0)}
-          className="group relative min-h-[260px] overflow-hidden rounded-2xl bg-slate-100 text-left sm:min-h-[340px] lg:col-span-7 lg:row-span-2 lg:min-h-[520px]"
+          className="group relative min-h-[260px] overflow-hidden  cursor-pointer rounded-2xl bg-slate-100 text-left sm:min-h-[340px] lg:col-span-7 lg:row-span-2 lg:min-h-[520px]"
           aria-label={`View ${images[0]?.title}`}
         >
           {images[0] && (
@@ -130,7 +130,7 @@ export default function WorkspaceGallery({
           <button
             type="button"
             onClick={() => setSelectedIndex(1)}
-            className="group relative min-h-[220px] overflow-hidden rounded-2xl bg-slate-100 text-left lg:col-span-5 lg:min-h-0"
+            className="group relative min-h-[220px] cursor-pointer overflow-hidden rounded-2xl bg-slate-100 text-left lg:col-span-5 lg:min-h-0"
             aria-label={`View ${images[1].title}`}
           >
             <Image
@@ -161,7 +161,7 @@ export default function WorkspaceGallery({
                 key={image.src}
                 type="button"
                 onClick={() => setSelectedIndex(actualIndex)}
-                className="group relative min-h-[150px] overflow-hidden rounded-2xl bg-slate-100 text-left sm:min-h-[190px]"
+                className="group relative min-h-[150px] overflow-hidden cursor-pointer rounded-2xl bg-slate-100 text-left sm:min-h-[190px]"
                 aria-label={`View ${image.title}`}
               >
                 <Image

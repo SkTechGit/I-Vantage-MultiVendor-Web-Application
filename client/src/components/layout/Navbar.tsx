@@ -18,7 +18,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/95 backdrop-blur-md shadow-sm">
-        <Container className="flex h-20 items-center justify-between">
+        <Container className="flex h-17 items-center justify-between">
 
           <Logo />
 

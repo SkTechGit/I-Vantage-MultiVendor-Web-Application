@@ -1,12 +1,12 @@
 export const LEAD_STATUS = [
   "NEW",
   "CONTACTED",
+  "FOLLOW_UP",
   "QUALIFIED",
-  "PROPOSAL_SENT",
-  "NEGOTIATION",
+  "CONVERTED",
   "WON",
   "LOST",
-];
+] as const;
 
 export const STATUS_COLOR = {
   NEW: "bg-blue-100 text-blue-700",
@@ -14,14 +14,14 @@ export const STATUS_COLOR = {
   CONTACTED:
     "bg-yellow-100 text-yellow-700",
 
+  FOLLOW_UP:
+    "bg-orange-100 text-orange-700",
+
   QUALIFIED:
     "bg-purple-100 text-purple-700",
 
-  PROPOSAL_SENT:
+  CONVERTED:
     "bg-indigo-100 text-indigo-700",
-
-  NEGOTIATION:
-    "bg-orange-100 text-orange-700",
 
   WON:
     "bg-green-100 text-green-700",
