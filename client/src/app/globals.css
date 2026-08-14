@@ -87,3 +87,15 @@ body {
     animation: none;
   }
 }
+
+.terms-title {
+  @apply mb-4 text-xl font-bold text-[#0A1F66] sm:text-2xl;
+}
+
+.terms-text {
+  @apply mb-4 text-sm leading-7 text-slate-600 sm:text-base;
+}
+
+.terms-list {
+  @apply mb-5 ml-6 list-decimal space-y-2 text-sm leading-7 text-slate-600 sm:text-base;
+}

@@ -189,10 +189,10 @@ export default function Footer() {
             </Link>
 
             <Link
-              href="/terms-and-conditions"
+              href="/terms-of-use"
               className="text-slate-500 transition hover:text-[#1E5BFF]"
             >
-              Terms & Conditions
+              Terms of use
             </Link>
 
             <Link
