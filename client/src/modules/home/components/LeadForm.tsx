@@ -10,14 +10,17 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 
-import {
-  leadSchema,
-  LeadFormData,
-} from "@/modules/lead/lead.schema";
+import { leadSchema, LeadFormData } from "@/modules/lead/lead.schema";
 
 import { createLead } from "@/modules/lead/lead.api";
 
 import { Service } from "@/modules/service/service.types";
+
+declare global {
+  interface Window {
+    dataLayer: Record<string, unknown>[];
+  }
+}
 
 interface Props {
   open: boolean;
@@ -34,8 +37,7 @@ export default function LeadForm({
   onClose,
   onSuccess,
 }: Props) {
-  const [isPending, startTransition] =
-    useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const {
     register,
@@ -47,37 +49,36 @@ export default function LeadForm({
   });
 
   const onSubmit = (values: LeadFormData) => {
-    // if (!services.length) {
-    //   toast.error(
-    //     "Please select at least one service."
-    //   );
-    //   return;
-    // }
+  startTransition(async () => {
+    try {
+      await createLead({
+        ...values,
+        services: services.map((service) => service._id),
+      });
 
-    startTransition(async () => {
-      try {
-        await createLead({
-          ...values,
-          services: services.map(
-            (service) => service._id
-          ),
-        });
+      // Track successful lead submission in Google Tag Manager
+      window.dataLayer = window.dataLayer || [];
 
-        toast.success(
-          "Enquiry submitted successfully."
-        );
+      window.dataLayer.push({
+        event: "lead_form_submit",
 
-        reset();
+        // Useful non-personal information for analytics
+        service_count: services.length,
+        location: values.location,
+      });
 
-        onSuccess();
-      } catch (error: any) {
-        toast.error(
-          error?.response?.data?.message ||
-            "Something went wrong."
-        );
-      }
-    });
-  };
+      toast.success("Enquiry submitted successfully.");
+
+      reset();
+
+      onSuccess();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Something went wrong."
+      );
+    }
+  });
+};
 
   if (!open) return null;
 
@@ -90,19 +91,14 @@ export default function LeadForm({
         }
       }}
     >
-
       <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl">
-
         {/* =====================================================
             HEADER
         ===================================================== */}
 
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6">
-
           <div className="min-w-0">
-
             <div className="flex items-center gap-2">
-
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF]">
                 <ShoppingBag size={16} />
               </div>
@@ -110,13 +106,12 @@ export default function LeadForm({
               <h2 className="text-base font-bold text-[#0A1F66] sm:text-lg">
                 Tell us your Requirement
               </h2>
-
             </div>
 
             <p className="mt-1 pl-10 text-[11px] text-slate-500 sm:text-xs">
-              Share your details and we&apos;ll help you find the right solution.
+              Share your details and we&apos;ll help you find the right
+              solution.
             </p>
-
           </div>
 
           <button
@@ -127,56 +122,39 @@ export default function LeadForm({
           >
             <X size={17} />
           </button>
-
         </div>
 
         {/* =====================================================
             SCROLLABLE CONTENT
         ===================================================== */}
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="overflow-y-auto"
-        >
-
+        <form onSubmit={handleSubmit(onSubmit)} className="overflow-y-auto">
           <div className="space-y-6 p-4 sm:p-6">
-
             {/* =================================================
                 SELECTED SERVICES
             ================================================= */}
 
             <div>
-
               <div className="mb-3 flex items-center justify-between">
-
                 <div>
-
                   <h3 className="text-xs font-bold text-[#0A1F66] sm:text-sm">
                     Services you&apos;re interested in
                   </h3>
 
                   <p className="mt-0.5 text-[10px] text-slate-500 sm:text-xs">
                     {services.length}{" "}
-                    {services.length === 1
-                      ? "service"
-                      : "services"}{" "}
-                    selected
+                    {services.length === 1 ? "service" : "services"} selected
                   </p>
-
                 </div>
-
               </div>
 
               {services.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-
                   {services.map((service) => (
-
                     <div
                       key={service._id}
                       className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[10px] font-medium text-[#0A1F66] sm:text-xs"
                     >
-
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1E5BFF] text-white">
                         <Check size={9} />
                       </span>
@@ -187,29 +165,21 @@ export default function LeadForm({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          onRemoveService(
-                            service._id
-                          )
-                        }
+                        onClick={() => onRemoveService(service._id)}
                         className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500"
                         aria-label={`Remove ${service.name}`}
                       >
                         <X size={11} />
                       </button>
-
                     </div>
-
                   ))}
-
                 </div>
               ) : (
                 <p className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-  No specific service selected. We&apos;ll understand your
-  requirement and suggest the right solution.
-</p>
+                  No specific service selected. We&apos;ll understand your
+                  requirement and suggest the right solution.
+                </p>
               )}
-
             </div>
 
             {/* =================================================
@@ -217,13 +187,11 @@ export default function LeadForm({
             ================================================= */}
 
             <div>
-
               <h3 className="mb-3 text-xs font-bold text-[#0A1F66] sm:text-sm">
                 Your Details
               </h3>
 
               <div className="grid gap-4 md:grid-cols-2">
-
                 <Input
                   label="Full Name"
                   {...register("fullName")}
@@ -243,23 +211,17 @@ export default function LeadForm({
                   {...register("mobile")}
                   error={errors.mobile?.message}
                 />
-             <Input
+                <Input
                   label="Preferred office Location"
                   {...register("location")}
-                  error={
-                    errors.location?.message
-                  }
+                  error={errors.location?.message}
                 />
                 <Input
                   label="Company"
                   {...register("companyName")}
-                  error={
-                    errors.companyName?.message
-                  }
+                  error={errors.companyName?.message}
                 />
- 
               </div>
-
             </div>
 
             {/* =================================================
@@ -267,15 +229,12 @@ export default function LeadForm({
             ================================================= */}
 
             <div>
-
               <Textarea
                 label="Requirement"
                 {...register("message")}
                 error={errors.message?.message}
               />
-
             </div>
-
           </div>
 
           {/* =================================================
@@ -283,23 +242,12 @@ export default function LeadForm({
           ================================================= */}
 
           <div className="sticky bottom-0 border-t border-slate-100 bg-white p-4 sm:px-6">
-
-            <Button
-  type="submit"
-  disabled={isPending}
-  className="w-full"
->
-  {isPending
-    ? "Submitting..."
-    : "Submit Enquiry"}
-</Button>
-
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? "Submitting..." : "Submit Enquiry"}
+            </Button>
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 }
