@@ -81,7 +81,7 @@ export default function TermsOfUsePage() {
       <section className="border-b bg-white">
         <Container>
           <div className="py-14 sm:py-16 lg:py-20">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-[#1E5BFF]">
+            <p className="mb-3 text-sm font-semibold tracking-wider text-[#1E5BFF]">
               i-VANTAGE Business Hub
             </p>
 
