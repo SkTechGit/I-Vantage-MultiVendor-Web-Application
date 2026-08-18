@@ -13,7 +13,9 @@ export default function PublicLayout({
       <Navbar />
 
       <main>{children}</main>
- <FloatingContactButtons />
+
+      <FloatingContactButtons />
+
       <Footer />
     </>
   );

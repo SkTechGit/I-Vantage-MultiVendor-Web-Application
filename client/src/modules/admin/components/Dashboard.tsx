@@ -6,7 +6,6 @@ import {
   FolderOpen,
   Briefcase,
   Users,
-  ClipboardList,
 } from "lucide-react";
 
 import Loader from "@/components/common/Loader";
@@ -45,54 +44,93 @@ export default function Dashboard() {
 
   if (!dashboard) {
     return (
-      <div className="rounded-2xl bg-white p-10 text-center shadow">
+      <div className="rounded-xl bg-white p-6 text-center text-sm shadow sm:rounded-2xl sm:p-10 sm:text-base">
         Failed to load dashboard.
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6 lg:space-y-8">
+      {/* Page Heading */}
       <div>
-
-        <h1 className="text-3xl font-bold text-[#0A1F66]">
+        <h1
+          className="
+            text-2xl
+            font-bold
+            leading-tight
+            text-[#0A1F66]
+            sm:text-3xl
+          "
+        >
           Dashboard
         </h1>
 
-        <p className="mt-2 text-slate-500">
+        <p
+          className="
+            mt-1
+            text-xs
+            text-slate-500
+            sm:mt-2
+            sm:text-sm
+          "
+        >
           Welcome back, Admin 👋
         </p>
-
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-
+      {/* Statistics */}
+      <div
+        className="
+          grid
+          grid-cols-1
+          gap-3
+          sm:grid-cols-2
+          sm:gap-4
+          xl:grid-cols-4
+          xl:gap-6
+        "
+      >
         <StatCard
           title="Categories"
           value={dashboard.totalCategories}
-          icon={<FolderOpen size={28} />}
+          icon={
+            <FolderOpen
+              size={22}
+              className="sm:h-7 sm:w-7"
+            />
+          }
         />
 
         <StatCard
           title="Services"
           value={dashboard.totalServices}
-          icon={<Briefcase size={28} />}
+          icon={
+            <Briefcase
+              size={22}
+              className="sm:h-7 sm:w-7"
+            />
+          }
         />
 
         <StatCard
           title="Leads"
           value={dashboard.totalLeads}
-          icon={<Users size={28} />}
+          icon={
+            <Users
+              size={22}
+              className="sm:h-7 sm:w-7"
+            />
+          }
         />
-
-       
       </div>
 
-      <RecentLeadTable
-        leads={dashboard.recentLeads}
-      />
-
+      {/* Recent Leads */}
+      <div className="min-w-0">
+        <RecentLeadTable
+          leads={dashboard.recentLeads}
+        />
+      </div>
     </div>
   );
 }

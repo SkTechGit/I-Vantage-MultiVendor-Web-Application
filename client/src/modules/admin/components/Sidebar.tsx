@@ -44,7 +44,13 @@ const menus = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export default function Sidebar({
+  onNavigate,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -56,34 +62,36 @@ export default function Sidebar() {
 
       router.refresh();
       router.push("/admin/login");
+
+      onNavigate?.();
     } catch (error) {
       console.error(error);
+
       toast.error("Logout failed.");
     }
   };
 
   return (
-   <aside
-  className="
-    fixed
-    left-0
-    top-0
-    z-40
-
-    h-screen
-    w-72
-
-    overflow-y-auto
-
-    bg-[#0A1F66]
-    text-white
-  "
->
+    <aside
+      className="
+        flex
+        h-full
+        w-72
+        flex-col
+        overflow-y-auto
+        bg-[#0A1F66]
+        text-white
+      "
+    >
       {/* Header */}
-      <div className="border-b border-blue-800 p-6">
-        <h2 className="text-2xl font-bold">i-VANTAGE</h2>
+      <div className="shrink-0 border-b border-blue-800 p-3">
+        <h2 className="text-2xl font-bold">
+          i-VANTAGE
+        </h2>
 
-        <p className="text-sm text-blue-200">Admin Panel</p>
+        <p className="mt-1 text-sm text-blue-200">
+          Admin Panel
+        </p>
       </div>
 
       {/* Navigation */}
@@ -91,32 +99,61 @@ export default function Sidebar() {
         {menus.map((menu) => {
           const Icon = menu.icon;
 
+          const isActive =
+            pathname === menu.href ||
+            pathname.startsWith(`${menu.href}/`);
+
           return (
             <Link
               key={menu.href}
               href={menu.href}
+              onClick={onNavigate}
               className={clsx(
-                "mb-2 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-                pathname === menu.href
-                  ? "bg-[#1E5BFF]"
-                  : "hover:bg-blue-900"
+                "mb-2 flex items-center gap-3 rounded-xl px-4 py-3",
+                "transition-colors duration-200",
+                "focus:outline-none focus:ring-2 focus:ring-blue-400",
+                isActive
+                  ? "bg-[#1E5BFF] text-white"
+                  : "text-blue-100 hover:bg-blue-900"
               )}
             >
-              <Icon size={20} />
-              <span>{menu.title}</span>
+              <Icon size={20} className="shrink-0" />
+
+              <span className="truncate">
+                {menu.title}
+              </span>
             </Link>
           );
         })}
       </nav>
 
       {/* Logout */}
-      <div className="border-t pt-10 border-blue-800 p-4">
+      <div className="shrink-0 border-t border-blue-800 p-4">
         <button
+          type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-blue-900"
+          className="
+            flex
+            w-full
+            items-center
+            gap-3
+            rounded-xl
+            px-4
+            py-3
+            text-blue-100
+            transition-colors
+            duration-200
+            hover:bg-blue-900
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-400
+          "
         >
-          <LogOut size={20} />
-          <span>Logout</span>
+          <LogOut size={20} className="shrink-0" />
+
+          <span>
+            Logout
+          </span>
         </button>
       </div>
     </aside>

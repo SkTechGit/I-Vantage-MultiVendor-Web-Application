@@ -11,19 +11,90 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+
+  metadataBase: new URL("https://i-vantage.in"),
+
   title: {
-    default: "I-Vantage Business Hub",
-    template: "%s | I-Vantage Business Hub",
+    default:
+      "i-VANTAGE Business Hub | Business Services, Workspace & Business Support",
+    template: "%s | i-VANTAGE Business Hub",
   },
 
-  description: "100+ Plug & Play Business Support Services.",
+  description:
+    "i-VANTAGE Business Hub provides 100+ business support services including business setup, legal, finance, technology, marketing, HR, workspace, administration, and business growth solutions.",
 
   keywords: [
-    "Coworking",
-    "Virtual Office",
-    "Business Support",
-    "Office Space",
+    "i-VANTAGE Business Hub",
+    "i-VANTAGE",
+    "business support services",
+    "business setup services",
+    "company registration",
+    "GST registration",
+    "virtual office",
+    "coworking space",
+    "workspace solutions",
+    "legal business services",
+    "finance services",
+    "accounting services",
+    "marketing services",
+    "digital marketing",
+    "technology services",
+    "IT services",
+    "HR services",
+    "business growth services",
+    "business consulting",
+    "business administration",
   ],
+
+  authors: [
+    {
+      name: "i-VANTAGE Business Hub",
+    },
+  ],
+
+  creator: "i-VANTAGE Business Hub",
+  publisher: "i-VANTAGE Business Hub",
+
+  robots: {
+    index: true,
+    follow: true,
+
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+
+ openGraph: {
+  title: "i-VANTAGE Business Hub | Business Services & Business Support",
+  description:
+    "100+ business support services including business setup, legal, finance, technology, marketing, HR, workspace, and business growth solutions.",
+  url: "https://i-vantage.in/",
+  siteName: "i-VANTAGE Business Hub",
+  images: [
+    {
+      url: "/logo.png",
+      width: 1200,
+      height: 630,
+      alt: "i-VANTAGE Business Hub",
+    },
+  ],
+  locale: "en_IN",
+  type: "website",
+},
+
+  twitter: {
+    card: "summary_large_image",
+
+    title:
+      "i-VANTAGE Business Hub | Business Services & Business Support",
+
+    description:
+      "100+ business support services including business setup, legal, finance, technology, marketing, HR, workspace, and business growth solutions.",
+  },
 };
 
 export default function RootLayout({
@@ -47,7 +118,6 @@ export default function RootLayout({
             })(window,document,'script','dataLayer','GTM-P9VBR7S4');
           `}
         </Script>
-        {/* End Google Tag Manager */}
 
         {/* Google Tag Manager (noscript) */}
         <noscript>
@@ -61,7 +131,6 @@ export default function RootLayout({
             }}
           />
         </noscript>
-        {/* End Google Tag Manager (noscript) */}
 
         <Providers>{children}</Providers>
       </body>
