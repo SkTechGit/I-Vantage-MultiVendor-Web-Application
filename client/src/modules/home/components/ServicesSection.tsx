@@ -383,15 +383,17 @@ export default function ServicesSection({ categories, services }: Props) {
             {/* Modal Footer */}
 
             <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
+              <div className="flex justify-center sm:block">
               <button
                 type="button"
                 onClick={() => setActiveCategory(null)}
-                className="w-full rounded-xl bg-[#1E5BFF] py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:py-3 sm:text-sm"
+                className="w-auto rounded-xl bg-[#1E5BFF] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-full sm:py-3 sm:px-4 sm:text-sm"
               >
                 Done
                 {selectedServices.length > 0 &&
                   ` • ${selectedServices.length} Selected`}
               </button>
+            </div>
             </div>
           </div>
         </div>
@@ -402,11 +404,11 @@ export default function ServicesSection({ categories, services }: Props) {
       ========================================================= */}
 
       {selectedServices.length > 0 && !isLeadFormOpen && (
-        <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+        <div className="fixed flex justify-center bottom-4 left-1/2 z-40 w-[calc(100%-24px)] max-w-md -translate-x-1/2">
           <button
             type="button"
             onClick={() => setIsLeadFormOpen(true)}
-            className="flex w-full items-center justify-between rounded-2xl bg-[#0A1F66] px-4 py-3 text-white shadow-2xl transition hover:bg-[#081950] sm:px-5"
+            className="flex w-auto items-center justify-between rounded-2xl bg-[#0A1F66] px-4 py-3 text-white shadow-2xl transition hover:bg-[#081950] sm:px-5"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">

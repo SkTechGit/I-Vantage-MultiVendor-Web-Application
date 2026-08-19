@@ -16,6 +16,7 @@ import {
   Trophy,
   BriefcaseBusiness,
   Laptop,
+  ShieldCheck,
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
@@ -265,67 +266,86 @@ export default function Hero() {
             BOTTOM BUSINESS ECOSYSTEM BAR
         ============================================================= */}
         <div className="relative z-20 mb-8 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:mb-10 sm:rounded-3xl lg:mb-14">
-          <div className="grid grid-cols-2 lg:grid-cols-[1.35fr_0.8fr_0.8fr_0.8fr]">
-            {/* Intro */}
-            <div className="col-span-2 flex items-center px-5 py-5 sm:px-7 sm:py-6 lg:col-span-1">
-              <p className="max-w-md text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-6">
-                A complete business ecosystem for founders, startups,
-                professionals and growing businesses.
-              </p>
-            </div>
+  <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))]">
 
-            {/* Business Services */}
-            <div className="flex items-center gap-3 border-t border-slate-100 px-5 py-5 sm:px-7 lg:border-l lg:border-t-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-                <Users size={19} />
-              </div>
+    {/* Intro */}
+    <div className="col-span-2 flex min-w-0 items-center px-5 py-5 sm:px-7 sm:py-6 lg:col-span-1">
+      <p className="max-w-md text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-6">
+        A complete business ecosystem for founders, startups,
+        professionals and growing businesses.
+      </p>
+    </div>
 
-              <div>
-                <p className="text-lg font-extrabold leading-none text-[#1E5BFF] sm:text-xl">
-                  100+
-                </p>
+    {/* Business Services */}
+    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
+        <Users size={19} />
+      </div>
 
-                <p className="mt-1 text-[9px] font-medium text-slate-500 sm:text-[10px]">
-                  Business Support Services
-                </p>
-              </div>
-            </div>
+      <div className="min-w-0">
+        <p className="text-lg font-extrabold leading-none text-[#1E5BFF] sm:text-xl">
+          100+
+        </p>
 
-            {/* Hub */}
-            <div className="flex items-center gap-3 border-t border-slate-100 px-5 py-5 sm:px-7 lg:border-l">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-                <MapPin size={19} />
-              </div>
+        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
+          Business Support Services
+        </p>
+      </div>
+    </div>
 
-              <div>
-                <p className="text-lg font-extrabold leading-none text-[#0A1F66] sm:text-xl">
-                  1 Hub
-                </p>
+    {/* Hub */}
+    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
+        <MapPin size={19} />
+      </div>
 
-                <p className="mt-1 text-[9px] font-medium text-slate-500 sm:text-[10px]">
-                  Multiple Solutions
-                </p>
-              </div>
-            </div>
+      <div className="min-w-0">
+        <p className="whitespace-nowrap text-lg font-extrabold leading-none text-[#0A1F66] sm:text-xl">
+          1 Hub
+        </p>
 
-            {/* Growth */}
-            <div className="flex items-center gap-3 border-t border-slate-100 px-5 py-5 sm:px-7 lg:border-l">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-500 sm:h-10 sm:w-10">
-                <Trophy size={19} />
-              </div>
+        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
+          Multiple Solutions
+        </p>
+      </div>
+    </div>
 
-              <div>
-                <p className="text-sm font-extrabold leading-none text-[#0A1F66] sm:text-base">
-                  Your Growth
-                </p>
+    {/* Growth */}
+    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-500 sm:h-10 sm:w-10">
+        <Trophy size={19} />
+      </div>
 
-                <p className="mt-1 text-[9px] font-medium text-slate-500 sm:text-[10px]">
-                  Our Mission
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-w-0">
+        <p className="text-sm font-extrabold leading-none text-[#0A1F66] sm:text-base">
+          Your Growth
+        </p>
+
+        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
+          Our Mission
+        </p>
+      </div>
+    </div>
+
+    {/* Trusted */}
+    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 sm:h-10 sm:w-10">
+        <ShieldCheck size={19} />
+      </div>
+
+      <div className="min-w-0">
+        <p className="whitespace-nowrap text-lg font-extrabold leading-none text-green-600 sm:text-xl">
+          Trusted
+        </p>
+
+        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
+          Built for Growth
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
         <LeadForm
           open={isLeadFormOpen}
           services={selectedServices}
