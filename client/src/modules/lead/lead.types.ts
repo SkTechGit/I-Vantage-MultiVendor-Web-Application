@@ -8,6 +8,22 @@ export interface Lead {
   mobile: string;
 
   companyName: string;
+
+  companyWebsite?: string;
+
+  role?: string;
+
+  industry?: string;
+
+  businessSize?:
+    | "JUST_STARTING"
+    | "ONE_TO_TEN"
+    | "TEN_TO_TWENTY"
+    | "MORE_THAN_TWENTY"
+    | null;
+
+  hearAboutUs?: string;
+
   location: string;
 
   message: string;
@@ -17,20 +33,20 @@ export interface Lead {
   source: string;
 
   services: {
-  _id: string;
-  name: string;
-  slug: string;
-
-  category: {
     _id: string;
     name: string;
     slug: string;
-  };
-}[];
+    category: {
+      _id: string;
+      name: string;
+      slug: string;
+    };
+  }[];
 
   notes: LeadNote[];
 
- followUps: FollowUp[];
+  followUps: FollowUp[];
+
   createdAt: string;
 
   updatedAt: string;
@@ -38,22 +54,15 @@ export interface Lead {
 
 export interface LeadNote {
   _id?: string;
-
   note: string;
-
   createdAt: string;
 }
 
 export interface FollowUp {
   _id?: string;
-
   followUpDate: string;
-
   remark: string;
-
   completed: boolean;
-
   completedAt?: string;
-
   createdAt: string;
 }

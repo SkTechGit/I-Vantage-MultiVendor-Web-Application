@@ -27,7 +27,44 @@ const leadSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    companyWebsite: {
+      type: String,
+      default: "",
+      trim: true,
+     },
 
+      role: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    industry: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    businessSize: {
+  type: String,
+  enum: [
+    "JUST_STARTING",
+    "ONE_TO_TEN",
+    "TEN_TO_TWENTY",
+    "MORE_THAN_TWENTY",
+  ],
+  default: null,
+},
+hearAboutUs: {
+  type: String,
+  default: "",
+  trim: true,
+},
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+   
     services: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -353,76 +353,144 @@ const confirmDeleteLead = () => {
           ------------------------------------------------ */}
 
           <div>
-            <h3 className="mb-4 text-xl font-semibold">
-              Customer Details
-            </h3>
+  <h3 className="mb-4 text-xl font-semibold">
+    Customer Details
+  </h3>
 
-            <div className="grid gap-4 md:grid-cols-2">
+  <div className="grid gap-4 md:grid-cols-2">
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Name
-                </p>
+    {/* Name */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Name
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.fullName}
-                </p>
-              </div>
+      <p className="font-semibold">
+        {leadData.fullName}
+      </p>
+    </div>
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Mobile
-                </p>
+    {/* Mobile */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Mobile
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.mobile}
-                </p>
-              </div>
+      <p className="font-semibold">
+        {leadData.mobile}
+      </p>
+    </div>
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Email
-                </p>
+    {/* Email */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Email
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.email}
-                </p>
-              </div>
+      <p className="font-semibold break-words">
+        {leadData.email}
+      </p>
+    </div>
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Company
-                </p>
+    {/* Company */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Company
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.companyName ||
-                    "-"}
-                </p>
-              </div>
+      <p className="font-semibold">
+        {leadData.companyName || "-"}
+      </p>
+    </div>
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Location
-                </p>
+    {/* Company Website */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Company Website
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.location ||
-                    "-"}
-                </p>
-              </div>
+      {leadData.companyWebsite ? (
+        <a
+          href={leadData.companyWebsite}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold break-all text-[#1E5BFF] hover:underline"
+        >
+          {leadData.companyWebsite}
+        </a>
+      ) : (
+        <p className="font-semibold">-</p>
+      )}
+    </div>
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Source
-                </p>
+    {/* Role */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Your Role
+      </p>
 
-                <p className="font-semibold">
-                  {leadData.source}
-                </p>
-              </div>
+      <p className="font-semibold">
+        {leadData.role || "-"}
+      </p>
+    </div>
 
-            </div>
-          </div>
+    {/* Industry */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Business / Industry
+      </p>
+
+      <p className="font-semibold">
+        {leadData.industry || "-"}
+      </p>
+    </div>
+
+    {/* Business Size */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Business Size
+      </p>
+
+      <p className="font-semibold">
+        {leadData.businessSize || "-"}
+      </p>
+    </div>
+
+    {/* Location */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Business Location
+      </p>
+
+      <p className="font-semibold">
+        {leadData.location || "-"}
+      </p>
+    </div>
+
+    {/* How did you hear */}
+    <div>
+      <p className="text-sm text-slate-500">
+        How did you hear about i-VANTAGE?
+      </p>
+
+      <p className="font-semibold">
+        {leadData.hearAboutUs || "-"}
+      </p>
+    </div>
+
+    {/* Source */}
+    <div>
+      <p className="text-sm text-slate-500">
+        Source
+      </p>
+
+      <p className="font-semibold">
+        {leadData.source || "-"}
+      </p>
+    </div>
+
+  </div>
+</div>
 
           {/* ------------------------------------------------
               Services

@@ -10,8 +10,9 @@ import * as leadService from "./lead.service.js";
 import { LEAD_MESSAGES } from "./lead.constants.js";
 
 export const createLead = asyncHandler(async (req, res) => {
-  const validatedData = createLeadSchema.parse(req.body);
+  
 
+  const validatedData = createLeadSchema.parse(req.body);
   const lead = await leadService.createLead(validatedData);
 
   res.status(201).json({

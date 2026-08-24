@@ -13,9 +13,39 @@ export const leadSchema = z.object({
     .string()
     .min(10, "Invalid mobile number."),
 
-  companyName: z.string().optional(),
+  companyName: z
+    .string()
+    .optional(),
 
-  location: z.string().optional(),
+  companyWebsite: z
+    .string()
+    .optional(),
+
+  role: z
+    .string()
+    .optional(),
+
+  industry: z
+    .string()
+    .optional(),
+
+  businessSize: z
+    .enum([
+      "JUST_STARTING",
+      "ONE_TO_TEN",
+      "TEN_TO_TWENTY",
+      "MORE_THAN_TWENTY",
+    ])
+    .or(z.literal(""))
+    .optional(),
+
+  hearAboutUs: z
+    .string()
+    .optional(),
+
+  location: z
+    .string()
+    .optional(),
 
   message: z
     .string()

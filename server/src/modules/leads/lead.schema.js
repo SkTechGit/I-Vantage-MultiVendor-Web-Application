@@ -23,9 +23,44 @@ export const createLeadSchema = z.object({
     .trim()
     .optional(),
 
+  companyWebsite: z
+    .string()
+    .trim()
+    .optional(),
+
+  role: z
+    .string()
+    .trim()
+    .optional(),
+
+  industry: z
+    .string()
+    .trim()
+    .optional(),
+
+  businessSize: z
+    .enum([
+      "JUST_STARTING",
+      "ONE_TO_TEN",
+      "TEN_TO_TWENTY",
+      "MORE_THAN_TWENTY",
+    ])
+    .nullable()
+    .optional(),
+
+  hearAboutUs: z
+    .string()
+    .trim()
+    .optional(),
+
+  location: z
+    .string()
+    .trim()
+    .optional(),
+
   services: z.array(
-  z.string().regex(objectIdRegex, "Invalid service id.")
-),
+    z.string().regex(objectIdRegex, "Invalid service id.")
+  ),
 
   message: z
     .string()
