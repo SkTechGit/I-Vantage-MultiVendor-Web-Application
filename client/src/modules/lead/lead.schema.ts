@@ -25,6 +25,12 @@ export const leadSchema = z.object({
     .string()
     .optional(),
 
+  termsAccepted: z
+  .boolean()
+  .refine((value) => value === true, {
+    message: "You must accept the Terms of Use.",
+  }),
+
   industry: z
     .string()
     .optional(),

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   X,
@@ -60,12 +61,12 @@ export default function LeadForm({
   const onSubmit = (values: LeadFormData) => {
   startTransition(async () => {
     try {
+    const { termsAccepted, ...leadValues } = values;
+
       const payload = {
-        ...values,
+        ...leadValues,
         services: services.map((service) => service._id),
       };
-
-      console.log("LEAD PAYLOAD:", payload);
 
       await createLead(payload);
 
@@ -532,6 +533,42 @@ export default function LeadForm({
               />
             </div>
           </div>
+
+          {/* TERMS AND CONDITIONS */}
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+  <div className="flex items-start gap-3">
+    <input
+      id="termsAccepted"
+      type="checkbox"
+      {...register("termsAccepted")}
+      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[#1E5BFF] focus:ring-[#1E5BFF]"
+    />
+
+    <div className="text-xs leading-5 text-slate-600">
+      <label
+        htmlFor="termsAccepted"
+        className="cursor-pointer"
+      >
+        I have read and agree to the{" "}
+        <Link
+          href="/terms-of-use"
+          target="_blank"
+          className="font-semibold text-[#1E5BFF] hover:underline"
+        >
+          Terms of Use
+        </Link>
+        .
+      </label>
+
+      {errors.termsAccepted && (
+        <p className="mt-1 text-xs text-red-500">
+          {errors.termsAccepted.message}
+        </p>
+      )}
+    </div>
+  </div>
+</div>
 
           {/* =================================================
               FOOTER
