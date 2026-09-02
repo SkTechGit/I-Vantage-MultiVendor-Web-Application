@@ -58,9 +58,9 @@ export default function LeadForm({
     resolver: zodResolver(leadSchema),
   });
 
-  const onSubmit = (values: LeadFormData) => {
-  startTransition(async () => {
-    try {
+    const onSubmit = (values: LeadFormData) => {
+    startTransition(async () => {
+      try {
     const { termsAccepted, ...leadValues } = values;
 
       const payload = {
