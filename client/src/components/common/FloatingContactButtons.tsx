@@ -34,11 +34,11 @@ export default function FloatingContactButtons() {
           shadow-lg
           transition-transform
           hover:scale-110
-          sm:bottom-6
+          sm:bottom-24
           sm:left-6
           sm:h-14
           sm:w-14
-          lg:bottom-8
+          lg:bottom-5
           lg:left-8
         "
       >
@@ -53,15 +53,15 @@ export default function FloatingContactButtons() {
         </svg>
       </a>
 
-      {/* Call - Bottom Right */}
+      {/* Call - Above WhatsApp */}
       <a
         href={`tel:+91${MOBILE_NUMBER}`}
         aria-label="Call us"
         className="
           floating-call
           fixed
-          bottom-5
-          right-4
+          bottom-20
+          left-4
           z-50
           flex
           h-12
@@ -74,12 +74,12 @@ export default function FloatingContactButtons() {
           shadow-lg
           transition-transform
           hover:scale-110
-          sm:bottom-6
-          sm:right-6
+          sm:bottom-25
+          sm:left-6
           sm:h-14
           sm:w-14
-          lg:bottom-8
-          lg:right-8
+          lg:bottom-21
+          lg:left-8
         "
       >
         <Phone

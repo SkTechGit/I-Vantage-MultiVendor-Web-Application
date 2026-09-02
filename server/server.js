@@ -2,6 +2,12 @@ import app from "./app.js";
 import connectDB from "./src/config/db.js";
 import env from "./src/config/env.config.js";
 import dotenv from "dotenv";
+import dns from "dns";
+
+dns.setServers([
+  "8.8.8.8",
+  "1.1.1.1",
+]);
 
 dotenv.config();
 connectDB();
