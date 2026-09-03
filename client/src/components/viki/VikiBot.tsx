@@ -1,3 +1,4 @@
+
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -150,13 +151,13 @@ export default function VikiBot() {
    * We don't open the chatbot automatically.
    * We only show the small suggestion box.
    */
- useEffect(() => {
-  const timer = setTimeout(() => {
-    setIsPromptVisible(true);
-  }, 4000);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsPromptVisible(true);
+    }, 4000);
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   /*
    * Rotate teaser questions every 8 seconds.
@@ -213,28 +214,31 @@ export default function VikiBot() {
    * 2. opens VIKI
    * 3. sends the selected question
    */
-  const handlePromptQuestion = async (question: string) => {
-  if (isLoading) {
-    return;
-  }
+  const handlePromptQuestion = async (
+    question: string
+  ) => {
+    if (isLoading) {
+      return;
+    }
 
-  setIsPromptVisible(false);
-  setIsOpen(true);
+    setIsPromptVisible(false);
+    setIsOpen(true);
 
-  await sendMessage(question);
-};
+    await sendMessage(question);
+  };
+
   /*
    * Close teaser without opening VIKI.
    */
-const closePrompt = () => {
-  setIsPromptVisible(false);
+  const closePrompt = () => {
+    setIsPromptVisible(false);
 
-  setTimeout(() => {
-    if (!isOpen) {
-      setIsPromptVisible(true);
-    }
-  }, 10000);
-};
+    setTimeout(() => {
+      if (!isOpen) {
+        setIsPromptVisible(true);
+      }
+    }, 10000);
+  };
 
   return (
     <>
@@ -243,9 +247,39 @@ const closePrompt = () => {
       {/* ================================================== */}
 
       {!isOpen && isPromptVisible && (
-        <div className="fixed bottom-[88px] right-4 z-[9998] w-[min(350px,calc(100vw-32px))] animate-in slide-in-from-bottom-3 fade-in duration-300">
-          <div className="relative overflow-hidden rounded-2xl border border-[#DCE6F7] bg-white p-4 shadow-[0_15px_50px_rgba(7,31,102,0.18)]">
+        <div
+          className="
+            fixed
+            bottom-[76px]
+            left-3
+            right-3
+            z-[9998]
+            w-auto
+            animate-in
+            slide-in-from-bottom-3
+            fade-in
+            duration-300
 
+            sm:bottom-[88px]
+            sm:left-auto
+            sm:right-4
+            sm:w-[min(350px,calc(100vw-32px))]
+          "
+        >
+          <div
+            className="
+              relative
+              overflow-hidden
+              rounded-2xl
+              border
+              border-[#DCE6F7]
+              bg-white
+              p-3.5
+              shadow-[0_15px_50px_rgba(7,31,102,0.18)]
+
+              sm:p-4
+            "
+          >
             {/* Top gradient */}
             <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-[#071F66] via-[#0759D9] to-[#2D7CFF]" />
 
@@ -253,40 +287,64 @@ const closePrompt = () => {
             <button
               type="button"
               onClick={closePrompt}
-              className="absolute right-2 top-2 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-[#071F66]"
+              className="
+                absolute
+                right-2
+                top-2
+                rounded-full
+                p-1.5
+                text-slate-400
+                transition
+                hover:bg-slate-100
+                hover:text-[#071F66]
+              "
               aria-label="Close VIKI suggestion"
             >
               <X size={15} />
             </button>
 
             {/* VIKI identity */}
-            <div className="flex items-start gap-3 pr-6">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F0F5FF]">
+            <div className="flex items-start gap-2.5 pr-6 sm:gap-3">
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-[#F0F5FF]
+
+                  sm:h-10
+                  sm:w-10
+                "
+              >
                 <Bot
-                  size={21}
-                  className="text-[#0759D9]"
+                  size={19}
+                  className="text-[#0759D9] sm:h-[21px] sm:w-[21px]"
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-[#071F66]">
                     VIKI
                   </p>
 
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[9px] text-slate-400 sm:text-[10px]">
                     i-VANTAGE AI
                   </span>
                 </div>
 
-                <p className="mt-1 text-sm font-medium leading-5 text-slate-700">
+                <p className="mt-1 text-xs font-medium leading-5 text-slate-700 sm:text-sm">
                   {currentPrompt.title}
                 </p>
               </div>
             </div>
 
             {/* Suggested questions */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-2 sm:mt-4">
               {currentPrompt.options.map(
                 (option) => (
                   <button
@@ -297,11 +355,32 @@ const closePrompt = () => {
                         option.question
                       )
                     }
-                    className="flex w-full items-center justify-between rounded-xl border border-[#DCE6F7] bg-[#F8FAFF] px-3.5 py-2.5 text-left text-xs font-semibold text-[#071F66] transition-all hover:border-[#0759D9] hover:bg-[#F0F5FF] hover:shadow-sm"
+                    className="
+                      flex
+                      w-full
+                      items-center
+                      justify-between
+                      rounded-xl
+                      border
+                      border-[#DCE6F7]
+                      bg-[#F8FAFF]
+                      px-3
+                      py-2.5
+                      text-left
+                      text-xs
+                      font-semibold
+                      text-[#071F66]
+                      transition-all
+                      hover:border-[#0759D9]
+                      hover:bg-[#F0F5FF]
+                      hover:shadow-sm
+                    "
                   >
-                    <span>{option.label}</span>
+                    <span className="truncate pr-2">
+                      {option.label}
+                    </span>
 
-                    <span className="text-[#0759D9]">
+                    <span className="shrink-0 text-[#0759D9]">
                       →
                     </span>
                   </button>
@@ -309,7 +388,7 @@ const closePrompt = () => {
               )}
             </div>
 
-            <p className="mt-3 text-center text-[10px] text-slate-400">
+            <p className="mt-2.5 text-center text-[10px] text-slate-400 sm:mt-3">
               Or ask VIKI anything
             </p>
           </div>
@@ -328,17 +407,54 @@ const closePrompt = () => {
             setIsPromptVisible(false);
           }}
           aria-label="Open VIKI assistant"
-          className="fixed bottom-5 right-5 z-[9999] flex items-center gap-3 rounded-full bg-[#0759D9] px-5 py-3.5 text-white shadow-[0_10px_35px_rgba(7,89,217,0.3)] transition-all duration-200 hover:-translate-y-1 hover:bg-[#064FBE]"
+          className="
+            fixed
+            bottom-4
+            right-4
+            z-[9999]
+            flex
+            items-center
+            gap-2.5
+            rounded-full
+            bg-[#0759D9]
+            px-3.5
+            py-3
+            text-white
+            shadow-[0_10px_35px_rgba(7,89,217,0.3)]
+            transition-all
+            duration-200
+            hover:-translate-y-1
+            hover:bg-[#064FBE]
+
+            sm:bottom-5
+            sm:right-5
+            sm:gap-3
+            sm:px-5
+            sm:py-3.5
+          "
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-            <Bot size={21} />
+          <span
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              bg-white/15
+
+              sm:h-9
+              sm:w-9
+            "
+          >
+            <Bot size={19} className="sm:h-[21px] sm:w-[21px]" />
           </span>
 
           <span className="hidden font-semibold sm:block">
             Ask VIKI
           </span>
 
-          <MessageCircle size={18} />
+          <MessageCircle size={17} className="sm:h-[18px] sm:w-[18px]" />
         </button>
       )}
 
@@ -347,96 +463,224 @@ const closePrompt = () => {
       {/* ================================================== */}
 
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-[9999] flex h-[min(720px,calc(100vh-32px))] w-[min(420px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl border border-[#DCE6F7] bg-[#F7FAFF] shadow-[0_20px_70px_rgba(7,31,102,0.22)]">
+        <div
+          className="
+            fixed
+            z-[9999]
+            flex
+            flex-col
+            overflow-hidden
+            border
+            border-[#DCE6F7]
+            bg-[#F7FAFF]
+            shadow-[0_20px_70px_rgba(7,31,102,0.22)]
 
-          {/* Header */}
-          <div className="relative overflow-hidden bg-[#071F66] px-5 py-4 text-white">
+            /* ========================= */
+            /* MOBILE                    */
+            /* ========================= */
 
+            bottom-3
+            left-3
+            right-3
+            h-[calc(100dvh-140px)]
+            max-h-[620px]
+            min-h-[430px]
+            rounded-2xl
+
+            /* ========================= */
+            /* TABLET / DESKTOP          */
+            /* ========================= */
+
+            sm:bottom-4
+            sm:left-auto
+            sm:right-4
+            sm:h-[min(680px,calc(100dvh-32px))]
+            sm:w-[min(400px,calc(100vw-32px))]
+            sm:min-h-0
+            sm:rounded-3xl
+
+            /* ========================= */
+            /* LARGE DESKTOP             */
+            /* ========================= */
+
+            lg:h-[min(720px,calc(100dvh-32px))]
+            lg:w-[420px]
+          "
+        >
+          {/* ================================================== */}
+          {/* HEADER                                             */}
+          {/* ================================================== */}
+
+          <div
+            className="
+              relative
+              shrink-0
+              overflow-hidden
+              bg-[#071F66]
+              px-3.5
+              py-3
+              text-white
+
+              sm:px-5
+              sm:py-4
+            "
+          >
+            {/* Decorative circle */}
             <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#2D7CFF]/20" />
 
             <div className="relative flex items-center justify-between">
+              {/* VIKI identity */}
+              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <div
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-white
+                    shadow-sm
 
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+                    sm:h-11
+                    sm:w-11
+                    sm:rounded-2xl
+                  "
+                >
                   <Bot
-                    size={25}
-                    className="text-[#0759D9]"
+                    size={21}
+                    className="text-[#0759D9] sm:h-[25px] sm:w-[25px]"
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold">
+                    <h2 className="text-sm font-bold sm:text-base">
                       VIKI
                     </h2>
 
-                    <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
+                    <span className="flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] sm:px-2 sm:text-[10px]">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                       Online
                     </span>
                   </div>
 
-                  <p className="text-xs text-blue-100">
+                  <p className="truncate text-[10px] text-blue-100 sm:text-xs">
                     i-VANTAGE Business Assistant
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
-
+              {/* Header actions */}
+              <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                 <button
                   type="button"
                   onClick={clearConversation}
-                  className="rounded-lg p-2 text-blue-100 transition hover:bg-white/10 hover:text-white"
+                  className="
+                    rounded-lg
+                    p-1.5
+                    text-blue-100
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+
+                    sm:p-2
+                  "
                   aria-label="Clear conversation"
                   title="New conversation"
                 >
-                  <Sparkles size={17} />
+                  <Sparkles size={16} className="sm:h-[17px] sm:w-[17px]" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-lg p-2 text-blue-100 transition hover:bg-white/10 hover:text-white"
+                  className="
+                    rounded-lg
+                    p-1.5
+                    text-blue-100
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+
+                    sm:p-2
+                  "
                   aria-label="Close VIKI"
                 >
-                  <X size={19} />
+                  <X size={18} className="sm:h-[19px] sm:w-[19px]" />
                 </button>
-
               </div>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-5">
+          {/* ================================================== */}
+          {/* MESSAGES                                           */}
+          {/* ================================================== */}
 
+          <div
+            className="
+              min-h-0
+              flex-1
+              overflow-y-auto
+              overscroll-contain
+              px-3
+              py-3
+
+              sm:px-4
+              sm:py-5
+            "
+          >
             {messages.length === 0 ? (
-
               <div className="flex min-h-full flex-col justify-center">
+                {/* Welcome */}
+                <div className="mb-4 text-center sm:mb-6">
+                  <div
+                    className="
+                      mx-auto
+                      mb-3
+                      flex
+                      h-12
+                      w-12
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-white
+                      shadow-md
 
-                <div className="mb-6 text-center">
-
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-md">
+                      sm:mb-4
+                      sm:h-16
+                      sm:w-16
+                      sm:rounded-2xl
+                    "
+                  >
                     <Bot
-                      size={32}
-                      className="text-[#0759D9]"
+                      size={25}
+                      className="text-[#0759D9] sm:h-8 sm:w-8"
                     />
                   </div>
 
-                  <h3 className="text-xl font-bold text-[#071F66]">
+                  <h3 className="text-lg font-bold text-[#071F66] sm:text-xl">
                     Hello! I&apos;m VIKI 👋
                   </h3>
 
-                  <p className="mx-auto mt-2 max-w-[300px] text-sm leading-6 text-slate-500">
+                  <p className="mx-auto mt-1.5 max-w-[280px] text-xs leading-5 text-slate-500 sm:mt-2 sm:max-w-[300px] sm:text-sm sm:leading-6">
                     Your i-VANTAGE Business Assistant.
                     How can I help you today?
                   </p>
-
                 </div>
 
-                <div className="space-y-2.5">
+                {/* Quick Actions */}
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    gap-2
 
+                    sm:block
+                    sm:space-y-2.5
+                  "
+                >
                   {QUICK_ACTIONS.map(
                     (action) => (
                       <button
@@ -448,27 +692,57 @@ const closePrompt = () => {
                           )
                         }
                         disabled={isLoading}
-                        className="flex w-full items-center justify-between rounded-xl border border-[#DCE6F7] bg-white px-4 py-3 text-left text-sm font-medium text-[#071F66] transition hover:border-[#0759D9] hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="
+                          flex
+                          min-h-[42px]
+                          w-full
+                          items-center
+                          justify-between
+                          rounded-xl
+                          border
+                          border-[#DCE6F7]
+                          bg-white
+                          px-3
+                          py-2.5
+                          text-left
+                          text-xs
+                          font-medium
+                          text-[#071F66]
+                          transition
+
+                          hover:border-[#0759D9]
+                          hover:bg-blue-50
+
+                          disabled:cursor-not-allowed
+                          disabled:opacity-60
+
+                          sm:px-4
+                          sm:py-3
+                          sm:text-sm
+                        "
                       >
-                        <span>
+                        <span className="pr-2">
                           {action.label}
                         </span>
 
                         <ChevronDown
-                          size={16}
-                          className="-rotate-90 text-[#0759D9]"
+                          size={15}
+                          className="
+                            shrink-0
+                            -rotate-90
+                            text-[#0759D9]
+
+                            sm:h-4
+                            sm:w-4
+                          "
                         />
                       </button>
                     )
                   )}
-
                 </div>
               </div>
-
             ) : (
-
-              <div className="space-y-4">
-
+              <div className="space-y-3 sm:space-y-4">
                 {messages.map(
                   (message) => (
                     <VikiMessage
@@ -478,11 +752,11 @@ const closePrompt = () => {
                   )
                 )}
 
+                {/* Loading indicator */}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-md border border-[#E5ECFA] bg-white px-4 py-3 shadow-sm">
+                    <div className="rounded-2xl rounded-bl-md border border-[#E5ECFA] bg-white px-3.5 py-2.5 shadow-sm sm:px-4 sm:py-3">
                       <div className="flex items-center gap-1.5">
-
                         <span className="h-2 w-2 animate-bounce rounded-full bg-[#0759D9]" />
 
                         <span
@@ -500,32 +774,51 @@ const closePrompt = () => {
                               "240ms",
                           }}
                         />
-
                       </div>
                     </div>
                   </div>
                 )}
-
               </div>
-
             )}
           </div>
 
-          {/* Input */}
-          <div className="border-t border-[#DCE6F7] bg-white p-3">
+          {/* ================================================== */}
+          {/* INPUT                                              */}
+          {/* ================================================== */}
 
+          <div
+            className="
+              shrink-0
+              border-t
+              border-[#DCE6F7]
+              bg-white
+              p-2.5
+
+              sm:p-3
+            "
+          >
             <form
               onSubmit={handleSubmit}
-              className="flex items-end gap-2 rounded-2xl border border-[#DCE6F7] bg-[#F7FAFF] p-1.5 focus-within:border-[#0759D9]"
-            >
+              className="
+                flex
+                items-end
+                gap-1.5
+                rounded-2xl
+                border
+                border-[#DCE6F7]
+                bg-[#F7FAFF]
+                p-1.5
+                focus-within:border-[#0759D9]
 
+                sm:gap-2
+              "
+            >
               <textarea
                 value={input}
                 onChange={(event) =>
                   setInput(event.target.value)
                 }
                 onKeyDown={(event) => {
-
                   if (
                     event.key === "Enter" &&
                     !event.shiftKey
@@ -545,7 +838,25 @@ const closePrompt = () => {
                 placeholder="Ask VIKI anything..."
                 rows={1}
                 disabled={isLoading}
-                className="max-h-24 min-h-[42px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm text-[#071F66] outline-none placeholder:text-slate-400 disabled:opacity-60"
+                className="
+                  min-h-[40px]
+                  max-h-20
+                  flex-1
+                  resize-none
+                  bg-transparent
+                  px-2.5
+                  py-2
+                  text-sm
+                  text-[#071F66]
+                  outline-none
+                  placeholder:text-slate-400
+                  disabled:opacity-60
+
+                  sm:min-h-[42px]
+                  sm:max-h-24
+                  sm:px-3
+                  sm:py-2.5
+                "
               />
 
               <button
@@ -554,21 +865,37 @@ const closePrompt = () => {
                   !input.trim() ||
                   isLoading
                 }
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0759D9] text-white transition hover:bg-[#064FBE] disabled:cursor-not-allowed disabled:opacity-40"
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-[#0759D9]
+                  text-white
+                  transition
+                  hover:bg-[#064FBE]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+
+                  sm:h-10
+                  sm:w-10
+                "
                 aria-label="Send message"
               >
-                <Send size={17} />
+                <Send size={16} className="sm:h-[17px] sm:w-[17px]" />
               </button>
-
             </form>
 
-            <p className="mt-2 text-center text-[10px] text-slate-400">
+            <p className="mt-1.5 text-center text-[9px] text-slate-400 sm:mt-2 sm:text-[10px]">
               Powered by i-VANTAGE AI
             </p>
-
           </div>
         </div>
       )}
     </>
   );
 }
+
