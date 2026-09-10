@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import ContactPage from "@/modules/lead/ContactPage";
+import { ContactView } from "@/modules/contact";
 
 export const metadata: Metadata = {
-  title: "Contact i-VANTAGE | Coworking & Virtual Office in Gurugram",
+  title: "Contact i-VANTAGE Business Hub | Workspace & Business Solutions",
 
   description:
-    "Contact i-VANTAGE Business Hub for coworking spaces, virtual offices, professional business addresses and business support services at Welldone Tech Park, Sector 48, Sohna Road, Gurugram.",
+    "Get in touch with i-VANTAGE Business Hub for coworking spaces, virtual offices, private cabins, meeting rooms and business support solutions in Gurgaon.",
 
   keywords: [
-    "contact coworking space Gurgaon",
-    "contact virtual office Gurgaon",
-    "coworking space Sector 48 Gurgaon",
-    "virtual office Sector 48 Gurgaon",
-    "i-VANTAGE Business Hub contact",
-    "business services Gurgaon",
+    "contact i-VANTAGE Business Hub",
+    "coworking space Gurgaon contact",
+    "virtual office Gurgaon contact",
     "Welldone Tech Park coworking",
-    "Sohna Road coworking space",
+    "Sohna Road workspace",
+    "private cabin Gurgaon",
+    "meeting rooms Gurgaon",
+    "GST registration Gurgaon",
+    "Asset Sense Workspaces",
   ],
 
   alternates: {
@@ -23,10 +24,10 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Contact i-VANTAGE | Coworking & Virtual Office in Gurugram",
+    title: "Contact i-VANTAGE Business Hub | Workspace & Business Solutions",
 
     description:
-      "Get in touch with i-VANTAGE Business Hub for coworking, virtual office and business support solutions at Welldone Tech Park, Sector 48, Sohna Road, Gurugram.",
+      "Get in touch with i-VANTAGE Business Hub for coworking spaces, virtual offices, private cabins, meeting rooms and business support solutions in Gurgaon.",
 
     url: "https://i-vantage.in/contact",
     siteName: "i-VANTAGE Business Hub",
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: "/logo.png",
+        url: "/images/workspace/conf1.webp",
         width: 1200,
         height: 630,
         alt: "Contact i-VANTAGE Business Hub",
@@ -45,13 +46,10 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-
-    title: "Contact i-VANTAGE | Coworking & Virtual Office in Gurugram",
-
+    title: "Contact i-VANTAGE Business Hub | Workspace & Business Solutions",
     description:
-      "Contact i-VANTAGE Business Hub for coworking, virtual office and business support services in Sector 48, Sohna Road, Gurugram.",
-
-    images: ["/logo.png"],
+      "Get in touch with i-VANTAGE Business Hub for coworking spaces, virtual offices, private cabins, meeting rooms and business support solutions in Gurgaon.",
+    images: ["/images/workspace/conf1.webp"],
   },
 
   robots: {
@@ -61,5 +59,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <ContactPage />;
+  return <ContactView />;
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Bot,
   ChevronDown,
@@ -13,6 +13,7 @@ import {
 
 import { useVikiChat } from "@/hooks/useVikiChat";
 import VikiMessage from "./VikiMessage";
+import "./viki-motion.css";
 
 const QUICK_ACTIONS = [
   {
@@ -125,9 +126,16 @@ const PROMPT_QUESTIONS = [
   },
 ];
 
+type ChatStatus = "closed" | "opening" | "open" | "closing";
+
 export default function VikiBot() {
   const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [chatStatus, setChatStatus] = useState<ChatStatus>("closed");
+  const [launcherTapped, setLauncherTapped] = useState(false);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const isOpen = chatStatus === "opening" || chatStatus === "open";
 
   // Teaser visibility
   const [isPromptVisible, setIsPromptVisible] =
@@ -146,10 +154,71 @@ export default function VikiBot() {
   } = useVikiChat();
 
   /*
+   * Coordinated Open & Close Machine
+   */
+  const openChat = () => {
+    if (chatStatus === "open" || chatStatus === "opening") return;
+    setLauncherTapped(true);
+    setIsPromptVisible(false);
+    setChatStatus("opening");
+  };
+
+  const closeChat = () => {
+    if (chatStatus === "closed" || chatStatus === "closing") return;
+    setChatStatus("closing");
+  };
+
+  /*
+   * Chat Transition Lifecycle Timer
+   */
+  useEffect(() => {
+    if (chatStatus === "opening") {
+      const timer = setTimeout(() => {
+        setChatStatus("open");
+        setLauncherTapped(false);
+        textareaRef.current?.focus();
+      }, 440);
+      return () => clearTimeout(timer);
+    }
+
+    if (chatStatus === "closing") {
+      const timer = setTimeout(() => {
+        setChatStatus("closed");
+        setLauncherTapped(false);
+      }, 280);
+      return () => clearTimeout(timer);
+    }
+  }, [chatStatus]);
+
+  /*
+   * Body Scroll Lock & Escape Key Handler
+   */
+  useEffect(() => {
+    const isChatActive = chatStatus === "opening" || chatStatus === "open";
+    if (isChatActive) {
+      document.body.classList.add("viki-active");
+    } else {
+      document.body.classList.remove("viki-active");
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Escape" &&
+        (chatStatus === "open" || chatStatus === "opening")
+      ) {
+        closeChat();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("viki-active");
+    };
+  }, [chatStatus]);
+
+  /*
    * Show VIKI teaser after 4 seconds.
-   *
-   * We don't open the chatbot automatically.
-   * We only show the small suggestion box.
    */
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -208,11 +277,6 @@ export default function VikiBot() {
 
   /*
    * Used by the teaser questions.
-   *
-   * Clicking a teaser:
-   * 1. closes teaser
-   * 2. opens VIKI
-   * 3. sends the selected question
    */
   const handlePromptQuestion = async (
     question: string
@@ -222,7 +286,7 @@ export default function VikiBot() {
     }
 
     setIsPromptVisible(false);
-    setIsOpen(true);
+    openChat();
 
     await sendMessage(question);
   };
@@ -396,22 +460,49 @@ export default function VikiBot() {
       )}
 
       {/* ================================================== */}
+      {/* BACKDROP BLUR OVERLAY                              */}
+      {/* ================================================== */}
+
+      {chatStatus !== "closed" && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            if (chatStatus === "open") {
+              closeChat();
+            }
+          }}
+          aria-hidden="true"
+          className={`
+            fixed
+            inset-0
+            z-[9990]
+            bg-[rgba(5,15,35,0.26)]
+            backdrop-blur-[3px]
+            ${chatStatus === "closing" ? "viki-backdrop-exit" : "viki-backdrop-enter"}
+          `}
+        />
+      )}
+
+      {/* ================================================== */}
       {/* FLOATING VIKI BUTTON                              */}
       {/* ================================================== */}
 
-      {!isOpen && (
+      {chatStatus !== "open" && (
         <button
           type="button"
-          onClick={() => {
-            setIsOpen(true);
-            setIsPromptVisible(false);
+          onClick={(e) => {
+            e.stopPropagation();
+            openChat();
           }}
           aria-label="Open VIKI assistant"
-          className="
+          aria-expanded={chatStatus === "open" || chatStatus === "opening"}
+          aria-controls="viki-chat-panel"
+          disabled={chatStatus === "opening" || chatStatus === "closing"}
+          className={`
             fixed
             bottom-4
             right-4
-            z-[9999]
+            z-[9985]
             flex
             items-center
             gap-2.5
@@ -431,7 +522,8 @@ export default function VikiBot() {
             sm:gap-3
             sm:px-5
             sm:py-3.5
-          "
+            ${launcherTapped ? "viki-launcher-tap" : ""}
+          `}
         >
           <span
             className="
@@ -462,11 +554,16 @@ export default function VikiBot() {
       {/* CHAT WINDOW                                       */}
       {/* ================================================== */}
 
-      {isOpen && (
+      {chatStatus !== "closed" && (
         <div
-          className="
+          id="viki-chat-panel"
+          role="dialog"
+          aria-label="VIKI AI Assistant"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+          className={`
             fixed
-            z-[9999]
+            z-[9995]
             flex
             flex-col
             overflow-hidden
@@ -476,36 +573,45 @@ export default function VikiBot() {
             shadow-[0_20px_70px_rgba(7,31,102,0.22)]
 
             /* ========================= */
-            /* MOBILE                    */
+            /* MOBILE — inset panel (never grows above viewport) */
             /* ========================= */
 
-            bottom-3
-            left-3
-            right-3
-            h-[calc(100dvh-140px)]
-            max-h-[620px]
-            min-h-[430px]
+            top-[max(12px,env(safe-area-inset-top))]
+            bottom-[max(12px,env(safe-area-inset-bottom))]
+            left-[max(12px,env(safe-area-inset-left))]
+            right-[max(12px,env(safe-area-inset-right))]
+            h-auto
+            min-h-0
+            max-h-none
+            w-auto
             rounded-2xl
 
             /* ========================= */
             /* TABLET / DESKTOP          */
             /* ========================= */
 
+            sm:top-auto
             sm:bottom-4
             sm:left-auto
             sm:right-4
             sm:h-[min(680px,calc(100dvh-32px))]
             sm:w-[min(400px,calc(100vw-32px))]
-            sm:min-h-0
+            sm:max-h-[min(680px,calc(100dvh-32px))]
             sm:rounded-3xl
 
             /* ========================= */
             /* LARGE DESKTOP             */
             /* ========================= */
 
+            lg:bottom-5
+            lg:right-5
             lg:h-[min(720px,calc(100dvh-32px))]
             lg:w-[420px]
-          "
+
+            ${chatStatus === "opening" ? "viki-panel-opening" : ""}
+            ${chatStatus === "open" ? "viki-panel-open" : ""}
+            ${chatStatus === "closing" ? "viki-panel-closing" : ""}
+          `}
         >
           {/* ================================================== */}
           {/* HEADER                                             */}
@@ -528,11 +634,11 @@ export default function VikiBot() {
             {/* Decorative circle */}
             <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#2D7CFF]/20" />
 
-            <div className="relative flex items-center justify-between">
+            <div className={`relative flex items-center justify-between ${chatStatus === "closing" ? "viki-header-animated" : ""}`}>
               {/* VIKI identity */}
               <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                 <div
-                  className="
+                  className={`
                     flex
                     h-9
                     w-9
@@ -546,7 +652,8 @@ export default function VikiBot() {
                     sm:h-11
                     sm:w-11
                     sm:rounded-2xl
-                  "
+                    ${chatStatus === "opening" ? "viki-header-avatar-enter" : ""}
+                  `}
                 >
                   <Bot
                     size={21}
@@ -554,14 +661,28 @@ export default function VikiBot() {
                   />
                 </div>
 
-                <div className="min-w-0">
+                <div className={`min-w-0 ${chatStatus === "opening" ? "viki-header-name-enter" : ""}`}>
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold sm:text-base">
                       VIKI
                     </h2>
 
-                    <span className="flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] sm:px-2 sm:text-[10px]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                    <span
+                      className={`
+                        flex
+                        items-center
+                        gap-1
+                        rounded-full
+                        bg-white/10
+                        px-1.5
+                        py-0.5
+                        text-[9px]
+                        sm:px-2
+                        sm:text-[10px]
+                        ${chatStatus === "opening" ? "viki-header-status-enter" : ""}
+                      `}
+                    >
+                      <span className="viki-status-dot h-1.5 w-1.5 rounded-full bg-green-400" />
                       Online
                     </span>
                   </div>
@@ -573,7 +694,16 @@ export default function VikiBot() {
               </div>
 
               {/* Header actions */}
-              <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+              <div
+                className={`
+                  flex
+                  shrink-0
+                  items-center
+                  gap-0.5
+                  sm:gap-1
+                  ${chatStatus === "opening" ? "viki-header-actions-enter" : ""}
+                `}
+              >
                 <button
                   type="button"
                   onClick={clearConversation}
@@ -595,7 +725,10 @@ export default function VikiBot() {
 
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeChat();
+                  }}
                   className="
                     rounded-lg
                     p-1.5
@@ -623,7 +756,9 @@ export default function VikiBot() {
               min-h-0
               flex-1
               overflow-y-auto
+              overflow-x-hidden
               overscroll-contain
+              [-webkit-overflow-scrolling:touch]
               px-3
               py-3
 
@@ -632,11 +767,11 @@ export default function VikiBot() {
             "
           >
             {messages.length === 0 ? (
-              <div className="flex min-h-full flex-col justify-center">
+              <div className="flex min-h-0 flex-col justify-start sm:min-h-full sm:justify-center">
                 {/* Welcome */}
-                <div className="mb-4 text-center sm:mb-6">
+                <div className={`mb-4 text-center sm:mb-6 ${chatStatus === "closing" ? "viki-welcome-content" : ""}`}>
                   <div
-                    className="
+                    className={`
                       mx-auto
                       mb-3
                       flex
@@ -652,7 +787,8 @@ export default function VikiBot() {
                       sm:h-16
                       sm:w-16
                       sm:rounded-2xl
-                    "
+                      ${chatStatus === "opening" ? "viki-welcome-avatar-enter" : ""}
+                    `}
                   >
                     <Bot
                       size={25}
@@ -660,14 +796,16 @@ export default function VikiBot() {
                     />
                   </div>
 
-                  <h3 className="text-lg font-bold text-[#071F66] sm:text-xl">
-                    Hello! I&apos;m VIKI 👋
-                  </h3>
+                  <div className={chatStatus === "opening" ? "viki-welcome-greeting-enter" : ""}>
+                    <h3 className="text-lg font-bold text-[#071F66] sm:text-xl">
+                      Hello! I&apos;m VIKI 👋
+                    </h3>
 
-                  <p className="mx-auto mt-1.5 max-w-[280px] text-xs leading-5 text-slate-500 sm:mt-2 sm:max-w-[300px] sm:text-sm sm:leading-6">
-                    Your i-VANTAGE Business Assistant.
-                    How can I help you today?
-                  </p>
+                    <p className="mx-auto mt-1.5 max-w-[280px] text-xs leading-5 text-slate-500 sm:mt-2 sm:max-w-[300px] sm:text-sm sm:leading-6">
+                      Your i-VANTAGE Business Assistant.
+                      How can I help you today?
+                    </p>
+                  </div>
                 </div>
 
                 {/* Quick Actions */}
@@ -682,7 +820,7 @@ export default function VikiBot() {
                   "
                 >
                   {QUICK_ACTIONS.map(
-                    (action) => (
+                    (action, index) => (
                       <button
                         key={action.label}
                         type="button"
@@ -692,7 +830,8 @@ export default function VikiBot() {
                           )
                         }
                         disabled={isLoading}
-                        className="
+                        style={{ "--card-index": index } as React.CSSProperties}
+                        className={`
                           flex
                           min-h-[42px]
                           w-full
@@ -719,7 +858,8 @@ export default function VikiBot() {
                           sm:px-4
                           sm:py-3
                           sm:text-sm
-                        "
+                          ${chatStatus === "opening" ? "viki-card-stagger" : ""}
+                        `}
                       >
                         <span className="pr-2">
                           {action.label}
@@ -787,7 +927,7 @@ export default function VikiBot() {
           {/* ================================================== */}
 
           <div
-            className="
+            className={`
               shrink-0
               border-t
               border-[#DCE6F7]
@@ -795,7 +935,9 @@ export default function VikiBot() {
               p-2.5
 
               sm:p-3
-            "
+              ${chatStatus === "opening" ? "viki-input-enter" : ""}
+              ${chatStatus === "closing" ? "viki-input-animated" : ""}
+            `}
           >
             <form
               onSubmit={handleSubmit}
@@ -814,6 +956,7 @@ export default function VikiBot() {
               "
             >
               <textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(event) =>
                   setInput(event.target.value)
@@ -865,7 +1008,7 @@ export default function VikiBot() {
                   !input.trim() ||
                   isLoading
                 }
-                className="
+                className={`
                   flex
                   h-9
                   w-9
@@ -882,7 +1025,8 @@ export default function VikiBot() {
 
                   sm:h-10
                   sm:w-10
-                "
+                  ${chatStatus === "opening" ? "viki-send-btn-enter" : ""}
+                `}
                 aria-label="Send message"
               >
                 <Send size={16} className="sm:h-[17px] sm:w-[17px]" />

@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import AboutPage from "@/components/layout/AboutPage";
+import { AboutView } from "@/modules/about";
 
 export const metadata: Metadata = {
-  title: "About i-VANTAGE | Coworking & Virtual Office in Gurugram",
+  title: "About i-VANTAGE | Flexible Workspaces & Business Solutions in Gurgaon",
 
   description:
-    "Learn about i-VANTAGE Business Hub, a coworking and virtual office provider at Welldone Tech Park, Sector 48, Sohna Road, Gurugram, offering flexible workspaces and business support solutions.",
+    "Discover i-VANTAGE's flexible workspace solutions in Gurgaon, including managed offices, coworking workstations, private cabins, meeting spaces and virtual office services.",
 
   keywords: [
     "i-VANTAGE Business Hub",
+    "About i-VANTAGE",
     "coworking space Gurgaon",
+    "managed offices Gurgaon",
+    "private cabins Sohna Road",
+    "boss cabin Gurgaon",
     "virtual office Gurgaon",
-    "coworking space Sector 48 Gurgaon",
-    "virtual office Sector 48 Gurgaon",
-    "business support services Gurgaon",
-    "workspace solutions Gurgaon",
     "Welldone Tech Park coworking",
-    "Sohna Road coworking",
+    "meeting room Sohna Road",
+    "conference room Gurgaon",
+    "flexible workspace Sector 48 Gurgaon",
+    "ASW Asset Sense Workspaces",
   ],
 
   alternates: {
@@ -24,10 +27,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "About i-VANTAGE | Coworking & Virtual Office in Gurugram",
+    title:
+      "About i-VANTAGE | Flexible Workspaces & Business Solutions in Gurgaon",
 
     description:
-      "Discover i-VANTAGE Business Hub and our coworking, virtual office, workspace and business support solutions in Sector 48, Sohna Road, Gurugram.",
+      "Discover i-VANTAGE's flexible workspace solutions in Gurgaon, including managed offices, coworking workstations, private cabins, meeting spaces and virtual office services.",
 
     url: "https://i-vantage.in/about",
     siteName: "i-VANTAGE Business Hub",
@@ -36,10 +40,10 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: "/logo.png",
+        url: "/images/workspace/reception1.webp",
         width: 1200,
         height: 630,
-        alt: "i-VANTAGE Business Hub",
+        alt: "i-VANTAGE Business Hub at Welldone Tech Park, Gurgaon",
       },
     ],
   },
@@ -47,12 +51,13 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "About i-VANTAGE | Coworking & Virtual Office in Gurugram",
+    title:
+      "About i-VANTAGE | Flexible Workspaces & Business Solutions in Gurgaon",
 
     description:
-      "Learn about i-VANTAGE Business Hub, offering coworking, virtual office and business support solutions in Sector 48, Sohna Road, Gurugram.",
+      "Discover i-VANTAGE's flexible workspace solutions in Gurgaon, including managed offices, coworking workstations, private cabins, meeting spaces and virtual office services.",
 
-    images: ["/logo.png"],
+    images: ["/images/workspace/reception1.webp"],
   },
 
   robots: {
@@ -62,5 +67,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <AboutPage />;
+  return <AboutView />;
 }

@@ -5,7 +5,7 @@ export const setAuthCookie = (res, token) => {
   res.cookie(AUTH_COOKIE.NAME, token, {
     httpOnly: true,
     secure: env.nodeEnv === "production",
-    sameSite: "strict",
+    sameSite: env.nodeEnv === "production" ? "strict" : "lax",
     domain: env.nodeEnv === "production"
       ? ".i-vantage.in"
       : undefined,
@@ -18,7 +18,7 @@ export const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE.NAME, {
     httpOnly: true,
     secure: env.nodeEnv === "production",
-    sameSite: "strict",
+    sameSite: env.nodeEnv === "production" ? "strict" : "lax",
     domain: env.nodeEnv === "production"
       ? ".i-vantage.in"
       : undefined,

@@ -1,0 +1,292 @@
+/* ==========================================================================
+   VIKI AI Chatbot — Motion System & Choreography
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. LAUNCHER TACTILE RESPONSE & GLOW
+   -------------------------------------------------------------------------- */
+@keyframes viki-launcher-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 10px 35px rgba(7, 89, 217, 0.3);
+  }
+  40% {
+    transform: scale(1.05);
+    box-shadow: 0 10px 40px rgba(7, 89, 217, 0.6), 0 0 20px rgba(45, 124, 255, 0.4);
+  }
+  100% {
+    transform: scale(0.96);
+    box-shadow: 0 4px 15px rgba(7, 89, 217, 0.25);
+  }
+}
+
+.viki-launcher-tap {
+  animation: viki-launcher-pulse 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* --------------------------------------------------------------------------
+   2. BACKDROP FADE & BLUR
+   -------------------------------------------------------------------------- */
+@keyframes viki-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes viki-backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.viki-backdrop-enter {
+  animation: viki-backdrop-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.viki-backdrop-exit {
+  animation: viki-backdrop-fade-out 0.24s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* --------------------------------------------------------------------------
+   3. PANEL EMERGENCE & CONTRACTION (Shared-Element Origin)
+   -------------------------------------------------------------------------- */
+@keyframes viki-panel-emerge {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(20px);
+    box-shadow: 0 10px 30px rgba(7, 31, 102, 0.08);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.995) translateY(2px);
+    box-shadow: 0 20px 60px rgba(7, 31, 102, 0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    box-shadow: 0 20px 70px rgba(7, 31, 102, 0.22);
+  }
+}
+
+@keyframes viki-panel-contract {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    box-shadow: 0 20px 70px rgba(7, 31, 102, 0.22);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(18px);
+    box-shadow: 0 8px 25px rgba(7, 31, 102, 0.06);
+  }
+}
+
+.viki-panel-opening {
+  transform-origin: bottom right;
+  animation: viki-panel-emerge 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.viki-panel-open {
+  transform-origin: bottom right;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.viki-panel-closing {
+  transform-origin: bottom right;
+  animation: viki-panel-contract 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* --------------------------------------------------------------------------
+   4. HEADER STAGGERED REVEAL
+   -------------------------------------------------------------------------- */
+@keyframes viki-item-fade-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes viki-item-fade-slide-x {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes viki-item-fade-slide-y {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes viki-online-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
+  }
+}
+
+.viki-header-avatar-enter {
+  animation: viki-item-fade-scale 0.28s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+}
+
+.viki-header-name-enter {
+  animation: viki-item-fade-slide-x 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.21s both;
+}
+
+.viki-header-status-enter {
+  animation: viki-item-fade-scale 0.24s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both;
+}
+
+.viki-header-status-enter .viki-status-dot {
+  animation: viki-online-dot-pulse 0.8s ease-out 0.4s 1;
+}
+
+.viki-header-actions-enter {
+  animation: viki-item-fade-scale 0.24s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+/* Close states for header */
+.viki-panel-closing .viki-header-animated {
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* --------------------------------------------------------------------------
+   5. VIKI WELCOME AVATAR & GREETING
+   -------------------------------------------------------------------------- */
+@keyframes viki-welcome-avatar {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) rotate(-4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.viki-welcome-avatar-enter {
+  animation: viki-welcome-avatar 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both;
+}
+
+.viki-welcome-greeting-enter {
+  animation: viki-item-fade-slide-y 0.28s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+}
+
+/* --------------------------------------------------------------------------
+   6. QUICK ACTION CARDS (STAGGERED CHOREOGRAPHY)
+   -------------------------------------------------------------------------- */
+@keyframes viki-card-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.viki-card-stagger {
+  animation: viki-card-reveal 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(0.32s + var(--card-index, 0) * 0.034s);
+}
+
+.viki-panel-closing .viki-card-stagger,
+.viki-panel-closing .viki-welcome-content {
+  transition: opacity 0.16s ease-in, transform 0.16s ease-in;
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* --------------------------------------------------------------------------
+   7. INPUT BAR ANCHOR ENTRY & EXIT
+   -------------------------------------------------------------------------- */
+@keyframes viki-input-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.viki-input-enter {
+  animation: viki-input-reveal 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.38s both;
+}
+
+.viki-send-btn-enter {
+  animation: viki-item-fade-scale 0.22s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both;
+}
+
+.viki-panel-closing .viki-input-animated {
+  transition: opacity 0.14s ease-in, transform 0.14s ease-in;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* --------------------------------------------------------------------------
+   8. REDUCED MOTION OVERRIDES (ACCESSIBILITY)
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .viki-launcher-tap,
+  .viki-backdrop-enter,
+  .viki-backdrop-exit,
+  .viki-panel-opening,
+  .viki-panel-closing,
+  .viki-header-avatar-enter,
+  .viki-header-name-enter,
+  .viki-header-status-enter,
+  .viki-header-actions-enter,
+  .viki-welcome-avatar-enter,
+  .viki-welcome-greeting-enter,
+  .viki-card-stagger,
+  .viki-input-enter,
+  .viki-send-btn-enter {
+    animation-duration: 0.12s !important;
+    animation-delay: 0s !important;
+    transform: none !important;
+    rotate: none !important;
+  }
+
+  .viki-panel-opening,
+  .viki-panel-open {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .viki-panel-closing {
+    transform: none !important;
+    opacity: 0 !important;
+  }
+}

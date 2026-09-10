@@ -1,27 +1,27 @@
 import type { Metadata } from "next";
-import ServicesPage from "@/modules/service/components/ServicesPage";
+import { ServicesView } from "@/modules/services";
 
 export const metadata: Metadata = {
-  title: "Business Services in Gurugram | i-VANTAGE Business Hub",
+  title:
+    "Services | Flexible Workspaces & Business Solutions in Gurgaon | i-VANTAGE",
 
   description:
-    "Explore business services from i-VANTAGE Business Hub in Gurugram, including business setup, legal, finance, technology, marketing, HR, coworking, virtual office and business support solutions.",
+    "Explore flexible workspace solutions (managed offices, coworking seats, private cabins, meeting rooms, virtual office) and comprehensive business support services (legal, accounting, HR, funding, marketing, AI automation) at Welldone Tech Park, Sohna Road, Gurgaon.",
 
   keywords: [
-    "business services in Gurugram",
-    "business services in Gurgaon",
+    "coworking space Gurgaon",
+    "managed office Gurgaon",
+    "private cabins Sohna Road",
+    "dedicated workstations Gurgaon",
+    "virtual office Gurgaon",
+    "meeting rooms Welldone Tech Park",
+    "conference room Gurgaon",
     "business support services Gurgaon",
-    "business setup services Gurgaon",
-    "business consultancy Gurgaon",
-    "legal services for businesses Gurgaon",
-    "finance services Gurgaon",
-    "HR services Gurgaon",
-    "marketing services Gurgaon",
-    "technology services Gurgaon",
-    "coworking services Gurgaon",
-    "virtual office services Gurgaon",
-    "business solutions Gurgaon",
+    "legal compliance Gurgaon",
+    "accounting and taxation services Gurgaon",
+    "business funding support Gurgaon",
     "i-VANTAGE Business Hub",
+    "Asset Sense Workspaces",
   ],
 
   alternates: {
@@ -29,10 +29,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Business Services in Gurugram | i-VANTAGE Business Hub",
+    title:
+      "Services | Flexible Workspaces & Business Solutions in Gurgaon | i-VANTAGE",
 
     description:
-      "Business setup, legal, finance, technology, marketing, HR, coworking, virtual office and other business support services in Gurugram.",
+      "Explore flexible workspace solutions and integrated business support services at Welldone Tech Park, Sector 48, Sohna Road, Gurgaon.",
 
     url: "https://i-vantage.in/services",
     siteName: "i-VANTAGE Business Hub",
@@ -41,20 +42,21 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: "/og-image.png",
+        url: "/images/workspace/conf1.webp",
         width: 1200,
         height: 630,
-        alt: "i-VANTAGE Business Hub Business Services",
+        alt: "i-VANTAGE Business Hub Workspace Solutions",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Business Services in Gurugram | i-VANTAGE Business Hub",
+    title:
+      "Services | Flexible Workspaces & Business Solutions in Gurgaon | i-VANTAGE",
     description:
-      "Business setup, legal, finance, technology, marketing, HR, coworking, virtual office and business support services in Gurugram.",
-    images: ["/logo.png"],
+      "Explore flexible workspace solutions and integrated business support services at Welldone Tech Park, Sector 48, Sohna Road, Gurgaon.",
+    images: ["/images/workspace/conf1.webp"],
   },
 
   robots: {
@@ -64,5 +66,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <ServicesPage />;
+  return <ServicesView />;
 }

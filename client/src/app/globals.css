@@ -99,3 +99,36 @@ body {
 .terms-list {
   @apply mb-5 ml-6 list-decimal space-y-2 text-sm leading-7 text-slate-600 sm:text-base;
 }
+
+/* ========================================================= */
+/* Mobile Menu & VIKI Chat State: Body Scroll Lock & Floating UI Hiding */
+/* ========================================================= */
+body.mobile-menu-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+@media (max-width: 639px) {
+  body.viki-active {
+    overflow: hidden !important;
+    touch-action: none;
+  }
+}
+
+body.mobile-menu-open .floating-whatsapp,
+body.mobile-menu-open .floating-call,
+body.mobile-menu-open [aria-label="Open VIKI assistant"],
+body.mobile-menu-open [aria-label="Ask VIKI"],
+body.viki-active .floating-whatsapp,
+body.viki-active .floating-call {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.85) translateY(8px) !important;
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.floating-whatsapp,
+.floating-call,
+[aria-label="Open VIKI assistant"] {
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}

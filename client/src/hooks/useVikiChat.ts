@@ -8,8 +8,23 @@ export type VikiMessage = {
   content: string;
 };
 
+function generateUUID(): string {
+  if (
+    typeof window !== "undefined" &&
+    typeof window.crypto !== "undefined" &&
+    typeof window.crypto.randomUUID === "function"
+  ) {
+    return window.crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function createSessionId() {
-  return crypto.randomUUID();
+  return generateUUID();
 }
 
 export function useVikiChat() {
@@ -40,7 +55,7 @@ export function useVikiChat() {
       }
 
       const userMessage: VikiMessage = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         role: "user",
         content: trimmedMessage,
       };
@@ -67,7 +82,7 @@ export function useVikiChat() {
         }
 
         const assistantMessage: VikiMessage = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           role: "assistant",
           content: data.response,
         };
@@ -80,7 +95,7 @@ export function useVikiChat() {
         console.error("VIKI chat error:", error);
 
         const errorMessage: VikiMessage = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           role: "assistant",
           content:
             "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",

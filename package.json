@@ -1,0 +1,12 @@
+{
+  "name": "i-vantage-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "I-Vantage Website Monorepo",
+  "scripts": {
+    "dev": "npx -y concurrently -k -n \"server,client\" -c \"blue,green\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client"
+  }
+}

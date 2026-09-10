@@ -8,9 +8,36 @@ import errorHandler from "./src/middlewares/error.middleware.js";
 
 const app = express();
 dotenv.config();
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile native apps, curl, etc.)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // In development, allow requests from any local network IP (192.168.x.x, 10.x.x.x, 172.x.x.x)
+      if (
+        process.env.NODE_ENV !== "production" &&
+        (/^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+         /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+         /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+         /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+         /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin))
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     credentials: true,
   }),
 );
