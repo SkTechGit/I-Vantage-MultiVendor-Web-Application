@@ -126,13 +126,17 @@ const PROMPT_QUESTIONS = [
   },
 ];
 
-type ChatStatus = "closed" | "opening" | "open" | "closing";
+type ChatStatus =
+  | "closed"
+  | "opening"
+  | "open"
+  | "closing";
 
 export default function VikiBot() {
   const [input, setInput] = useState("");
   const [chatStatus, setChatStatus] = useState<ChatStatus>("closed");
   const [launcherTapped, setLauncherTapped] = useState(false);
-  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const isOpen = chatStatus === "opening" || chatStatus === "open";
@@ -223,7 +227,7 @@ export default function VikiBot() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsPromptVisible(true);
-    }, 4000);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -487,7 +491,7 @@ export default function VikiBot() {
       {/* FLOATING VIKI BUTTON                              */}
       {/* ================================================== */}
 
-      {chatStatus !== "open" && (
+      {chatStatus === "closed" && (
         <button
           type="button"
           onClick={(e) => {
@@ -495,9 +499,9 @@ export default function VikiBot() {
             openChat();
           }}
           aria-label="Open VIKI assistant"
-          aria-expanded={chatStatus === "open" || chatStatus === "opening"}
+          aria-expanded={false}
           aria-controls="viki-chat-panel"
-          disabled={chatStatus === "opening" || chatStatus === "closing"}
+          disabled={false}
           className={`
             fixed
             bottom-4
