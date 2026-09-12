@@ -18,7 +18,7 @@ const comparisonData: ComparisonRow[] = [
     solution: "Dedicated Workstation",
     bestFor: "Individuals / professionals",
     capacity: "1 seat (120 total)",
-    price: "₹6,500",
+    price: "₹7,000",
     period: "/ seat / month",
     highlight: true,
   },

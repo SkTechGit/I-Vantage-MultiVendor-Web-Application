@@ -18,7 +18,7 @@ interface PlanItem {
 const plans: PlanItem[] = [
   {
     name: "Dedicated Coworking",
-    price: "₹6,500",
+    price: "₹7,000",
     period: "per seat / month",
     tagline: "Ideal for individual professionals & agile teams",
     promo: "1 complimentary service for every 5 seats booked",

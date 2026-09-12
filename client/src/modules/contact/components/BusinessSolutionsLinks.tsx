@@ -24,7 +24,7 @@ const solutions = [
     description: "120 dedicated workstations with 24/7 biometric access",
     href: "/services#workspace-solutions",
     icon: Users,
-    badge: "₹6,500/mo",
+    badge: "₹7,000/mo",
   },
   {
     title: "Dedicated Desk",

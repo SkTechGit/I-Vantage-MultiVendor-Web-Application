@@ -126,6 +126,11 @@ const PROMPT_QUESTIONS = [
   },
 ];
 
+// Teaser Timing Configurations (in milliseconds)
+const TEASER_INITIAL_DELAY = 60000; // 1 minute after page load
+const TEASER_REAPPEAR_DELAY = 60000; // 1 minute after close/dismiss
+const TEASER_ROTATION_INTERVAL = 60000; // 1 minute per suggested question
+
 type ChatStatus = "closed" | "opening" | "open" | "closing";
 
 export default function VikiBot() {
@@ -134,8 +139,14 @@ export default function VikiBot() {
   const [launcherTapped, setLauncherTapped] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const promptTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isOpen = chatStatus === "opening" || chatStatus === "open";
+  const isOpenRef = useRef(isOpen);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
   // Teaser visibility
   const [isPromptVisible, setIsPromptVisible] =
@@ -158,6 +169,9 @@ export default function VikiBot() {
    */
   const openChat = () => {
     if (chatStatus === "open" || chatStatus === "opening") return;
+    if (promptTimerRef.current) {
+      clearTimeout(promptTimerRef.current);
+    }
     setLauncherTapped(true);
     setIsPromptVisible(false);
     setChatStatus("opening");
@@ -218,18 +232,20 @@ export default function VikiBot() {
   }, [chatStatus]);
 
   /*
-   * Show VIKI teaser after 4 seconds.
+   * Show VIKI teaser after 1 minute (60 seconds).
    */
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsPromptVisible(true);
-    }, 4000);
+      if (!isOpenRef.current) {
+        setIsPromptVisible(true);
+      }
+    }, TEASER_INITIAL_DELAY);
 
     return () => clearTimeout(timer);
   }, []);
 
   /*
-   * Rotate teaser questions every 8 seconds.
+   * Rotate teaser questions every 1 minute (60 seconds).
    */
   useEffect(() => {
     if (!isPromptVisible || isOpen) {
@@ -241,7 +257,7 @@ export default function VikiBot() {
         (current) =>
           (current + 1) % PROMPT_QUESTIONS.length
       );
-    }, 8000);
+    }, TEASER_ROTATION_INTERVAL);
 
     return () => clearInterval(timer);
   }, [isPromptVisible, isOpen]);
@@ -285,6 +301,9 @@ export default function VikiBot() {
       return;
     }
 
+    if (promptTimerRef.current) {
+      clearTimeout(promptTimerRef.current);
+    }
     setIsPromptVisible(false);
     openChat();
 
@@ -293,16 +312,29 @@ export default function VikiBot() {
 
   /*
    * Close teaser without opening VIKI.
+   * Reappears after 1 minute (60 seconds).
    */
   const closePrompt = () => {
     setIsPromptVisible(false);
 
-    setTimeout(() => {
-      if (!isOpen) {
+    if (promptTimerRef.current) {
+      clearTimeout(promptTimerRef.current);
+    }
+
+    promptTimerRef.current = setTimeout(() => {
+      if (!isOpenRef.current) {
         setIsPromptVisible(true);
       }
-    }, 10000);
+    }, TEASER_REAPPEAR_DELAY);
   };
+
+  useEffect(() => {
+    return () => {
+      if (promptTimerRef.current) {
+        clearTimeout(promptTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -495,7 +527,7 @@ export default function VikiBot() {
             openChat();
           }}
           aria-label="Open VIKI assistant"
-          aria-expanded={chatStatus === "open" || chatStatus === "opening"}
+          aria-expanded={chatStatus === "opening"}
           aria-controls="viki-chat-panel"
           disabled={chatStatus === "opening" || chatStatus === "closing"}
           className={`

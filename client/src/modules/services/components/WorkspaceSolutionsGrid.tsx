@@ -56,7 +56,7 @@ const workspaceSolutions: WorkspaceSolution[] = [
     icon: Users,
     description:
       "Get your own dedicated workstation in a professionally managed workspace with high-speed internet and full amenities.",
-    price: "₹6,500",
+    price: "₹7,000",
     priceNote: "per seat / month",
     promo: "1 complimentary service for every 5 seats booked",
     capacity: "Individual workstations",
