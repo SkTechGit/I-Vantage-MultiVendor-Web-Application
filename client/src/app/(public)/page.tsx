@@ -80,13 +80,25 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const categories = await getPublicCategories();
-  const services = await getPublicServices();
+  let categories = [];
+  let services = [];
+
+  try {
+    categories = await getPublicCategories();
+  } catch (error) {
+    console.error("Failed to load categories on server:", error);
+  }
+
+  try {
+    services = await getPublicServices();
+  } catch (error) {
+    console.error("Failed to load services on server:", error);
+  }
 
   return (
     <HomePage
-      categories={categories}
-      services={services}
+      categories={categories || []}
+      services={services || []}
     />
   );
 }
