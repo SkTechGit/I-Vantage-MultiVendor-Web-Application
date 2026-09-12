@@ -1,7 +1,7 @@
 
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Bot,
   ChevronDown,
@@ -127,19 +127,23 @@ const PROMPT_QUESTIONS = [
 ];
 
 // Teaser Timing Configurations (in milliseconds)
-const TEASER_INITIAL_DELAY = 60000; // 1 minute after page load
+const TEASER_INITIAL_DELAY = 4000; // 4 seconds after page load
 const TEASER_REAPPEAR_DELAY = 60000; // 1 minute after close/dismiss
 const TEASER_ROTATION_INTERVAL = 60000; // 1 minute per suggested question
 
-type ChatStatus = "closed" | "opening" | "open" | "closing";
+type ChatStatus =
+  | "closed"
+  | "opening"
+  | "open"
+  | "closing";
 
 export default function VikiBot() {
   const [input, setInput] = useState("");
   const [chatStatus, setChatStatus] = useState<ChatStatus>("closed");
   const [launcherTapped, setLauncherTapped] = useState(false);
-  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const promptTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const isOpen = chatStatus === "opening" || chatStatus === "open";
   const isOpenRef = useRef(isOpen);
@@ -177,10 +181,9 @@ export default function VikiBot() {
     setChatStatus("opening");
   };
 
-  const closeChat = () => {
-    if (chatStatus === "closed" || chatStatus === "closing") return;
-    setChatStatus("closing");
-  };
+  const closeChat = useCallback(() => {
+    setChatStatus((prev) => (prev === "closed" || prev === "closing" ? prev : "closing"));
+  }, []);
 
   /*
    * Chat Transition Lifecycle Timer
@@ -229,10 +232,19 @@ export default function VikiBot() {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.classList.remove("viki-active");
     };
-  }, [chatStatus]);
+  }, [chatStatus, closeChat]);
 
   /*
-   * Show VIKI teaser after 1 minute (60 seconds).
+   * Auto-scroll to bottom on new messages or loading state
+   */
+  useEffect(() => {
+    if (chatStatus === "open" || chatStatus === "opening") {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading, chatStatus]);
+
+  /*
+   * Show VIKI teaser after initial delay (4 seconds).
    */
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -263,9 +275,9 @@ export default function VikiBot() {
   }, [isPromptVisible, isOpen]);
 
   const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>
+    event?: FormEvent<HTMLFormElement>
   ) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     const message = input.trim();
 
@@ -519,7 +531,7 @@ export default function VikiBot() {
       {/* FLOATING VIKI BUTTON                              */}
       {/* ================================================== */}
 
-      {chatStatus !== "open" && (
+      {chatStatus === "closed" && (
         <button
           type="button"
           onClick={(e) => {
@@ -527,9 +539,8 @@ export default function VikiBot() {
             openChat();
           }}
           aria-label="Open VIKI assistant"
-          aria-expanded={chatStatus === "opening"}
+          aria-expanded={false}
           aria-controls="viki-chat-panel"
-          disabled={chatStatus === "opening" || chatStatus === "closing"}
           className={`
             fixed
             bottom-4
@@ -950,6 +961,8 @@ export default function VikiBot() {
                     </div>
                   </div>
                 )}
+                {/* Auto-scroll target */}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
@@ -1004,9 +1017,7 @@ export default function VikiBot() {
                       input.trim() &&
                       !isLoading
                     ) {
-                      handleSubmit(
-                        event as unknown as FormEvent<HTMLFormElement>
-                      );
+                      handleSubmit();
                     }
                   }
                 }}
