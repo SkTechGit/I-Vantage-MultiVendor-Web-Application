@@ -14,9 +14,12 @@ import {
   logout,
 } from "@/modules/auth/auth.api";
 
-interface User {
+export interface User {
   _id: string;
   email: string;
+  fullName?: string;
+  role?: string;
+  status?: string;
 }
 
 interface LoginPayload {
@@ -50,9 +53,9 @@ export function AuthProvider({
 
   const refreshUser = async () => {
     try {
-      const currentUser = await getCurrentUser();
-
-      setUser(currentUser);
+      const response = await getCurrentUser();
+      const userData = response?.data || response;
+      setUser(userData);
     } catch {
       setUser(null);
     } finally {

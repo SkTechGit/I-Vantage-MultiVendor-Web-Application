@@ -7,6 +7,10 @@
     "dev": "npx -y concurrently -k -n \"server,client\" -c \"blue,green\" \"cd server && npm run dev\" \"cd client && npm run dev\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
+    "create:admin": "cd server && node scripts/create-admin.js",
     "build": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
   }
 }

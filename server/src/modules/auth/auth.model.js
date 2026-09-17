@@ -29,6 +29,35 @@ const authSchema = new mongoose.Schema(
       default: true,
     },
 
+    role: {
+      type: String,
+      enum: ["super_admin", "admin", "editor", "pending"],
+      default: "pending",
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "active", "rejected", "suspended"],
+      default: "pending",
+    },
+
+    invitedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      default: null,
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      default: null,
+    },
+
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
     lastLogin: {
       type: Date,
       default: null,

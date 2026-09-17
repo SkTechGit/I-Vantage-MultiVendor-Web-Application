@@ -5,7 +5,6 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Bot,
   ChevronDown,
-  MessageCircle,
   Send,
   Sparkles,
   X,
@@ -542,54 +541,39 @@ export default function VikiBot() {
           aria-expanded={false}
           aria-controls="viki-chat-panel"
           className={`
+            group
             fixed
             bottom-4
             right-4
             z-[9985]
             flex
+            h-12
+            w-12
             items-center
-            gap-2.5
+            justify-center
             rounded-full
-            bg-[#0759D9]
-            px-3.5
-            py-3
+            bg-gradient-to-br
+            from-[#0A1F66]
+            to-[#0759D9]
             text-white
-            shadow-[0_10px_35px_rgba(7,89,217,0.3)]
+            shadow-[0_6px_24px_rgba(7,89,217,0.35)]
             transition-all
-            duration-200
-            hover:-translate-y-1
-            hover:bg-[#064FBE]
+            duration-300
+            hover:shadow-[0_8px_32px_rgba(7,89,217,0.45)]
+            hover:scale-105
+            active:scale-95
 
             sm:bottom-5
             sm:right-5
-            sm:gap-3
-            sm:px-5
-            sm:py-3.5
+            sm:h-[52px]
+            sm:w-[52px]
             ${launcherTapped ? "viki-launcher-tap" : ""}
           `}
         >
-          <span
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              bg-white/15
+          {/* Subtle pulse ring */}
+          <span className="absolute inset-0 rounded-full bg-[#0759D9]/20 animate-ping opacity-30" style={{ animationDuration: "3s" }} />
 
-              sm:h-9
-              sm:w-9
-            "
-          >
-            <Bot size={19} className="sm:h-[21px] sm:w-[21px]" />
-          </span>
-
-          <span className="hidden font-semibold sm:block">
-            Ask VIKI
-          </span>
-
-          <MessageCircle size={17} className="sm:h-[18px] sm:w-[18px]" />
+          <Bot size={22} className="relative z-10 sm:h-[24px] sm:w-[24px]" />
         </button>
       )}
 

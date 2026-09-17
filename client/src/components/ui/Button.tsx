@@ -77,12 +77,22 @@ export default function Button({
         // =====================================================
         // OUTLINE
         // =====================================================
-        variant === "outline" && [
-          "border-[#1E5BFF]",
-          "bg-white text-[#1E5BFF]",
-          "hover:bg-[#1E5BFF] cursor-pointer hover:text-white",
-          "focus-visible:ring-blue-200",
-        ],
+        variant === "outline" && (
+          className?.includes("border-white") || className?.includes("bg-white/10") || className?.includes("text-white")
+            ? [
+                "border border-white/40",
+                "bg-white/10 text-white",
+                "hover:bg-white hover:text-[#0A1F66] cursor-pointer",
+                "backdrop-blur-sm",
+                "focus-visible:ring-white/30",
+              ]
+            : [
+                "border-[#1E5BFF]",
+                "bg-white text-[#1E5BFF]",
+                "hover:bg-[#1E5BFF] cursor-pointer hover:text-white",
+                "focus-visible:ring-blue-200",
+              ]
+        ),
 
         // =====================================================
         // GHOST

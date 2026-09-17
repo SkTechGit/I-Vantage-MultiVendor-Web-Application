@@ -24,14 +24,16 @@ app.use(
         return callback(null, true);
       }
 
-      // In development, allow requests from any local network IP (192.168.x.x, 10.x.x.x, 172.x.x.x)
+      // In development, allow requests from any local network IP or tunnels (trycloudflare.com, loca.lt)
       if (
         process.env.NODE_ENV !== "production" &&
         (/^https?:\/\/localhost(:\d+)?$/.test(origin) ||
          /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
          /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
          /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
-         /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin))
+         /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+         /^https?:\/\/.*\.trycloudflare\.com$/.test(origin) ||
+         /^https?:\/\/.*\.loca\.lt$/.test(origin))
       ) {
         return callback(null, true);
       }

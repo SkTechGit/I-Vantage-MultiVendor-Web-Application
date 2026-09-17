@@ -2,6 +2,7 @@ import Service from "./service.model.js";
 import Category from "../category/category.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { SERVICE_MESSAGES } from "./service.constants.js";
+import { invalidateCategoriesCache } from "../category/category.service.js";
 
 /* -------------------------------------------------------------------------- */
 /*                           Create Service                                   */
@@ -22,6 +23,7 @@ export const createService = async (data) => {
     throw new ApiError(409, SERVICE_MESSAGES.ALREADY_EXISTS);
   }
 
+  invalidateCategoriesCache();
   return await Service.create(data);
 };
 
@@ -125,6 +127,7 @@ export const updateService = async (id, data) => {
   Object.assign(service, data);
 
   await service.save();
+  invalidateCategoriesCache();
 
   return service;
 };
@@ -141,4 +144,5 @@ export const deleteService = async (id) => {
   }
 
   await service.deleteOne();
+  invalidateCategoriesCache();
 };

@@ -44,6 +44,8 @@ console.log("Buffer length:", file?.buffer?.length);
     image,
   });
 
+  invalidateCategoriesCache();
+
   return category;
 };
 
@@ -51,32 +53,43 @@ console.log("Buffer length:", file?.buffer?.length);
 /*                        Public Categories With Services                      */
 /* -------------------------------------------------------------------------- */
 
+let publicCategoriesCache = null;
+let publicCategoriesCacheTime = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+
+export const invalidateCategoriesCache = () => {
+  publicCategoriesCache = null;
+  publicCategoriesCacheTime = 0;
+};
+
 export const getPublicCategories = async () => {
-  const categories = await Category.find({
-    isActive: true,
-  })
-    .select("name slug description image")
-    .sort({
-      sortOrder: 1,
-    })
-    .lean();
+  const now = Date.now();
+  if (publicCategoriesCache && now - publicCategoriesCacheTime < CACHE_TTL_MS) {
+    return publicCategoriesCache;
+  }
 
-  const services = await Service.find({
-    isActive: true,
-  })
-    .select("name category slug description image")
-    .sort({
-      sortOrder: 1,
-    })
-    .lean();
+  const [categories, services] = await Promise.all([
+    Category.find({ isActive: true })
+      .select("name slug description image")
+      .sort({ sortOrder: 1 })
+      .lean(),
+    Service.find({ isActive: true })
+      .select("name category slug description image")
+      .sort({ sortOrder: 1 })
+      .lean(),
+  ]);
 
-  return categories.map((category) => ({
+  const result = categories.map((category) => ({
     ...category,
     services: services.filter(
-      (service) =>
-        service.category.toString() === category._id.toString()
+      (service) => service.category.toString() === category._id.toString()
     ),
   }));
+
+  publicCategoriesCache = result;
+  publicCategoriesCacheTime = now;
+
+  return result;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -141,6 +154,7 @@ export const updateCategory = async (id, data, file) => {
   Object.assign(category, data);
 
   await category.save();
+  invalidateCategoriesCache();
 
   return category;
 };
@@ -161,4 +175,5 @@ export const deleteCategory = async (id) => {
   }
 
   await category.deleteOne();
+  invalidateCategoriesCache();
 };

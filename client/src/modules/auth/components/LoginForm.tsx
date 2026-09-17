@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,10 +46,10 @@ export default function LoginForm() {
 
         router.push("/admin/dashboard");
 
-      } catch (error: any) {
+      } catch (error: unknown) {
 
         toast.error(
-          error?.response?.data?.message ??
+          (axios.isAxiosError(error) && error.response?.data?.message) ||
             "Invalid credentials."
         );
 
@@ -92,6 +93,16 @@ export default function LoginForm() {
               ? "Logging in..."
               : "Login"}
           </Button>
+
+          <div className="pt-2 text-center text-xs sm:text-sm text-slate-500">
+            Have an admin invitation or need access?{" "}
+            <a
+              href="/admin/signup"
+              className="font-semibold text-[#1E5BFF] hover:underline"
+            >
+              Sign Up / Request Access
+            </a>
+          </div>
 
         </div>
 

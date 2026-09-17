@@ -30,7 +30,10 @@ const errorHandler = (err, req, res, next) => {
   // Default Error
   return res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message:
+      process.env.NODE_ENV !== "production" && err.message
+        ? err.message
+        : "Internal Server Error",
   });
 };
 
