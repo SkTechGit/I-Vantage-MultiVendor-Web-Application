@@ -216,33 +216,51 @@ export const signup = async ({ fullName, email, password, inviteToken }) => {
     };
   }
 
-  // --- CASE B: Public Request Access (Without Invitation) ---
-  // Account is created strictly as PENDING with NO admin access until approved
+  // --- CASE B: Dynamic Admin Account Creation ---
+  // If no active super_admin exists, make super_admin, otherwise assign admin role
+  const superAdminExists = await Auth.exists({ role: "super_admin", status: "active" });
+  const assignedRole = superAdminExists ? "admin" : "super_admin";
+
   const user = new Auth({
     fullName: fullName.trim(),
     email: normalizedEmail,
     password,
-    role: "pending",
-    status: "pending",
-    isActive: false, // Disabled until approved
+    role: assignedRole,
+    status: "active",
+    isActive: true,
+    approvedAt: new Date(),
   });
 
   await user.save();
 
   // Audit log
   await AuditLog.create({
-    action: "admin_signup_request",
+    action: "admin_created",
     targetEmail: normalizedEmail,
     targetUser: user._id,
+    metadata: { role: assignedRole },
   }).catch((err) => console.error("Audit log error:", err));
+
+  // Automatically generate session tokens for immediate login
+  const accessToken = generateAccessToken({
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  });
+
+  const refreshToken = generateRefreshToken({
+    id: user._id,
+  });
 
   user.password = undefined;
 
   return {
-    type: "request_submitted",
-    message: AUTH_MESSAGES.SIGNUP_REQUEST_SUBMITTED,
+    type: "admin_created",
+    message: "Admin account created successfully. Welcome to i-VANTAGE!",
     user,
-    token: null, // No token granted for pending accounts
+    token: accessToken,
+    accessToken,
+    refreshToken,
   };
 };
 
