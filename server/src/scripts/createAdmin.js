@@ -8,7 +8,7 @@ const createAdmin = async () => {
     await connectDB();
 
     const exists = await Auth.findOne({
-      email: "sandeep@assetsense.co.in",
+      email: "sandeep.assetsense@gmail.com",
     });
 
     if (exists) {
