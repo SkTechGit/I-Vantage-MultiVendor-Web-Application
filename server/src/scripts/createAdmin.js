@@ -13,29 +13,19 @@ const createAdmin = async () => {
 
     if (exists) {
       console.log("Admin already exists.");
-      console.log(`Email: ${email}`);
-      console.log(`Role: ${exists.role}`);
-      console.log(`Status: ${exists.status}`);
-
-      await process.exit(0);
+      process.exit();
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await Auth.create({
       fullName: "Administrator",
-      email,
-      password: hashedPassword,
-      role: "super_admin",
-      status: "active",
-      isActive: true,
-      approvedAt: new Date(),
+      email: "sandeep.assetsense@gmail.com",
+      password: "Admin@assetsense9958",
     });
 
     console.log("Admin created successfully.");
-    console.log(`Email: ${email}`);
-
-    await process.exit(0);
+    process.exit();
   } catch (error) {
     console.error("Admin creation failed:", error);
     process.exit(1);
