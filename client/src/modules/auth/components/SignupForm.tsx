@@ -129,15 +129,11 @@ export default function SignupForm() {
       try {
         const res = await signup(values);
 
-        if (res.type === "invitation_accepted") {
-          toast.success(res.message || "Account created successfully.");
-          router.refresh();
-          router.push("/admin/dashboard");
-        } else {
-          // Access request submitted (pending approval)
-          toast.success(res.message || "Access request submitted.");
-          setRequestSubmitted(values.fullName);
-        }
+        toast.success(
+          res.message || "Admin account created successfully! Welcome to i-VANTAGE."
+        );
+        router.refresh();
+        router.push("/admin/dashboard");
       } catch (error: unknown) {
         toast.error(
           (axios.isAxiosError(error) && error.response?.data?.message) ||
@@ -273,13 +269,13 @@ export default function SignupForm() {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0A1F66]">
-            {inviteData ? "Admin Account Setup" : "Request Admin Access"}
+            {inviteData ? "Admin Account Setup" : "Create Admin Account"}
           </h1>
 
           <p className="mt-1 text-xs sm:text-sm text-slate-500">
             {inviteData
               ? "Complete your authorized administrator profile."
-              : "Set up your secure request for the i-VANTAGE administration portal."}
+              : "Create your administrative account to manage the i-VANTAGE portal."}
           </p>
         </div>
 
@@ -442,7 +438,7 @@ export default function SignupForm() {
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-500">
             {inviteData
               ? "By creating this account, you confirm authorized access to manage i-VANTAGE administrative services."
-              : "Access requests require verification by an existing administrator before privileges are enabled."}
+              : "This account grants full administrative access to manage blogs, leads, categories, and business desks."}
           </div>
 
           {/* Submit Button */}
@@ -453,12 +449,8 @@ export default function SignupForm() {
             loading={isPending}
           >
             {isPending
-              ? inviteData
-                ? "Creating Account..."
-                : "Submitting Request..."
-              : inviteData
-              ? "Create Admin Account"
-              : "Submit Access Request"}
+              ? "Creating Account..."
+              : "Create Admin Account"}
           </Button>
 
           {/* Back to Login Link */}
