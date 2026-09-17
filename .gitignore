@@ -3,12 +3,15 @@ node_modules/
 */node_modules/
 
 # Environment files
-/.env
+.env
+.env*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-!server/.env
+server/.env
+ENV_CREDENTIALS.md
+!.env.example
 
 # Build outputs
 .next/
