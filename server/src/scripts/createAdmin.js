@@ -12,7 +12,12 @@ const createAdmin = async () => {
     });
 
     if (exists) {
-      console.log("Admin already exists.");
+      exists.role = "super_admin";
+      exists.status = "active";
+      exists.isActive = true;
+      exists.approvedAt = new Date();
+      await exists.save();
+      console.log("Admin updated to active super_admin successfully.");
       process.exit();
     }
 
@@ -20,9 +25,13 @@ const createAdmin = async () => {
       fullName: "Administrator",
       email: "sandeep.assetsense@gmail.com",
       password: "Admin@assetsense9958",
+      role: "super_admin",
+      status: "active",
+      isActive: true,
+      approvedAt: new Date(),
     });
 
-    console.log("Admin created successfully.");
+    console.log("Admin created successfully with super_admin role.");
     process.exit();
   } catch (error) {
     console.error(error);
