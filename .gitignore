@@ -9,6 +9,7 @@ node_modules/
 .env.test.local
 .env.production.local
 server/.env
+ENV_CREDENTIALS.md
 
 # Build outputs
 .next/
