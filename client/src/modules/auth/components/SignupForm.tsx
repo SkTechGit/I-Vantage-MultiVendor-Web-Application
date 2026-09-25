@@ -16,12 +16,17 @@ import {
   ArrowRight,
   Loader2,
   CheckCircle2,
+  Building2,
+  User,
+  Sparkles,
 } from "lucide-react";
 
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import Logo from "@/components/common/Logo";
 import { signupSchema, SignupFormData } from "../auth.schema";
 import { signup, validateInvitation } from "../auth.api";
+import { marketplaceApi } from "@/lib/marketplace.api";
 
 interface InviteData {
   valid: boolean;
@@ -31,14 +36,25 @@ interface InviteData {
   invitedBy?: string;
 }
 
+type AccountType = "vendor" | "user" | "admin";
+
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite") || "";
+  const initialRoleParam = searchParams.get("role");
+
+  const [accountType, setAccountType] = useState<AccountType>(
+    inviteToken ? "admin" : initialRoleParam === "user" ? "user" : "vendor"
+  );
 
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Vendor / User custom fields
+  const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Invite state
   const [checkingInvite, setCheckingInvite] = useState(!!inviteToken);
@@ -106,6 +122,7 @@ export default function SignupForm() {
         setInviteData(data);
         setValue("email", data.email);
         setValue("inviteToken", inviteToken);
+        setAccountType("admin");
         setInviteError(null);
       })
       .catch((err: unknown) => {
@@ -127,8 +144,41 @@ export default function SignupForm() {
   const onSubmit = (values: SignupFormData) => {
     startTransition(async () => {
       try {
-        const res = await signup(values);
+        if (accountType === "vendor") {
+          if (!businessName.trim()) {
+            toast.error("Please enter your Coworking Space / Business name");
+            return;
+          }
+          await marketplaceApi.register({
+            name: values.fullName,
+            email: values.email,
+            password: values.password,
+            phone: phone.trim() || undefined,
+            businessName: businessName.trim(),
+            role: "vendor",
+          });
 
+          toast.success("Welcome! Your Coworking Partner account has been registered.");
+          router.push("/vendor");
+          return;
+        }
+
+        if (accountType === "user") {
+          await marketplaceApi.register({
+            name: values.fullName,
+            email: values.email,
+            password: values.password,
+            phone: phone.trim() || undefined,
+            role: "user",
+          });
+
+          toast.success("Account created successfully! Welcome to i-VANTAGE.");
+          router.push("/");
+          return;
+        }
+
+        // Default: Admin registration
+        const res = await signup(values);
         toast.success(
           res.message || "Admin account created successfully! Welcome to i-VANTAGE."
         );
@@ -136,7 +186,7 @@ export default function SignupForm() {
         router.push("/admin/dashboard");
       } catch (error: unknown) {
         toast.error(
-          (axios.isAxiosError(error) && error.response?.data?.message) ||
+          (axios.isAxiosError(error) && (error.response?.data?.error || error.response?.data?.message)) ||
             "Unable to complete registration. Please check your information."
         );
       }
@@ -148,9 +198,12 @@ export default function SignupForm() {
   /* -------------------------------------------------------------------------- */
   if (checkingInvite) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow text-center space-y-4">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#1E5BFF]" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4">
+        <div className="w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(10,31,102,0.08)] border border-slate-200/90 text-center space-y-4">
+          <div className="flex justify-center mb-1">
+            <Logo href="/" width={70} height={56} className="h-11 w-auto" />
+          </div>
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#1E5BFF]" />
           <h2 className="text-xl font-bold text-[#0A1F66]">
             Verifying Invitation...
           </h2>
@@ -167,8 +220,11 @@ export default function SignupForm() {
   /* -------------------------------------------------------------------------- */
   if (inviteToken && inviteError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow text-center space-y-6">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4">
+        <div className="w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(10,31,102,0.08)] border border-slate-200/90 text-center space-y-6">
+          <div className="flex justify-center">
+            <Logo href="/" width={70} height={56} className="h-11 w-auto" />
+          </div>
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500">
             <AlertCircle size={32} />
           </div>
@@ -207,12 +263,15 @@ export default function SignupForm() {
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                     3. REQUEST SUBMITTED SUCCESS STATE                     */
+  /*                      3. ACCESS REQUEST SUBMITTED                           */
   /* -------------------------------------------------------------------------- */
   if (requestSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow text-center space-y-6">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4">
+        <div className="w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(10,31,102,0.08)] border border-slate-200/90 text-center space-y-6">
+          <div className="flex justify-center">
+            <Logo href="/" width={70} height={56} className="h-11 w-auto" />
+          </div>
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF]">
             <CheckCircle2 size={32} />
           </div>
@@ -255,33 +314,85 @@ export default function SignupForm() {
   /*                           4. MAIN SIGNUP FORM                              */
   /* -------------------------------------------------------------------------- */
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4 relative overflow-hidden selection:bg-[#1E5BFF] selection:text-white">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0A1F6608_1px,transparent_1px),linear-gradient(to_bottom,#0A1F6608_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow"
+        className="relative z-10 w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-6 sm:p-9 shadow-[0_20px_60px_rgba(10,31,102,0.08)] border border-slate-200/90"
       >
         {/* Brand & Heading */}
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center justify-center gap-2 mb-2">
-            <span className="text-xs font-bold tracking-widest uppercase text-[#C8942C]">
-              i-VANTAGE Enterprise
-            </span>
+        <div className="mb-5 text-center">
+          <div className="flex justify-center mb-2">
+            <Logo href="/" width={75} height={60} className="h-12 w-auto" />
+          </div>
+          <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase text-[#B45309] bg-amber-50 border border-amber-200/80 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" /> i-VANTAGE Onboarding
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0A1F66]">
-            {inviteData ? "Admin Account Setup" : "Create Admin Account"}
+          <h1 className="text-2xl sm:text-3xl font-black text-[#0A1F66] tracking-tight">
+            {accountType === "vendor"
+              ? "Join as Space Partner"
+              : accountType === "user"
+              ? "Create User Account"
+              : "Create Admin Account"}
           </h1>
 
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
-            {inviteData
-              ? "Complete your authorized administrator profile."
-              : "Create your administrative account to manage the i-VANTAGE portal."}
+          <p className="mt-1 text-xs text-slate-500">
+            {accountType === "vendor"
+              ? "List your coworking spaces, desks, cabins & receive verified tenant leads."
+              : accountType === "user"
+              ? "Book workspace visits, request quotes & manage desk bookings."
+              : "Authorized administrator account for i-VANTAGE platform operations."}
           </p>
         </div>
 
+        {/* Role Selector Tabs (Only if not invited via admin invite token) */}
+        {!inviteToken && (
+          <div className="mb-5 grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setAccountType("vendor")}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-bold transition ${
+                accountType === "vendor"
+                  ? "bg-white text-[#0A1F66] shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <Building2 className={`w-4 h-4 mb-0.5 ${accountType === "vendor" ? "text-[#1E5BFF]" : ""}`} />
+              <span>Partner</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAccountType("user")}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-bold transition ${
+                accountType === "user"
+                  ? "bg-white text-[#0A1F66] shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <User className={`w-4 h-4 mb-0.5 ${accountType === "user" ? "text-[#1E5BFF]" : ""}`} />
+              <span>User</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAccountType("admin")}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-bold transition ${
+                accountType === "admin"
+                  ? "bg-white text-[#0A1F66] shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <ShieldCheck className={`w-4 h-4 mb-0.5 ${accountType === "admin" ? "text-[#1E5BFF]" : ""}`} />
+              <span>Admin</span>
+            </button>
+          </div>
+        )}
+
         {/* Invitation Role Banner (if invited) */}
         {inviteData && (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3">
+          <div className="mb-5 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3">
             <div className="flex items-center gap-2.5">
               <ShieldCheck size={20} className="text-[#1E5BFF] shrink-0" />
               <div>
@@ -303,11 +414,28 @@ export default function SignupForm() {
           </div>
         )}
 
-        <div className="space-y-4 sm:space-y-5">
+        <div className="space-y-4">
+          {/* Vendor Specific: Business/Brand Name */}
+          {accountType === "vendor" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Coworking Space / Brand Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Horizon Workspaces"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
+              />
+            </div>
+          )}
+
           {/* Full Name */}
           <Input
             id="fullName"
-            label="Full Name"
+            label={accountType === "vendor" ? "Contact Person Name" : "Full Name"}
             placeholder="e.g. John Doe"
             autoComplete="name"
             {...register("fullName")}
@@ -318,7 +446,7 @@ export default function SignupForm() {
           <Input
             id="email"
             type="email"
-            label="Work Email"
+            label={accountType === "vendor" ? "Business Email" : "Email Address"}
             placeholder="name@company.com"
             autoComplete="email"
             disabled={!!inviteData}
@@ -326,11 +454,28 @@ export default function SignupForm() {
             error={errors.email?.message}
           />
 
+          {/* Phone (for Vendor & User) */}
+          {accountType !== "admin" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Mobile Number {accountType === "vendor" ? <span className="text-red-500">*</span> : "(Optional)"}
+              </label>
+              <input
+                type="tel"
+                required={accountType === "vendor"}
+                placeholder="+91 98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
+              />
+            </div>
+          )}
+
           {/* Password with Show/Hide */}
           <div className="min-w-0 w-full">
             <label
               htmlFor="password"
-              className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
+              className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700"
             >
               Password
             </label>
@@ -341,7 +486,7 @@ export default function SignupForm() {
                 autoComplete="new-password"
                 placeholder="Create a strong password"
                 {...register("password")}
-                className={`w-full min-w-0 rounded-xl border bg-white border-gray-300 outline-none text-sm text-gray-900 transition-all duration-200 h-11 px-3.5 pr-11 sm:h-12 sm:px-4 sm:pr-11 placeholder:text-gray-400 focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100 ${
+                className={`w-full min-w-0 rounded-xl border bg-white border-gray-300 outline-none text-sm text-gray-900 transition-all duration-200 h-11 px-3.5 pr-11 placeholder:text-gray-400 focus:border-[#1E5BFF] focus:ring-2 focus:ring-blue-100 ${
                   errors.password
                     ? "border-red-500 focus:border-red-500 focus:ring-red-100"
                     : ""
@@ -357,18 +502,18 @@ export default function SignupForm() {
               </button>
             </div>
             {errors.password && (
-              <p className="mt-1.5 text-xs text-red-500">
+              <p className="mt-1 text-xs text-red-500">
                 {errors.password.message}
               </p>
             )}
 
             {/* Password Strength Meter */}
             {passwordValue.length > 0 && (
-              <div className="mt-2 space-y-1.5">
+              <div className="mt-2 space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Password strength:</span>
+                  <span className="text-slate-500 text-[11px]">Password strength:</span>
                   <span
-                    className={`font-semibold ${
+                    className={`font-bold text-[11px] ${
                       strengthLabel === "Strong"
                         ? "text-emerald-600"
                         : strengthLabel === "Fair"
@@ -392,7 +537,7 @@ export default function SignupForm() {
           <div className="min-w-0 w-full">
             <label
               htmlFor="confirmPassword"
-              className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
+              className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700"
             >
               Confirm Password
             </label>
@@ -403,7 +548,7 @@ export default function SignupForm() {
                 autoComplete="new-password"
                 placeholder="Confirm your password"
                 {...register("confirmPassword")}
-                className={`w-full min-w-0 rounded-xl border bg-white border-gray-300 outline-none text-sm text-gray-900 transition-all duration-200 h-11 px-3.5 pr-11 sm:h-12 sm:px-4 sm:pr-11 placeholder:text-gray-400 focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100 ${
+                className={`w-full min-w-0 rounded-xl border bg-white border-gray-300 outline-none text-sm text-gray-900 transition-all duration-200 h-11 px-3.5 pr-11 placeholder:text-gray-400 focus:border-[#1E5BFF] focus:ring-2 focus:ring-blue-100 ${
                   errors.confirmPassword
                     ? "border-red-500 focus:border-red-500 focus:ring-red-100"
                     : ""
@@ -421,50 +566,62 @@ export default function SignupForm() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="mt-1.5 text-xs text-red-500">
+              <p className="mt-1 text-xs text-red-500">
                 {errors.confirmPassword.message}
               </p>
             )}
 
             {/* Real-time Match Indicator */}
             {confirmPasswordValue.length > 0 && !errors.confirmPassword && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600">
-                <Check size={14} /> Passwords match
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+                <Check size={13} /> Passwords match
               </p>
             )}
           </div>
 
-          {/* Security Notice */}
+          {/* Notice info */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-500">
-            {inviteData
-              ? "By creating this account, you confirm authorized access to manage i-VANTAGE administrative services."
-              : "This account grants full administrative access to manage blogs, leads, categories, and business desks."}
+            {accountType === "vendor"
+              ? "As a partner, you can add multiple coworking locations, create desk packages, and manage prospective tenant inquiries."
+              : accountType === "user"
+              ? "As a user, you get zero-brokerage workspace access with direct partner-verified rates."
+              : "This account grants administrative access to manage blogs, leads, categories, and business desks."}
           </div>
 
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full py-3"
             disabled={isPending}
             loading={isPending}
           >
             {isPending
-              ? "Creating Account..."
+              ? "Registering Account..."
+              : accountType === "vendor"
+              ? "Register as Space Partner"
+              : accountType === "user"
+              ? "Create User Account"
               : "Create Admin Account"}
           </Button>
 
-          {/* Back to Login Link */}
-          <div className="pt-2 text-center text-sm text-slate-600">
-            Already have an admin account?{" "}
-            <Link
-              href="/admin/login"
-              className="font-semibold text-[#1E5BFF] hover:underline"
-            >
-              Sign In
-            </Link>
+          {/* Back to Login Links */}
+          <div className="pt-2 text-center text-xs text-slate-600 space-y-1">
+            <p>
+              Already have an account?{" "}
+              {accountType === "vendor" ? (
+                <Link href="/vendor/login" className="font-bold text-[#1E5BFF] hover:underline">
+                  Partner Sign In
+                </Link>
+              ) : (
+                <Link href="/admin/login" className="font-bold text-[#1E5BFF] hover:underline">
+                  Admin Sign In
+                </Link>
+              )}
+            </p>
           </div>
         </div>
       </form>
     </div>
   );
 }
+

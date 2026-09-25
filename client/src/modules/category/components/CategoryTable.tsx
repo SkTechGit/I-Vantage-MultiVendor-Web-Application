@@ -331,7 +331,7 @@ export default function CategoryTable() {
                         <Image
                           src={
                             category.image?.url ||
-                            "/images/logo.png"
+                            "/images/ivantage.png"
                           }
                           alt={category.name}
                           width={50}

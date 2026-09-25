@@ -14,6 +14,7 @@ import {
   Sparkles,
   ShieldCheck,
   BookOpen,
+  Building2,
 } from "lucide-react";
 
 import Logo from "../common/Logo";
@@ -33,27 +34,34 @@ const navItems = [
   },
   {
     num: "02",
+    label: "Coworking Spaces",
+    href: "/gurugram",
+    icon: Building2,
+    description: "Explore verified desks & cabins",
+  },
+  {
+    num: "03",
     label: "About",
     href: "/about",
     icon: Users,
     description: "Who we are & our story",
   },
   {
-    num: "03",
+    num: "04",
     label: "Services",
     href: "/services",
     icon: BriefcaseBusiness,
     description: "Workspaces & business solutions",
   },
   {
-    num: "04",
+    num: "05",
     label: "Blogs",
     href: "/blogs",
     icon: BookOpen,
     description: "Insights, guides & updates",
   },
   {
-    num: "05",
+    num: "06",
     label: "Contact",
     href: "/contact",
     icon: PhoneCall,
@@ -144,8 +152,8 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
       >
         {/* Top Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 pb-4 sm:px-6">
-          <div className="w-[120px]">
-            <Logo width={120} height={38} />
+          <div>
+            <Logo width={65} height={52} className="h-10 w-auto" />
           </div>
 
           <button
@@ -295,36 +303,38 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
         </div>
 
         {/* Drawer Footer */}
-        <div className="shrink-0 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-xs font-bold text-[#0A1F66]">
-                  i-VANTAGE Business Hub
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Welldone Tech Park, Sector 48, Gurgaon
-                </p>
-              </div>
-            </div>
+        <div className="shrink-0 border-t border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-6 space-y-3">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <span>Portal Login Access</span>
+            <span className="text-[#1E5BFF]">i-VANTAGE Hub</span>
+          </div>
 
-            <div className="flex items-center gap-2">
-              {/* Admin Portal — subtle icon */}
-              <Link
-                href="/admin/login"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-300 transition-all hover:border-[#1E5BFF]/30 hover:bg-[#F0F5FF] hover:text-[#1E5BFF]"
-                title="Admin Portal"
-                aria-label="Admin Portal"
-              >
-                <ShieldCheck size={15} strokeWidth={1.8} />
-              </Link>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Partner Portal button */}
+            <Link
+              href="/vendor/login"
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200/80 bg-blue-50/70 text-[#1E5BFF] text-xs font-bold transition hover:bg-[#1E5BFF] hover:text-white"
+            >
+              <Building2 size={14} />
+              <span>Coworking Partner</span>
+            </Link>
 
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                24/7 Access
-              </span>
-            </div>
+            {/* Admin Portal */}
+            <Link
+              href="/admin/login"
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold transition hover:border-[#0A1F66] hover:text-[#0A1F66]"
+            >
+              <ShieldCheck size={14} />
+              <span>Enterprise Admin</span>
+            </Link>
+          </div>
+
+          <div className="text-center pt-1 border-t border-slate-200/60">
+            <p className="text-[11px] text-slate-500">
+              Welldone Tech Park, Sector 48, Gurugram
+            </p>
           </div>
         </div>
       </div>

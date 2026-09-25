@@ -6,6 +6,7 @@ export type VikiMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  suggestions?: string[];
 };
 
 function generateUUID(): string {
@@ -81,10 +82,18 @@ export function useVikiChat() {
           throw new Error(data.error || "VIKI request failed");
         }
 
+        const cleanSuggestions = Array.isArray(data.suggestions)
+          ? data.suggestions.filter(
+              (item: unknown): item is string =>
+                typeof item === "string" && item.trim().length > 0
+            )
+          : [];
+
         const assistantMessage: VikiMessage = {
           id: generateUUID(),
           role: "assistant",
-          content: data.response,
+          content: data.response || "",
+          suggestions: cleanSuggestions,
         };
 
         setMessages((previous) => [
@@ -99,6 +108,7 @@ export function useVikiChat() {
           role: "assistant",
           content:
             "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          suggestions: [],
         };
 
         setMessages((previous) => [

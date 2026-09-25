@@ -14,14 +14,19 @@ import {
   Sparkles,
   ChevronRight,
   CheckCircle2,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtime } from "@/context/RealtimeContext";
 import { logout } from "@/modules/auth/auth.api";
 
 interface Props {
   onOpenMobileSidebar?: () => void;
   onOpenCommandPalette?: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const ROUTE_NAMES: Record<string, { label: string; group: string }> = {
@@ -38,10 +43,13 @@ const ROUTE_NAMES: Record<string, { label: string; group: string }> = {
 export default function Header({
   onOpenMobileSidebar,
   onOpenCommandPalette,
+  isSidebarCollapsed = false,
+  onToggleCollapse,
 }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logoutUser } = useAuth();
+  const { isConnected } = useRealtime();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -72,8 +80,12 @@ export default function Header({
 
   const handleLogout = async () => {
     try {
-      await logout();
-      await refreshUser();
+      if (logoutUser) {
+        await logoutUser();
+      } else {
+        await logout();
+        await refreshUser();
+      }
       toast.success("Successfully logged out.");
       router.refresh();
       router.push("/admin/login");
@@ -87,21 +99,22 @@ export default function Header({
     group: "Workspace",
   };
 
-  const userInitial = user?.fullName
-    ? user.fullName.charAt(0).toUpperCase()
-    : user?.email
-    ? user.email.charAt(0).toUpperCase()
-    : "A";
+  const userDisplayName =
+    user?.fullName ||
+    user?.name ||
+    (user?.email ? user.email.split("@")[0] : "Administrator");
 
-  const userDisplayName = user?.fullName || "Admin User";
+  const userInitial = (userDisplayName || "A").trim().charAt(0).toUpperCase();
+
   const userRole = user?.role
-    ? user.role.replace("_", " ").toUpperCase()
+    ? user.role.replace(/_/g, " ").toUpperCase()
     : "SUPER ADMIN";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 sm:h-[68px] w-full items-center justify-between border-b border-slate-200/90 bg-white/95 backdrop-blur-md px-3 sm:px-6 lg:px-8 transition-colors">
-      {/* Left: Mobile hamburger + Clean Breadcrumbs */}
-      <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+      {/* Left: Mobile hamburger + Desktop Sidebar Toggle + Clean Breadcrumbs */}
+      <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+        {/* Mobile Hamburger Menu */}
         <button
           type="button"
           onClick={onOpenMobileSidebar}
@@ -110,6 +123,19 @@ export default function Header({
         >
           <Menu size={19} />
         </button>
+
+        {/* Desktop Sidebar Toggle in Header */}
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95 cursor-pointer"
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+        )}
 
         {/* Breadcrumb Context */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500">
@@ -155,6 +181,32 @@ export default function Header({
         >
           <Search size={18} />
         </button>
+
+        {/* Real-time Live Sync Indicator */}
+        <div
+          className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition border ${
+            isConnected
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+          }`}
+          title={
+            isConnected
+              ? "Real-time Live Sync Active: Mobile & Desktop synchronized instantly."
+              : "Reconnecting real-time stream..."
+          }
+        >
+          <span className="relative flex h-2 w-2">
+            {isConnected && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            )}
+            <span
+              className={`relative inline-flex rounded-full h-2 w-2 ${
+                isConnected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+              }`}
+            ></span>
+          </span>
+          <span>{isConnected ? "Live Sync" : "Syncing..."}</span>
+        </div>
 
         {/* Public Site Shortcut */}
         <Link
@@ -254,15 +306,18 @@ export default function Header({
             onClick={() => setProfileOpen((prev) => !prev)}
             className="flex items-center gap-2 rounded-xl p-1 sm:pr-2.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
           >
-            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-[#0B1F5E] text-xs sm:text-sm font-bold text-white shadow-2xs">
+            <div
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-[#0B1F5E] text-xs sm:text-sm font-bold text-white shadow-2xs"
+              suppressHydrationWarning
+            >
               {userInitial}
             </div>
 
             <div className="hidden text-left lg:block max-w-[120px]">
-              <p className="truncate text-xs font-semibold text-slate-900">
+              <p className="truncate text-xs font-semibold text-slate-900" suppressHydrationWarning>
                 {userDisplayName}
               </p>
-              <p className="truncate text-[10px] font-medium text-slate-400">
+              <p className="truncate text-[10px] font-medium text-slate-400" suppressHydrationWarning>
                 {userRole}
               </p>
             </div>
@@ -279,15 +334,15 @@ export default function Header({
             <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 z-50">
               {/* User Identity Info */}
               <div className="border-b border-slate-100 px-3 py-2.5">
-                <p className="text-xs font-bold text-slate-900">
+                <p className="text-xs font-bold text-slate-900" suppressHydrationWarning>
                   {userDisplayName}
                 </p>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                  {user?.email || "Admin session"}
+                <p className="text-[11px] text-slate-500 truncate mt-0.5" suppressHydrationWarning>
+                  {user?.email || ""}
                 </p>
                 <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
                   <Shield size={11} />
-                  <span>{userRole}</span>
+                  <span suppressHydrationWarning>{userRole}</span>
                 </div>
               </div>
 

@@ -26,7 +26,7 @@ export default function Footer() {
           <div className="min-w-0">
             {/* Responsive Logo */}
             <div className="w-[140px] sm:w-[170px] lg:w-[190px]">
-              <Logo width={220} height={70} />
+              <Logo width={120} height={96} className="h-14 sm:h-16 w-auto" />
             </div>
 
             <p className="mt-4 max-w-md text-sm leading-6 text-slate-600 sm:mt-5 sm:text-base sm:leading-7">

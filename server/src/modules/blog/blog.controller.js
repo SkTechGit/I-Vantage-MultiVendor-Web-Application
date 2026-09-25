@@ -177,3 +177,34 @@ export const uploadBlogMedia = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+export const trackView = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+  const result = await blogService.trackBlogView(slug, req.ip, req.cookies);
+
+  if (result.incremented && result.cookieKey) {
+    res.cookie(result.cookieKey, "1", {
+      maxAge: 30 * 60 * 1000, // 30 minutes debounce
+      httpOnly: true,
+      sameSite: "lax",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      viewsCount: result.viewsCount,
+      incremented: result.incremented,
+    },
+  });
+});
+
+export const resetViews = asyncHandler(async (req, res) => {
+  const result = await blogService.resetBlogViews(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Blog views count reset to 0",
+    data: result,
+  });
+});

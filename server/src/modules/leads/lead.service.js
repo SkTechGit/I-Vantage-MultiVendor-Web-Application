@@ -2,6 +2,7 @@ import Lead from "./lead.model.js";
 import Service from "../services/service.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { LEAD_MESSAGES } from "./lead.constants.js";
+import { realtimeHub } from "../realtime/realtime.hub.js";
 
 // export const createLead = async (data) => {
 //   const services = await Service.find({
@@ -49,10 +50,26 @@ export const createLead = async (data) => {
 
   // Create lead with selected service(s)
   // OR General Enquiry when no service was selected
-  return await Lead.create({
+  const lead = await Lead.create({
     ...data,
     services: serviceIds,
   });
+
+  try {
+    realtimeHub.broadcast("leads", "LEAD_CREATED", {
+      leadId: lead._id.toString(),
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      status: lead.status || "NEW",
+      createdAt: lead.createdAt,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime lead broadcast error:", rtErr);
+  }
+
+  return lead;
 };
 
 export const getAllLeads = async () => {
@@ -109,6 +126,15 @@ export const deleteLead = async (id) => {
   }
 
   await lead.deleteOne();
+
+  try {
+    realtimeHub.broadcast("leads", "LEAD_DELETED", {
+      leadId: id.toString(),
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime lead delete broadcast error:", rtErr);
+  }
 };
 
 export const updateLeadStatus = async (id, status) => {
@@ -121,6 +147,16 @@ export const updateLeadStatus = async (id, status) => {
   lead.status = status;
 
   await lead.save();
+
+  try {
+    realtimeHub.broadcast("leads", "LEAD_STATUS_CHANGED", {
+      leadId: lead._id.toString(),
+      status: lead.status,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime lead status broadcast error:", rtErr);
+  }
 
   return lead;
 };

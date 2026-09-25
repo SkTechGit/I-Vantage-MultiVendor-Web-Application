@@ -31,7 +31,7 @@ const authSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["super_admin", "admin", "editor", "pending"],
+      enum: ["super_admin", "admin", "vendor", "user", "editor", "pending"],
       default: "pending",
     },
 

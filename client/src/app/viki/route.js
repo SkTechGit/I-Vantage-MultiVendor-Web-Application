@@ -76,8 +76,15 @@ export async function POST(request) {
 
     const data = await response.json();
 
+    const cleanSuggestions = Array.isArray(data.suggestions)
+      ? data.suggestions.filter(
+          (item) => typeof item === "string" && item.trim().length > 0
+        )
+      : [];
+
     return NextResponse.json({
-      response: data.response,
+      response: data.response || "",
+      suggestions: cleanSuggestions,
     });
   } catch (error) {
     console.error("VIKI proxy error:", error);

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -19,6 +20,10 @@ import {
   Images,
   PanelLeftClose,
   PanelLeftOpen,
+  Building2,
+  CheckCircle2,
+  Sparkles,
+  X,
 } from "lucide-react";
 
 interface NavGroup {
@@ -42,6 +47,21 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "COWORKING MARKETPLACE",
+    items: [
+      {
+        title: "Approvals Queue",
+        href: "/admin/approvals",
+        icon: CheckCircle2,
+      },
+      {
+        title: "All Properties",
+        href: "/admin/listings",
+        icon: Building2,
+      },
+    ],
+  },
+  {
     label: "CONTENT & SERVICES",
     items: [
       {
@@ -58,6 +78,11 @@ const NAV_GROUPS: NavGroup[] = [
         title: "Categories",
         href: "/admin/categories",
         icon: FolderOpen,
+      },
+      {
+        title: "Amenities",
+        href: "/admin/amenities",
+        icon: Sparkles,
       },
       {
         title: "Services",
@@ -106,12 +131,16 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logoutUser } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await logout();
-      await refreshUser();
+      if (logoutUser) {
+        await logoutUser();
+      } else {
+        await logout();
+        await refreshUser();
+      }
       toast.success("Logged out successfully.");
       router.refresh();
       router.push("/admin/login");
@@ -121,11 +150,12 @@ export default function Sidebar({
     }
   };
 
-  const userInitial = user?.fullName
-    ? user.fullName.charAt(0).toUpperCase()
-    : user?.email
-    ? user.email.charAt(0).toUpperCase()
-    : "A";
+  const userDisplayName =
+    user?.fullName ||
+    user?.name ||
+    (user?.email ? user.email.split("@")[0] : "Administrator");
+
+  const userInitial = (userDisplayName || "A").trim().charAt(0).toUpperCase();
 
   return (
     <aside
@@ -135,17 +165,60 @@ export default function Sidebar({
       )}
     >
       {/* Top: Brand Area */}
-      <div className="shrink-0">
-        <div
-          className={clsx(
-            "flex h-16 sm:h-[68px] items-center border-b border-[#152B6E] px-4",
-            isCollapsed ? "justify-center" : "justify-between"
-          )}
-        >
-          {!isCollapsed ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-white font-black text-sm shadow-xs">
-                iV
+      <div className="shrink-0 border-b border-[#152B6E]">
+        {isCollapsed ? (
+          /* Collapsed Header: Centered interactive Logo / Expand Toggle */
+          <div className="flex h-16 sm:h-[68px] items-center justify-center px-2">
+            {onToggleCollapse ? (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                title="Expand sidebar"
+                aria-label="Expand sidebar"
+                className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-xs hover:ring-2 hover:ring-blue-400 transition cursor-pointer p-1.5"
+              >
+                {/* Logo normal */}
+                <Image
+                  src="/images/ivantage.png"
+                  alt="i-VANTAGE"
+                  width={28}
+                  height={28}
+                  className="h-6 w-auto object-contain transition-opacity duration-150 group-hover:opacity-0"
+                />
+                {/* Expand icon on hover */}
+                <PanelLeftOpen
+                  size={19}
+                  className="absolute text-[#0B1F5E] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                />
+              </button>
+            ) : (
+              <Link
+                href="/admin/dashboard"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-xs p-1.5"
+                title="i-VANTAGE Enterprise"
+              >
+                <Image
+                  src="/images/ivantage.png"
+                  alt="i-VANTAGE"
+                  width={28}
+                  height={28}
+                  className="h-6 w-auto object-contain"
+                />
+              </Link>
+            )}
+          </div>
+        ) : (
+          /* Expanded Header: Logo + Title + Collapse/Close Buttons */
+          <div className="flex h-16 sm:h-[68px] items-center justify-between px-3.5 sm:px-4">
+            <Link href="/admin/dashboard" className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-xs shrink-0 p-1">
+                <Image
+                  src="/images/ivantage.png"
+                  alt="i-VANTAGE"
+                  width={32}
+                  height={32}
+                  className="h-6 w-auto object-contain"
+                />
               </div>
               <div className="min-w-0">
                 <span className="block text-base font-extrabold tracking-tight text-white leading-none">
@@ -155,32 +228,35 @@ export default function Sidebar({
                   Enterprise Workspace
                 </span>
               </div>
-            </div>
-          ) : (
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2563EB] text-white font-black text-sm shadow-xs"
-              title="i-VANTAGE Enterprise"
-            >
-              iV
-            </div>
-          )}
+            </Link>
 
-          {/* Desktop Collapse / Expand Toggle Button */}
-          {onToggleCollapse && (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className={clsx(
-                "hidden lg:flex h-7 w-7 items-center justify-center rounded-md text-blue-200/70 hover:bg-[#152B6E] hover:text-white transition",
-                isCollapsed && "hidden"
-              )}
-            >
-              <PanelLeftClose size={16} />
-            </button>
-          )}
-        </div>
+            {/* Desktop Collapse Button */}
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+                className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-blue-200/80 hover:bg-[#152B6E] hover:text-white transition cursor-pointer"
+              >
+                <PanelLeftClose size={18} />
+              </button>
+            )}
+
+            {/* Mobile Drawer Close Button */}
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={onNavigate}
+                aria-label="Close sidebar menu"
+                title="Close menu"
+                className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition active:scale-95 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Center: Navigation Menu with Categorized Sections */}
@@ -243,32 +319,44 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Bottom: Signed-in User Info + Logout Action */}
+      {/* Bottom: Signed-in User Info + Action Buttons */}
       <div className="shrink-0 border-t border-[#152B6E] p-3 pb-5 sm:pb-6 space-y-2">
-        {/* User Card (expanded only) */}
-        {!isCollapsed && (
+        {/* User Card */}
+        {isCollapsed ? (
+          <div
+            className="flex h-9 w-9 mx-auto items-center justify-center rounded-xl bg-[#2563EB] text-xs font-bold text-white shadow-xs cursor-default"
+            title={`${userDisplayName} (${user?.email || ""})`}
+            suppressHydrationWarning
+          >
+            {userInitial}
+          </div>
+        ) : (
           <div className="flex items-center gap-2.5 rounded-xl bg-[#09184A] p-2 border border-[#152B6E]/80">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-xs font-bold text-white shrink-0">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-xs font-bold text-white shrink-0"
+              suppressHydrationWarning
+            >
               {userInitial}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-white">
-                {user?.fullName || "Admin User"}
+              <p className="truncate text-xs font-semibold text-white" suppressHydrationWarning>
+                {userDisplayName}
               </p>
-              <p className="truncate text-[10px] text-blue-300/70">
-                {user?.email || "admin@ivantage.in"}
+              <p className="truncate text-[10px] text-blue-300/70" suppressHydrationWarning>
+                {user?.email || ""}
               </p>
             </div>
           </div>
         )}
 
-        {/* Sidebar Expand trigger when collapsed */}
+        {/* Sidebar Expand trigger button when collapsed at bottom */}
         {isCollapsed && onToggleCollapse && (
           <button
             type="button"
             onClick={onToggleCollapse}
             title="Expand sidebar"
-            className="hidden lg:flex h-10 w-10 mx-auto items-center justify-center rounded-xl text-blue-200 hover:bg-[#132766] hover:text-white transition"
+            aria-label="Expand sidebar"
+            className="hidden lg:flex h-9 w-9 mx-auto items-center justify-center rounded-xl text-blue-200 hover:bg-[#132766] hover:text-white transition cursor-pointer"
           >
             <PanelLeftOpen size={18} />
           </button>
@@ -282,8 +370,8 @@ export default function Sidebar({
           className={clsx(
             "group flex items-center rounded-xl text-xs font-medium text-blue-200/80 transition-colors duration-150 hover:bg-rose-500/10 hover:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-400/40",
             isCollapsed
-              ? "h-10 w-10 justify-center mx-auto"
-              : "h-10 w-full gap-2.5 px-3"
+              ? "h-9 w-9 justify-center mx-auto"
+              : "h-9 w-full gap-2.5 px-3"
           )}
         >
           <LogOut

@@ -4,7 +4,7 @@ export default function Loader() {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="animate-pulse">
-        <Logo width={90} />
+        <Logo width={65} height={52} className="h-12 w-auto" />
       </div>
 
       <div className="mt-6 h-1.5 w-40 overflow-hidden rounded-full bg-[#E5ECF8]">

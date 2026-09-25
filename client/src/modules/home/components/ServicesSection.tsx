@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, X, ArrowRight, ShoppingBag, Check } from "lucide-react";
+import {
+  Search,
+  X,
+  ArrowRight,
+  ShoppingBag,
+  Check,
+  Sparkles,
+  Layers,
+  ArrowUpRight,
+  ShieldCheck,
+} from "lucide-react";
 import { Service } from "@/modules/service/service.types";
 import { Category } from "@/modules/category/category.types";
 import LeadForm from "./LeadForm";
 import Container from "@/components/common/Container";
-import SectionHeading from "@/components/common/SectionHeading";
 
 type CategoryWithServices = Category & {
   services: Service[];
@@ -19,13 +28,8 @@ interface Props {
 
 export default function ServicesSection({ categories, services }: Props) {
   const [search, setSearch] = useState("");
-
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-
-  // Currently opened category
   const [activeCategory, setActiveCategory] = useState<CategoryWithServices | null>(null);
-
-  // Lead form modal
   const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
 
   const groupedCategories = useMemo(() => {
@@ -74,40 +78,27 @@ export default function ServicesSection({ categories, services }: Props) {
     );
   };
 
-  /*
-   * Close category popup with Escape
-   * Close lead popup with Escape
-   */
+  /* Close modal with Escape */
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-
-      if (activeCategory) {
-        setActiveCategory(null);
-      }
-
-      if (isLeadFormOpen) {
-        setIsLeadFormOpen(false);
-      }
+      if (activeCategory) setActiveCategory(null);
+      if (isLeadFormOpen) setIsLeadFormOpen(false);
     };
 
     document.addEventListener("keydown", handleEscape);
-
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [activeCategory, isLeadFormOpen]);
 
-  /*
-   * Prevent background scrolling while modal is open
-   */
+  /* Prevent background scrolling while modal is open */
   useEffect(() => {
     if (activeCategory || isLeadFormOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -115,265 +106,274 @@ export default function ServicesSection({ categories, services }: Props) {
 
   return (
     <>
-      <section id="serviceSection">
+      <section id="serviceSection" className="relative py-20 sm:py-24 bg-gradient-to-b from-slate-50/50 via-white to-slate-50/50 overflow-hidden">
+        {/* Subtle Architectural Lighting */}
+        <div className="absolute left-1/4 top-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-1/4 bottom-0 w-96 h-96 bg-[#F4A900]/5 rounded-full blur-3xl pointer-events-none" />
+
         <Container>
-          {/* =====================================================
-              SECTION HEADING
-          ===================================================== */}
+          {/* Header */}
+          <div className="mx-auto max-w-3xl text-center space-y-3 mb-12">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-blue-50 border border-blue-100 text-[#0A1F66] uppercase tracking-wider shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+              <span>Full-Spectrum Enterprise Services</span>
+            </div>
 
-          <SectionHeading
-            title="Business Support Services"
-            subtitle="Find Your Custom Business Solution in Minutes, Search and select one or more services you need."
-          />
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
+              Business Support &{" "}
+              <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+                Corporate Infrastructure
+              </span>
+            </h2>
 
-          {/* =====================================================
-              PROGRESS
-          ===================================================== */}
+            <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Tailor-fit support covering company registrations, taxation, corporate legal advisory, and managed office operations under a single transparent umbrella.
+            </p>
+          </div>
 
-          <div className="mb-5 flex items-center justify-center gap-2 text-xs sm:gap-3 sm:text-sm">
-            {/* Step 1 */}
-            <div className="flex items-center gap-1.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1E5BFF] text-xs font-semibold text-white">
+          {/* Workflow Indicator */}
+          <div className="mb-8 flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-blue-200/80 shadow-2xs">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1E5BFF] text-[10px] font-black text-white">
                 1
               </span>
-
-              <span className="font-medium text-[#1E5BFF]">
+              <span className="text-xs font-bold text-[#0A1F66]">
                 Select Services
               </span>
             </div>
 
-            <span className="text-slate-300">---</span>
+            <span className="h-0.5 w-6 bg-slate-200" />
 
-            {/* Step 2 */}
-            <div className="flex items-center gap-1.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-medium text-slate-500">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 border border-slate-200 text-slate-500">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-[10px] font-bold">
                 2
               </span>
-
-              <span className="text-slate-500">Your Details</span>
+              <span className="text-xs font-medium">
+                Submit Consultation
+              </span>
             </div>
           </div>
-          {/* =====================================================
-              SEARCH
-          ===================================================== */}
 
-          <div className="relative mx-auto mb-8 max-w-2xl">
-            <Search
-              size={20}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services..."
-              className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-12 pr-5 text-sm outline-none transition-all placeholder:text-gray-400 focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100 sm:h-14 sm:text-base"
-            />
-
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-700"
-              >
-                <X size={18} />
-              </button>
-            )}
+          {/* Search Console */}
+          <div className="relative mx-auto mb-10 max-w-2xl">
+            <div className="relative flex items-center rounded-2xl bg-white border border-slate-200/90 shadow-[0_4px_24px_rgba(10,31,102,0.05)] transition-all focus-within:border-[#1E5BFF] focus-within:ring-4 focus-within:ring-blue-100">
+              <Search
+                size={19}
+                className="absolute left-4.5 text-slate-400 pointer-events-none"
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search across corporate services, compliance, legal..."
+                className="h-13 w-full rounded-2xl bg-transparent pl-12 pr-11 text-xs sm:text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-normal"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-4 flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* =====================================================
-              SELECTED SERVICES PREVIEW
-          ===================================================== */}
-
+          {/* Selected Services Preview Bar */}
           {selectedServices.length > 0 && (
-            <div className="mb-7 rounded-xl border border-blue-100 bg-blue-50/50 p-3 sm:p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold text-[#0A1F66] sm:text-sm">
-                    Selected Services
-                  </p>
-
-                  <p className="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
-                    {selectedServices.length}{" "}
-                    {selectedServices.length === 1 ? "service" : "services"}{" "}
-                    selected
-                  </p>
+            <div className="mb-10 rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/80 p-4 sm:p-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A1F66] text-white shadow-xs">
+                    <ShoppingBag size={18} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-[#0A1F66]">
+                      {selectedServices.length} {selectedServices.length === 1 ? "Service" : "Services"} Selected For Request
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Submit for instant quotation & relationship manager assignment
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setIsLeadFormOpen(true)}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#1E5BFF] px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 sm:px-4 sm:text-sm"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] px-5 py-2.5 text-xs font-black text-white shadow-md transition hover:brightness-110 active:scale-95"
                 >
-                  <ShoppingBag size={15} />
-                  View Selected
+                  <span>Review & Submit</span>
+                  <ArrowRight size={14} />
                 </button>
               </div>
 
-              {/* Small selected service pills */}
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {selectedServices.slice(0, 4).map((service) => (
+              {/* Service Pills */}
+              <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-blue-100">
+                {selectedServices.map((service) => (
                   <span
                     key={service._id}
-                    className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-[#0A1F66] shadow-sm sm:text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-[#0A1F66] border border-blue-100 shadow-2xs"
                   >
-                    {service.name}
+                    <span>{service.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeSelectedService(service._id)}
+                      className="text-slate-400 hover:text-red-500 transition"
+                      aria-label={`Remove ${service.name}`}
+                    >
+                      <X size={12} />
+                    </button>
                   </span>
                 ))}
-
-                {selectedServices.length > 4 && (
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-slate-500 shadow-sm sm:text-xs">
-                    +{selectedServices.length - 4} more
-                  </span>
-                )}
               </div>
             </div>
           )}
 
-          {/* =====================================================
-              CATEGORIES
-          ===================================================== */}
+          {/* Categories Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {filteredCategories.map((category) => {
+              const selectedInCat = category.services.filter((s) => isSelected(s._id)).length;
+              return (
+                <button
+                  key={category._id}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                  className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/85 bg-white p-6 sm:p-7 text-left shadow-[0_4px_16px_rgba(10,31,102,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-[#1E5BFF]/50 hover:shadow-[0_16px_36px_rgba(30,91,255,0.08)]"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-[#1E5BFF] border border-blue-100/70 transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
+                        <Layers size={20} strokeWidth={2.2} />
+                      </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-            {filteredCategories.map((category) => (
-              <button
-                key={category._id}
-                type="button"
-                onClick={() => setActiveCategory(category)}
-                className="group rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all hover:border-blue-200 hover:shadow-md sm:rounded-2xl sm:p-4"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="line-clamp-2 text-sm md:text-xl font-semibold leading-5 text-slate-800 sm:text-sm">
-                    {category.name}
-                  </h3>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all duration-300 group-hover:bg-[#1E5BFF] group-hover:text-white">
+                        <ArrowUpRight size={15} />
+                      </span>
+                    </div>
 
-                  <span className="shrink-0 text-slate-400 transition  group-hover:text-[#1E5BFF]">
-                    <ArrowRight size={14} />
-                  </span>
-                </div>
-                <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:text-xs">
-                  {category.description}
-                </p>
+                    <h3 className="text-base sm:text-lg font-bold text-[#0A1F66] transition-colors group-hover:text-[#1E5BFF]">
+                      {category.name}
+                    </h3>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="rounded-full bg-blue-50 px-2 py-1 text-[9px] font-semibold text-[#1E5BFF] sm:px-2.5 sm:text-[10px]">
-                    {category.services.length} Services
-                  </span>
+                    <p className="mt-2 line-clamp-2 text-xs sm:text-sm text-slate-500 leading-relaxed">
+                      {category.description || "Comprehensive enterprise services and legal support."}
+                    </p>
+                  </div>
 
-                  {category.services.some((service) =>
-                    isSelected(service._id),
-                  ) && (
-                    <span className="flex items-center gap-1 text-[9px] font-medium text-green-600 sm:text-[10px]">
-                      <Check size={12} />
-                      Selected
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-[#1E5BFF]">
+                      {category.services.length} Solutions
                     </span>
-                  )}
-                </div>
-              </button>
-            ))}
+
+                    {selectedInCat > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                        <Check size={13} /> {selectedInCat} Selected
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-400 group-hover:text-[#1E5BFF] transition-colors">
+                        View Details →
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
-        
           {filteredCategories.length === 0 && (
-            <div className="py-10 text-center">
-              <Search size={28} className="mx-auto text-slate-300" />
-
-              <p className="mt-3 text-sm font-medium text-slate-600">
-                No services found
+            <div className="py-16 text-center max-w-md mx-auto">
+              <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-4">
+                <Search size={26} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800">
+                No matching services found
+              </h3>
+              <p className="mt-1.5 text-xs text-slate-500">
+                Try searching for another service term or clear your search query.
               </p>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Try searching for another service.
-              </p>
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition"
+              >
+                Clear Search
+              </button>
             </div>
           )}
         </Container>
       </section>
 
-      {/* =========================================================
-          CATEGORY SERVICES MODAL
-      ========================================================= */}
-
+      {/* Category Services Modal */}
       {activeCategory && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              setActiveCategory(null);
-            }
+            if (e.target === e.currentTarget) setActiveCategory(null);
           }}
         >
-          <div className="flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
+          <div className="flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-3xl border border-slate-100">
             {/* Modal Header */}
-
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6">
-              <div className="min-w-0">
-                <h2 className="truncate text-sm font-bold text-[#0A1F66] sm:text-base">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-gradient-to-b from-slate-50/60 to-white">
+              <div className="min-w-0 pr-4">
+                <div className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#1E5BFF]">
+                  <ShieldCheck className="w-3 h-3" /> i-VANTAGE Verified Services
+                </div>
+                <h2 className="truncate text-lg sm:text-xl font-bold text-[#0A1F66] mt-0.5">
                   {activeCategory.name}
                 </h2>
-
-                <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-gray-700 sm:text-xs">
-                  {activeCategory.description}
-                </p>
-
-                <p className="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
-                  Select the services you need
+                <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                  Select one or more services to include in your package
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setActiveCategory(null)}
-                className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition"
                 aria-label="Close"
               >
-                <X size={17} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Services */}
-
-            <div className="overflow-y-auto p-4 sm:p-6">
-              <div className="space-y-2.5">
+            {/* Services List */}
+            <div className="overflow-y-auto p-5 sm:p-6 max-h-[55vh]">
+              <div className="space-y-3">
                 {activeCategory.services.map((service) => {
                   const selected = isSelected(service._id);
-
                   return (
                     <button
                       key={service._id}
                       type="button"
                       onClick={() => handleSelectService(service)}
-                      className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition sm:p-4 ${
+                      className={`flex w-full items-start gap-3.5 rounded-2xl border p-4 text-left transition-all ${
                         selected
-                          ? "border-blue-200 bg-blue-50"
-                          : "border-slate-200 bg-white hover:bg-slate-50"
+                          ? "border-[#1E5BFF] bg-blue-50/50 shadow-xs"
+                          : "border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                       }`}
                     >
-                      {/* Checkbox */}
-
+                      {/* Custom Checkbox */}
                       <span
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
                           selected
                             ? "border-[#1E5BFF] bg-[#1E5BFF] text-white"
                             : "border-slate-300 bg-white"
                         }`}
                       >
-                        {selected && <Check size={13} />}
+                        {selected && <Check size={13} strokeWidth={3} />}
                       </span>
 
-                      {/* Service */}
-
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-semibold text-slate-800 sm:text-sm">
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-xs sm:text-sm font-bold text-slate-900">
                           {service.name}
                         </span>
-
                         {service.shortDescription && (
-                          <span className="mt-0.5 block line-clamp-2 text-[10px] leading-4 text-slate-500 sm:text-xs">
+                          <span className="mt-1 block text-xs leading-relaxed text-slate-500">
                             {service.shortDescription}
                           </span>
                         )}
-                      </span>
+                      </div>
                     </button>
                   );
                 })}
@@ -381,49 +381,44 @@ export default function ServicesSection({ categories, services }: Props) {
             </div>
 
             {/* Modal Footer */}
+            <div className="border-t border-slate-100 bg-slate-50/60 p-4 sm:p-5 flex items-center justify-between gap-4">
+              <span className="text-xs font-semibold text-slate-500">
+                {selectedServices.length} Selected Total
+              </span>
 
-            <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
-              <div className="flex justify-center sm:block">
               <button
                 type="button"
                 onClick={() => setActiveCategory(null)}
-                className="w-auto rounded-xl bg-[#1E5BFF] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-full sm:py-3 sm:px-4 sm:text-sm"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] text-xs sm:text-sm font-black text-white shadow-md hover:brightness-110 active:scale-95 transition"
               >
-                Done
-                {selectedServices.length > 0 &&
-                  ` • ${selectedServices.length} Selected`}
+                Confirm Selection
               </button>
-            </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* =========================================================
-          MOBILE / DESKTOP SELECTED SERVICES CTA
-      ========================================================= */}
-
+      {/* Floating CTA Pill */}
       {selectedServices.length > 0 && !isLeadFormOpen && (
-        <div className="fixed flex justify-center bottom-4 left-1/2 z-40 w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+        <div className="fixed bottom-6 left-1/2 z-40 w-[calc(100%-32px)] max-w-md -translate-x-1/2">
           <button
             type="button"
             onClick={() => setIsLeadFormOpen(true)}
-            className="flex w-auto items-center justify-between rounded-2xl bg-[#0A1F66] px-4 py-3 text-white shadow-2xl transition hover:bg-[#081950] sm:px-5"
+            className="flex w-full items-center justify-between rounded-2xl bg-[#0A1F66] px-5 py-3.5 text-white shadow-2xl shadow-blue-950/40 border border-white/10 hover:bg-[#081850] transition active:scale-98"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E5BFF] text-white shadow-xs">
                 <ShoppingBag size={18} />
               </div>
 
               <div className="text-left">
-                <p className="text-xs font-semibold sm:text-sm">
+                <p className="text-xs sm:text-sm font-bold">
                   {selectedServices.length}{" "}
                   {selectedServices.length === 1 ? "Service" : "Services"}{" "}
-                  Selected
+                  Ready For Consultation
                 </p>
-
-                <p className="text-[10px] text-blue-100 sm:text-xs">
-                  Continue to your details
+                <p className="text-[10px] text-blue-200">
+                  Tap to request instant callback
                 </p>
               </div>
             </div>
@@ -433,10 +428,7 @@ export default function ServicesSection({ categories, services }: Props) {
         </div>
       )}
 
-      {/* =========================================================
-          LEAD FORM MODAL
-      ========================================================= */}
-
+      {/* Lead Form Modal */}
       <LeadForm
         open={isLeadFormOpen}
         services={selectedServices}

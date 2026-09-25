@@ -5,6 +5,7 @@ import BlogSlugRedirect from "./blog-slug-redirect.model.js";
 import BlogAuditLog from "./blog-audit-log.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { uploadImage, deleteImage } from "../../utils/cloudinary.js";
+import { realtimeHub } from "../realtime/realtime.hub.js";
 
 // Helper to generate a unique slug
 export const generateUniqueSlug = async (baseText, excludeBlogId = null) => {
@@ -202,8 +203,6 @@ export const getPublicBlogBySlug = async (slug) => {
     .lean();
 
   if (blog) {
-    // Atomically increment views count in background
-    Blog.updateOne({ _id: blog._id }, { $inc: { viewsCount: 1 } }).exec();
     return { blog, redirected: false };
   }
 
@@ -391,6 +390,18 @@ export const createBlog = async (payload, userId) => {
     metadata: { title: blog.title, status: blog.status },
   });
 
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_CREATED", {
+      blogId: blog._id.toString(),
+      title: blog.title,
+      slug: blog.slug,
+      status: blog.status,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog broadcast error:", rtErr);
+  }
+
   return blog;
 };
 
@@ -437,6 +448,18 @@ export const updateBlog = async (id, payload, userId) => {
     metadata: { title: blog.title, status: blog.status, slug: blog.slug },
   });
 
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_UPDATED", {
+      blogId: blog._id.toString(),
+      title: blog.title,
+      slug: blog.slug,
+      status: blog.status,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog broadcast error:", rtErr);
+  }
+
   return blog;
 };
 
@@ -466,6 +489,17 @@ export const updateBlogStatus = async (id, status, scheduledAt = null, userId) =
     action: status === "published" ? "published" : status === "draft" ? "unpublished" : "updated",
     metadata: { previousStatus, newStatus: status },
   });
+
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_STATUS_CHANGED", {
+      blogId: blog._id.toString(),
+      status,
+      previousStatus,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog broadcast error:", rtErr);
+  }
 
   return blog;
 };
@@ -499,8 +533,19 @@ export const deleteBlog = async (id, userId, permanent = false) => {
     metadata: { title: blog.title, permanent },
   });
 
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_DELETED", {
+      blogId: id.toString(),
+      permanent,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog broadcast error:", rtErr);
+  }
+
   return { message: "Blog deleted successfully" };
 };
+
 
 // Admin: Dashboard Overview Stats
 export const getBlogDashboardStats = async () => {
@@ -582,4 +627,60 @@ export const uploadBlogMedia = async (file) => {
     format: result.format,
     bytes: result.bytes,
   };
+};
+
+// Public: Track genuine blog article view (with 30-min cookie/session debounce)
+export const trackBlogView = async (slug, clientIp, viewedCookies = {}) => {
+  const cleanSlug = slug.toLowerCase().trim();
+  const blog = await Blog.findOne({
+    slug: cleanSlug,
+    isDeleted: false,
+    status: "published",
+  }).select("_id viewsCount title");
+
+  if (!blog) {
+    throw new ApiError(404, "Blog article not found or not published");
+  }
+
+  const cookieKey = `iv_bv_${blog._id.toString()}`;
+  // Check if visitor has already viewed within the debounce window
+  if (viewedCookies && viewedCookies[cookieKey]) {
+    return {
+      success: true,
+      blogId: blog._id.toString(),
+      cookieKey,
+      viewsCount: blog.viewsCount,
+      incremented: false,
+    };
+  }
+
+  // Atomically increment views count in database
+  const updated = await Blog.findByIdAndUpdate(
+    blog._id,
+    { $inc: { viewsCount: 1 } },
+    { new: true }
+  ).select("viewsCount");
+
+  return {
+    success: true,
+    blogId: blog._id.toString(),
+    cookieKey,
+    viewsCount: updated ? updated.viewsCount : blog.viewsCount + 1,
+    incremented: true,
+  };
+};
+
+// Admin: Reset views for testing or recalibration
+export const resetBlogViews = async (blogId) => {
+  const updated = await Blog.findByIdAndUpdate(
+    blogId,
+    { $set: { viewsCount: 0 } },
+    { new: true }
+  ).select("_id title slug viewsCount");
+
+  if (!updated) {
+    throw new ApiError(404, "Blog article not found");
+  }
+
+  return updated;
 };

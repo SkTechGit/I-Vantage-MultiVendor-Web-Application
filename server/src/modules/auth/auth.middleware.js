@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Auth from "./auth.model.js";
 import { AUTH_COOKIE, AUTH_MESSAGES } from "./auth.constants.js";
 import {
@@ -47,6 +48,50 @@ const validateUser = (user, res) => {
 };
 
 /**
+ * Helper to resolve user from auths or marketplace_users collection
+ */
+const resolveUserFromPayload = async (payload) => {
+  if (!payload) return null;
+  let user = null;
+
+  if (payload.id && mongoose.Types.ObjectId.isValid(payload.id)) {
+    user = await Auth.findById(payload.id).select("-password");
+  }
+
+  if (!user && payload.email) {
+    user = await Auth.findOne({ email: payload.email.toLowerCase().trim() }).select("-password");
+  }
+
+  if (!user) {
+    // Check marketplace_users collection for unified session resolution
+    const filter = [];
+    if (payload.id && mongoose.Types.ObjectId.isValid(payload.id)) {
+      filter.push({ _id: new mongoose.Types.ObjectId(payload.id) });
+    }
+    if (payload.email) {
+      filter.push({ email: payload.email.toLowerCase().trim() });
+    }
+    if (filter.length > 0) {
+      const mUser = await mongoose.connection.db?.collection("marketplace_users").findOne({ $or: filter });
+      if (mUser) {
+        user = {
+          _id: mUser._id,
+          id: mUser._id.toString(),
+          fullName: mUser.name || mUser.fullName || "Administrator",
+          name: mUser.name || mUser.fullName || "Administrator",
+          email: mUser.email,
+          role: mUser.role === "superadmin" ? "super_admin" : mUser.role,
+          status: mUser.status || "active",
+          isActive: mUser.status !== "suspended",
+        };
+      }
+    }
+  }
+
+  return user;
+};
+
+/**
  * Helper to attempt auto-regeneration of accessToken using refreshToken
  */
 const tryAutoRefresh = async (req, res, next) => {
@@ -64,7 +109,7 @@ const tryAutoRefresh = async (req, res, next) => {
 
   try {
     const refreshPayload = verifyRefreshToken(refreshToken);
-    const user = await Auth.findById(refreshPayload.id).select("-password");
+    const user = await resolveUserFromPayload(refreshPayload);
 
     if (!validateUser(user, res)) return;
 
@@ -106,7 +151,7 @@ export const authenticate = async (req, res, next) => {
 
     try {
       const payload = verifyAccessToken(token);
-      const user = await Auth.findById(payload.id).select("-password");
+      const user = await resolveUserFromPayload(payload);
 
       if (!validateUser(user, res)) return;
 

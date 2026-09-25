@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Blog, BlogCategory, BlogStats } from "@/modules/blog/blog.types";
 import {
@@ -8,6 +8,7 @@ import {
   getBlogDashboardStats,
   getBlogCategories,
 } from "@/modules/blog/blog.api";
+import { useRealtimeEvent } from "@/context/RealtimeContext";
 import BlogTable from "./BlogTable";
 
 export default function BlogManagement() {
@@ -23,38 +24,50 @@ export default function BlogManagement() {
   });
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setRefreshing(true);
+    try {
+      const [blogsRes, statsRes, catsRes] = await Promise.all([
+        getAdminBlogs({ page: 1, limit: 100 }),
+        getBlogDashboardStats(),
+        getBlogCategories(),
+      ]);
+
+      setBlogs(blogsRes.blogs || []);
+      setStats(statsRes);
+      setCategories(catsRes);
+    } catch (err) {
+      console.error("Failed to load blog admin data:", err);
+    } finally {
+      if (!silent) setRefreshing(false);
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let ignore = false;
-
-    async function loadData() {
-      try {
-        const [blogsRes, statsRes, catsRes] = await Promise.all([
-          getAdminBlogs({ page: 1, limit: 100 }),
-          getBlogDashboardStats(),
-          getBlogCategories(),
-        ]);
-
-        if (!ignore) {
-          setBlogs(blogsRes.blogs || []);
-          setStats(statsRes);
-          setCategories(catsRes);
-        }
-      } catch (err) {
-        console.error("Failed to load blog admin data:", err);
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
     loadData();
 
-    return () => {
-      ignore = true;
+    // Revalidate when user returns to this browser tab
+    const handleFocus = () => {
+      loadData(true);
     };
-  }, []);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [loadData]);
+
+  // Debounced silent refetch for real-time blog synchronization
+  const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useRealtimeEvent("blogs", () => {
+    if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
+    refetchTimerRef.current = setTimeout(() => {
+      loadData(true);
+    }, 300);
+  });
 
   if (loading) {
     return (
@@ -72,6 +85,8 @@ export default function BlogManagement() {
       initialBlogs={blogs}
       initialStats={stats}
       categories={categories}
+      onRefresh={() => loadData(false)}
+      isRefreshing={refreshing}
     />
   );
 }

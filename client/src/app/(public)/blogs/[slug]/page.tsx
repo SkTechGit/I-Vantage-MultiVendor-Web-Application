@@ -8,6 +8,7 @@ import TableOfContents from "@/modules/blog/components/TableOfContents";
 import ReadingProgress from "@/modules/blog/components/ReadingProgress";
 import RelatedBlogs from "@/modules/blog/components/RelatedBlogs";
 import BlogCTA from "@/modules/blog/components/BlogCTA";
+import BlogViewTracker from "@/modules/blog/components/BlogViewTracker";
 import {
   getPublicBlogBySlug,
   getRelatedBlogs,
@@ -120,6 +121,9 @@ export default async function BlogDetailPage({ params }: Props) {
 
       {/* Reading Progress Indicator */}
       <ReadingProgress />
+
+      {/* Genuine Client-Side View Tracker */}
+      <BlogViewTracker slug={blog.slug} />
 
       <article className="bg-white pb-20 pt-8 sm:pt-12">
         <Container>

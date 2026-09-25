@@ -8,15 +8,15 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
-  Clock3,
   FileCheck2,
   LineChart,
   MapPin,
   Users,
-  Trophy,
+  ShieldCheck,
   BriefcaseBusiness,
   Laptop,
-  ShieldCheck,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
@@ -27,155 +27,159 @@ import LeadForm from "./LeadForm";
 const serviceHighlights = [
   {
     title: "Work Smart",
-    description: "Coworking, Managed Offices & Meeting Rooms",
+    description: "Coworking, Private Suites & Boardrooms",
     image: "/images/workspace/conf3.webp",
     icon: Laptop,
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
   },
   {
     title: "Start Right",
-    description: "Virtual Office, GST & Company Registration",
+    description: "Virtual Office, GST & Company Setup",
     image: "/images/workspace/conf4.webp",
     icon: BriefcaseBusiness,
-    iconBg: "bg-orange-50",
-    iconColor: "text-orange-500",
   },
   {
     title: "Stay Compliant",
-    description: "Compliance, Legal, Accounting & HR Support",
+    description: "Legal, Tax, Audit & Corporate Services",
     image: "/images/workspace/openseat1.webp",
     icon: FileCheck2,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
   },
   {
     title: "Grow Faster",
-    description: "Marketing, Technology, Mentorship & More",
+    description: "Tech Desks, Growth Ops & Mentorship",
     image: "/images/workspace/reception1.webp",
     icon: LineChart,
-    iconBg: "bg-purple-50",
-    iconColor: "text-purple-600",
   },
 ];
 
 const trustPoints = [
-  "Professional Spaces",
-  "Expert Support",
-  "End to End Solutions",
-  "Grow with Confidence",
+  "Welldone Tech Park Flagship",
+  "100+ Enterprise Support Services",
+  "Zero Brokerage Direct Network",
+  "Rapid 1-Hour Dedicated Response",
 ];
 
 export default function Hero() {
   const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+
   return (
-    <section className="relative overflow-hidden bg-white">
-      {/* Soft Background */}
-      <div className="pointer-events-none absolute left-0 top-20 -z-0 h-[420px] w-[420px] rounded-full bg-blue-50/80 blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#F8FAFC] via-white to-[#F8FAFC]">
+      {/* =========================================================
+          1. AMBIENT CORPORATE LIGHTING & GRID OVERLAY
+      ========================================================= */}
+      <div className="pointer-events-none absolute -left-20 top-10 -z-0 h-[480px] w-[480px] rounded-full bg-[#1E5BFF]/08 blur-[130px]" />
+      <div className="pointer-events-none absolute -right-20 top-40 -z-0 h-[450px] w-[450px] rounded-full bg-[#F4A900]/06 blur-[120px]" />
+
+      {/* Subtle Precision Matrix */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0a1f6608_1px,transparent_1px),linear-gradient(to_bottom,#0a1f6608_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_65%_55%_at_50%_35%,#000_65%,transparent_100%)]" />
 
       <Container>
-        <div className="relative z-10 grid items-start gap-10 py-10 sm:py-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:py-16 xl:grid-cols-[0.86fr_1.14fr]">
+        <div className="relative z-10 grid items-center gap-10 py-10 sm:py-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:py-18 xl:grid-cols-[0.88fr_1.12fr]">
           {/* =========================================================
-              LEFT CONTENT
+              LEFT COLUMN: Executive Headline & Value Propositions
           ========================================================= */}
           <div className="flex min-w-0 flex-col">
-            {/* Badge */}
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#1E5BFF] sm:px-4 sm:text-xs">
-              <Building2 size={14} strokeWidth={2.5} />
-
-              <span>More Than Coworking</span>
+            {/* Luminous Brand Badge */}
+            <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-blue-200/70 bg-white/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#0A1F66] shadow-xs backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4A900] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F4A900]" />
+              </span>
+              <span>INDIA'S PREMIER BUSINESS ECOSYSTEM & WORKSPACE NETWORK</span>
             </div>
 
-            {/* Heading */}
-            <h1 className="mt-5 max-w-2xl text-[27px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[#0A1F66] sm:mt-7 sm:text-3xl md:text-[45px] lg:text-[45px] xl:text-[50px]">
+            {/* High-Impact Headline */}
+            <h1 className="mt-5 max-w-2xl text-[29px] font-black leading-[1.08] tracking-[-0.03em] text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-[46px] lg:text-[46px] xl:text-[52px]">
               Everything Your{" "}
-              <span className="text-[#1E5BFF]">Business Needs</span> to Grow
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E5BFF] via-[#2563EB] to-[#1E5BFF]">
+                Business Needs
+              </span>{" "}
+              to Grow
               <span className="text-[#F4A900]">.</span>
             </h1>
 
             {/* Description */}
-            <p className="mt-5 max-w-xl text-sm leading-6 text-slate-600 sm:mt-6 sm:text-base sm:leading-7 lg:text-[15px] xl:text-base">
-              i-VANTAGE is a complete business hub combining workspace, business
-              setup, compliance and growth support — all under one roof.
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-6 sm:text-base sm:leading-7 lg:text-[15px] xl:text-base">
+              i-VANTAGE unites luxury commercial workspaces, seamless corporate registrations,
+              regulatory compliance, and 100+ business growth desks under one prestigious roof in Gurugram.
             </p>
 
             {/* =========================================================
-                BUSINESS STATS CARD
+                EXECUTIVE TELEMETRY BADGES
             ========================================================= */}
-            <div className="mt-6 grid w-full max-w-[520px] grid-cols-2 overflow-hidden rounded-xl border border-blue-100 bg-white shadow-sm sm:mt-7 sm:rounded-2xl">
+            <div className="mt-6 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-xs backdrop-blur-md sm:mt-7">
               {/* Stat 1 */}
-              <div className="flex min-w-0 items-center gap-3 border-r border-blue-100 px-3 py-4 sm:px-5 sm:py-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-                  <Users size={19} />
+              <div className="flex min-w-0 items-center gap-3 border-r border-slate-100 px-3.5 py-3.5 sm:px-5 sm:py-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs">
+                  <Users size={20} />
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-base font-extrabold leading-none text-[#1E5BFF] sm:text-lg">
+                  <p className="text-lg font-black leading-none text-[#1E5BFF] sm:text-xl">
                     100+
                   </p>
-
-                  <p className="mt-1  text-[9px] font-medium text-slate-600 sm:text-[11px]">
-                    Business Support Services
+                  <p className="mt-1 text-[10px] font-semibold text-slate-600 sm:text-[11px]">
+                    Enterprise Support Desks
                   </p>
                 </div>
               </div>
 
               {/* Stat 2 */}
-              <div className="flex min-w-0 items-center gap-3 px-3 py-4 sm:px-5 sm:py-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-                  <Building2 size={19} />
+              <div className="flex min-w-0 items-center gap-3 px-3.5 py-3.5 sm:px-5 sm:py-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50/80 text-[#D97706] border border-amber-100/60 shadow-2xs">
+                  <Building2 size={20} />
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-base font-extrabold leading-none text-[#0A1F66] sm:text-lg">
+                  <p className="text-lg font-black leading-none text-[#0A1F66] sm:text-xl">
                     One
                   </p>
-
-                  <p className="mt-1 text-[9px] font-medium text-slate-600 sm:text-[11px]">
-                    Business Ecosystem
+                  <p className="mt-1 text-[10px] font-semibold text-slate-600 sm:text-[11px]">
+                    Unified Business Hub
                   </p>
                 </div>
               </div>
             </div>
 
             {/* =========================================================
-                BUTTONS
+                HIGH-CONVERSION CALL-TO-ACTIONS
             ========================================================= */}
             <div className="mt-6 flex w-full flex-col gap-3 sm:mt-7 sm:w-auto sm:flex-row">
               <Link href="#serviceSection" className="w-full sm:w-auto">
-                <Button className="flex h-12 w-full items-center justify-center gap-2 px-6 sm:w-auto">
-                  Explore Services
-                  <ArrowRight size={17} />
-                </Button>
+                <button
+                  type="button"
+                  className="group flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] via-[#12319A] to-[#1E5BFF] px-6 text-sm font-bold text-white shadow-md shadow-blue-900/15 hover:brightness-110 transition-all active:scale-95"
+                >
+                  <span>Explore All Services</span>
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </button>
               </Link>
 
-              <Button
+              <button
+                type="button"
                 onClick={() => {
                   setSelectedServices([]);
                   setIsLeadFormOpen(true);
                 }}
-                variant="secondary"
-                className="h-12 w-full px-6 sm:w-auto"
+                className="flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-6 text-sm font-bold text-[#0A1F66] shadow-xs hover:bg-slate-50 hover:border-slate-300 hover:text-[#1E5BFF] transition-all active:scale-95"
               >
-                Book a Visit
-              </Button>
+                <Sparkles size={16} className="text-[#F4A900]" />
+                <span>Book a VIP Tour</span>
+              </button>
             </div>
 
             {/* =========================================================
                 TRUST POINTS
             ========================================================= */}
-            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
+            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
               {trustPoints.map((point) => (
-                <div key={point} className="flex min-w-0 items-center gap-1.5">
+                <div key={point} className="flex min-w-0 items-center gap-2">
                   <CheckCircle2
-                    size={13}
+                    size={14}
                     className="shrink-0 text-[#1E5BFF]"
-                    fill="currentColor"
+                    fill="#1E5BFF"
+                    color="#ffffff"
                     strokeWidth={2}
                   />
-
-                  <span className="truncate text-[12px] font-medium text-slate-600 sm:text-[13px]">
+                  <span className="truncate text-xs font-semibold text-slate-700 sm:text-[13px]">
                     {point}
                   </span>
                 </div>
@@ -184,76 +188,65 @@ export default function Hero() {
           </div>
 
           {/* =========================================================
-              RIGHT CONTENT
+              RIGHT COLUMN: Luxury Workspace Showcase & Pillars
           ========================================================= */}
-          <div className="relative min-w-0 lg:-mt-6 xl:-mt-10">
-            {/* Decorative glow */}
-            <div className="pointer-events-none absolute -right-10 top-5 h-40 w-40 rounded-full bg-blue-100 blur-3xl sm:h-56 sm:w-56" />
+          <div className="relative min-w-0">
+            {/* Luminous Backing Aura */}
+            <div className="pointer-events-none absolute -right-6 top-6 h-60 w-60 rounded-full bg-blue-100/60 blur-3xl" />
 
-            <div className="relative">
-              {/* =====================================================
-                  MAIN IMAGE
-              ===================================================== */}
-              <div className="relative ml-auto w-full overflow-hidden rounded-[28px] sm:rounded-[38px] lg:rounded-l-[100px] lg:rounded-r-none xl:rounded-l-[130px]">
+            <div className="relative space-y-3.5">
+              {/* Main Architectural Showcase Card */}
+              <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl ring-1 ring-slate-900/5 group">
                 <Image
                   src="/images/workspace/reception1.webp"
-                  alt="i-VANTAGE Business Hub"
+                  alt="i-VANTAGE Welldone Tech Park Flagship Hub"
                   width={900}
-                  height={650}
+                  height={600}
                   priority
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 55vw"
-                  className="h-[320px] w-full object-cover sm:h-[420px] md:h-[500px] lg:h-[500px] xl:h-[540px]"
+                  className="h-[310px] w-full object-cover transition-transform duration-700 group-hover:scale-103 sm:h-[400px] md:h-[440px] lg:h-[420px] xl:h-[460px]"
                 />
 
-                {/* Soft image overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07194d]/10 via-transparent to-white/5" />
+                {/* Subtle Cinematic Vignette */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0A1F66]/50 via-transparent to-black/10" />
+
+                {/* Floating Glassmorphic Location Badge */}
+                <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-slate-950/60 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-lg">
+                  <MapPin size={13} className="text-[#F4A900]" />
+                  <span>Welldone Tech Park, Sec 48 Gurugram</span>
+                </div>
+
+                {/* Floating Glassmorphic Facility Telemetry */}
+                <div className="absolute bottom-4 left-4 right-4 hidden sm:flex items-center justify-between rounded-2xl border border-white/20 bg-slate-950/70 p-3 text-xs text-white backdrop-blur-md shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <Zap size={15} className="text-[#F4A900]" />
+                    <span className="font-semibold">100% Leased Line & Power Backup</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-blue-300">24/7 BIOMETRIC SECURE</span>
+                </div>
               </div>
 
-              {/* =====================================================
-                  SERVICE HIGHLIGHTS
-              ===================================================== */}
-              <div className="relative z-20 mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:grid-cols-4 sm:gap-2.5">
+              {/* 4 Pillars Micro-Grid */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
                 {serviceHighlights.map((service) => {
                   const Icon = service.icon;
 
                   return (
                     <div
                       key={service.title}
-                      className="group min-w-0 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md sm:rounded-2xl"
+                      className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-[#1E5BFF]/40 hover:shadow-md"
                     >
-                      {/* Small Image */}
-                      <div className="relative h-[72px] w-full overflow-hidden sm:h-[82px]">
-                        <Image
-                          src={service.image}
-                          alt={service.title}
-                          fill
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-
-                        {/* Slight overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 transition-colors group-hover:bg-[#1E5BFF] group-hover:text-white">
+                        <Icon size={16} strokeWidth={2.2} />
                       </div>
 
-                      {/* Content */}
-                      <div className="p-2.5 sm:p-3">
-                        {/* Icon */}
-                        <div
-                          className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full sm:h-8 sm:w-8 ${service.iconBg} ${service.iconColor}`}
-                        >
-                          <Icon size={14} strokeWidth={2.2} />
-                        </div>
+                      <h3 className="text-xs font-bold leading-tight text-[#0A1F66]">
+                        {service.title}
+                      </h3>
 
-                        {/* Title */}
-                        <h3 className="text-[10px] font-bold leading-4 text-[#0A1F66] sm:text-[11px]">
-                          {service.title}
-                        </h3>
-
-                        {/* Description */}
-                        <p className="mt-1 line-clamp-2 text-[8px] leading-3.5 text-slate-500 sm:text-[9px] sm:leading-4">
-                          {service.description}
-                        </p>
-                      </div>
+                      <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                        {service.description}
+                      </p>
                     </div>
                   );
                 })}
@@ -265,87 +258,81 @@ export default function Hero() {
         {/* =============================================================
             BOTTOM BUSINESS ECOSYSTEM BAR
         ============================================================= */}
-        <div className="relative z-20 mb-8 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:mb-10 sm:rounded-3xl lg:mb-14">
-  <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))]">
+        <div className="relative z-20 mb-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-sm sm:mb-10 sm:rounded-3xl lg:mb-14 backdrop-blur-md">
+          <div className="grid grid-cols-2 lg:grid-cols-[1.3fr_repeat(4,minmax(0,1fr))]">
+            {/* Intro */}
+            <div className="col-span-2 flex min-w-0 items-center px-5 py-5 sm:px-7 sm:py-6 lg:col-span-1">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#1E5BFF]">
+                  THE i-VANTAGE ADVANTAGE
+                </p>
+                <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-800 sm:text-sm">
+                  Complete commercial ecosystem for startups, consultants & enterprises.
+                </p>
+              </div>
+            </div>
 
-    {/* Intro */}
-    <div className="col-span-2 flex min-w-0 items-center px-5 py-5 sm:px-7 sm:py-6 lg:col-span-1">
-      <p className="max-w-md text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-6">
-        A complete business ecosystem for founders, startups,
-        professionals and growing businesses.
-      </p>
-    </div>
+            {/* Business Services */}
+            <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6 lg:border-l lg:border-t-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs">
+                <Users size={19} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-none text-[#1E5BFF]">
+                  100+
+                </p>
+                <p className="mt-1 text-[10px] font-semibold leading-3 text-slate-600">
+                  Business Desks
+                </p>
+              </div>
+            </div>
 
-    {/* Business Services */}
-    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-        <Users size={19} />
-      </div>
+            {/* Hub */}
+            <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6 lg:border-l lg:border-t-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs">
+                <MapPin size={19} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-none text-[#0A1F66]">
+                  Welldone
+                </p>
+                <p className="mt-1 text-[10px] font-semibold leading-3 text-slate-600">
+                  Sector 48 Flagship
+                </p>
+              </div>
+            </div>
 
-      <div className="min-w-0">
-        <p className="text-lg font-extrabold leading-none text-[#1E5BFF] sm:text-xl">
-          100+
-        </p>
+            {/* Growth */}
+            <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6 lg:border-l lg:border-t-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-[#D97706] border border-amber-100/60 shadow-2xs">
+                <Sparkles size={19} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-none text-[#0A1F66]">
+                  Zero
+                </p>
+                <p className="mt-1 text-[10px] font-semibold leading-3 text-slate-600">
+                  Brokerage Direct
+                </p>
+              </div>
+            </div>
 
-        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
-          Business Support Services
-        </p>
-      </div>
-    </div>
-
-    {/* Hub */}
-    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1E5BFF] sm:h-10 sm:w-10">
-        <MapPin size={19} />
-      </div>
-
-      <div className="min-w-0">
-        <p className="whitespace-nowrap text-lg font-extrabold leading-none text-[#0A1F66] sm:text-xl">
-          1 Hub
-        </p>
-
-        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
-          Multiple Solutions
-        </p>
-      </div>
-    </div>
-
-    {/* Growth */}
-    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-500 sm:h-10 sm:w-10">
-        <Trophy size={19} />
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-sm font-extrabold leading-none text-[#0A1F66] sm:text-base">
-          Your Growth
-        </p>
-
-        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
-          Our Mission
-        </p>
-      </div>
-    </div>
-
-    {/* Trusted */}
-    <div className="flex min-w-0 items-center gap-2.5 border-t border-slate-100 px-4 py-5 sm:gap-3 sm:px-6 lg:border-l lg:border-t-0">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 sm:h-10 sm:w-10">
-        <ShieldCheck size={19} />
-      </div>
-
-      <div className="min-w-0">
-        <p className="whitespace-nowrap text-lg font-extrabold leading-none text-green-600 sm:text-xl">
-          Trusted
-        </p>
-
-        <p className="mt-1 text-[9px] font-medium leading-3 text-slate-500 sm:text-[10px] sm:leading-4">
-          Built for Growth
-        </p>
-      </div>
-    </div>
-
-  </div>
-</div>
+            {/* Trusted */}
+            <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6 lg:border-l lg:border-t-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-2xs">
+                <ShieldCheck size={19} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-black leading-none text-emerald-600">
+                  1-Hour
+                </p>
+                <p className="mt-1 text-[10px] font-semibold leading-3 text-slate-600">
+                  Response SLA
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         <LeadForm
           open={isLeadFormOpen}
           services={selectedServices}

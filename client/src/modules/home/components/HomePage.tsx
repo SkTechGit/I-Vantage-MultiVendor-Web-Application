@@ -7,7 +7,7 @@ import CTASection from "./Ctasection";
 import { HomePageProps } from "../home.types";
 import WorkspaceShowcase from "./WorkspaceShowcase";
 import CategoryMarquee from "./CategoryMarquee";
-
+import CoworkingLocationsSection from "./CoworkingLocationsSection";
 
 export default function HomePage({
   categories,
@@ -17,19 +17,15 @@ export default function HomePage({
     <>
       <Hero />
       <CategoryMarquee categories={categories} />
-
-
- <HowItWorks />
+      <CoworkingLocationsSection />
+      <HowItWorks />
       <ServicesSection
-  categories={categories}
-  services={services}
-/>
-
-     
-     <WorkspaceShowcase />
+        categories={categories}
+        services={services}
+      />
+      <WorkspaceShowcase />
       <WhyChooseUs />
-
       <CTASection />
     </>
   );
-}
+}

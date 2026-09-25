@@ -1,127 +1,122 @@
 import Container from "@/components/common/Container";
 import WorkspaceGallery from "@/components/common/WorkspaceGallery";
+import { Sparkles, MapPin, Building2, Coffee } from "lucide-react";
 
-import { conferenceImages, coworkingImages, receptionImages, pantryImages } from "@/data/workspace-gallery";
+import {
+  conferenceImages,
+  coworkingImages,
+  receptionImages,
+  pantryImages,
+} from "@/data/workspace-gallery";
 
 export default function WorkspaceShowcase() {
   return (
-    <section className="overflow-hidden py-16 sm:py-20 lg:py-28">
+    <section className="relative overflow-hidden py-20 sm:py-28 bg-gradient-to-b from-white via-slate-50/40 to-white border-t border-slate-100">
       <Container>
-        {/* =====================================================
-            SECTION HEADER
-        ===================================================== */}
-        <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
-          <p className="text-xs font-semibold tracking-[0.2em] text-[#1E5BFF] sm:text-sm">
-            i-VANTAGE Business Hub
-          </p>
+        {/* Section Header */}
+        <div className="mx-auto mb-14 max-w-3xl text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-blue-50 border border-blue-100 text-[#0A1F66] uppercase tracking-wider shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+            <span>Infrastructure & Architectural Excellence</span>
+          </div>
 
-          <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-[#0A1F66] sm:text-2xl md:text-4xl">
-            Spaces Designed for
-            <span className="block text-[#1E5BFF]">
-              Business & Growth
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
+            Spaces Engineered for{" "}
+            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+              Focus & High Growth
             </span>
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-5 sm:text-base sm:leading-7">
-            Explore our professionally designed workspaces, meeting
-            rooms and business amenities built to help you work,
-            connect and grow.
+          <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600">
+            Tour our flagship physical hub at Welldone Tech Park, Sector 48 Gurugram, equipped with ergonomic workstations, high-tech AV meeting suites, and executive reception.
           </p>
         </div>
 
-        {/* =====================================================
-            CONFERENCE ROOMS
-        ===================================================== */}
-        <div>
-          <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E5BFF]">
-                Meeting Spaces
-              </p>
-
-              <h3 className="mt-2 text-xl font-bold text-[#0A1F66] sm:text-2xl lg:text-3xl">
-                Conference & Meeting Rooms
+        {/* Conference Rooms Section */}
+        <div className="mb-20 sm:mb-24">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-slate-200/80">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#1E5BFF]">
+                <Building2 className="w-3.5 h-3.5" /> Meeting & Collaboration
+              </div>
+              <h3 className="mt-1.5 text-xl font-black text-[#0A1F66] sm:text-2xl lg:text-3xl">
+                Conference & Boardroom Suites
               </h3>
-
-              <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                Professional meeting spaces for presentations,
-                discussions, client meetings and team collaboration.
-              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full w-fit">
+              <MapPin className="w-3.5 h-3.5 text-[#F4A900]" />
+              <span>Welldone Tech Park, Gurugram</span>
             </div>
           </div>
 
           <WorkspaceGallery images={conferenceImages} />
         </div>
 
-        {/* =====================================================
-            COWORKING
-        ===================================================== */}
-        <div className="mt-20 sm:mt-24 lg:mt-32">
-          <div className="mb-6 max-w-2xl sm:mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E5BFF]">
-              Flexible Workspace
-            </p>
-
-            <h3 className="mt-2 text-xl font-bold text-[#0A1F66] sm:text-2xl lg:text-3xl">
-              Open Seats & Coworking
-            </h3>
-
-            <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-              Plug-and-play workstations designed for professionals,
-              freelancers, startups and growing teams.
-            </p>
+        {/* Coworking & Open Seats Section */}
+        <div className="mb-20 sm:mb-24">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-slate-200/80">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#1E5BFF]">
+                <Building2 className="w-3.5 h-3.5" /> High-Performance Workspaces
+              </div>
+              <h3 className="mt-1.5 text-xl font-black text-[#0A1F66] sm:text-2xl lg:text-3xl">
+                Open Desks & Private Team Cabins
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full w-fit">
+              <span>Ergonomic Seating & 1 Gbps Leased Fiber</span>
+            </div>
           </div>
 
           <WorkspaceGallery images={coworkingImages} />
         </div>
 
-        {/* =====================================================
-            AMENITIES
-        ===================================================== */}
-        <div className="mt-20 sm:mt-24 lg:mt-32">
-          <div className="mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1E5BFF]">
-              More Than Workspace
-            </p>
-
-            <h3 className="mt-2 text-xl font-bold text-[#0A1F66] sm:text-2xl lg:text-3xl">
-              Designed Around Your Business
+        {/* Hospitality & Amenities Section */}
+        <div>
+          <div className="mb-8 text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#1E5BFF]">
+              <Coffee className="w-3.5 h-3.5 text-[#F4A900]" /> Hospitality & Comfort
+            </div>
+            <h3 className="text-xl font-black text-[#0A1F66] sm:text-2xl lg:text-3xl">
+              World-Class Front-Office Experience
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Reception */}
-            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-              <div className="p-3 sm:p-4">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300">
+              <div className="p-4 sm:p-5">
                 <WorkspaceGallery images={receptionImages} />
               </div>
 
-              <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+              <div className="px-6 pb-6">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-blue-50 text-[11px] font-bold text-[#1E5BFF] mb-2">
+                  Branded Reception
+                </div>
                 <h4 className="text-lg font-bold text-[#0A1F66]">
-                  Reception & Lounge
+                  Executive Reception & Concierge Lounge
                 </h4>
-
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  A professional reception and comfortable lounge
-                  area for welcoming clients and visitors.
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  A front office that reflects credibility. Welcome guests, investors, and clients with professional concierge receptionists and stylish waiting lounges.
                 </p>
               </div>
             </div>
 
             {/* Pantry */}
-            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-              <div className="p-3 sm:p-4">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300">
+              <div className="p-4 sm:p-5">
                 <WorkspaceGallery images={pantryImages} />
               </div>
 
-              <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+              <div className="px-6 pb-6">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-amber-50 text-[11px] font-bold text-[#B45309] mb-2">
+                  Beverages & Refreshments
+                </div>
                 <h4 className="text-lg font-bold text-[#0A1F66]">
-                  Premium Pantry
+                  Cafeteria & Artisan Pantry
                 </h4>
-
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  A clean and comfortable common area where you can
-                  take a break, refresh and connect.
+                <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600">
+                  Fully stocked pantry with gourmet coffee machines, purified water, refrigerator, microwave, and breakout areas for rejuvenation.
                 </p>
               </div>
             </div>

@@ -1,8 +1,10 @@
 import crypto from "crypto";
+import mongoose from "mongoose";
 import Auth from "./auth.model.js";
 import AdminInvitation from "./admin-invitation.model.js";
 import AuditLog from "./audit-log.model.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
+import { realtimeHub } from "../realtime/realtime.hub.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -366,6 +368,18 @@ export const createInvitation = async ({ email, role = "admin", adminId }) => {
     metadata: { role, invitationId: invitation._id },
   }).catch((err) => console.error("Audit log error:", err));
 
+  try {
+    realtimeHub.broadcast("team", "TEAM_INVITATION_UPDATED", {
+      invitationId: invitation._id.toString(),
+      email: normalizedEmail,
+      role: invitation.role,
+      status: invitation.status,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
   return {
     rawToken,
     invitation: {
@@ -395,6 +409,17 @@ export const revokeInvitation = async (invitationId, adminId) => {
 
   invitation.status = "revoked";
   await invitation.save();
+
+  try {
+    realtimeHub.broadcast("team", "TEAM_INVITATION_UPDATED", {
+      invitationId: invitation._id.toString(),
+      email: invitation.email,
+      status: "revoked",
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
 
   return invitation;
 };
@@ -434,6 +459,19 @@ export const approveAccessRequest = async (userId, role = "admin", adminId) => {
     metadata: { assignedRole: role },
   }).catch((err) => console.error("Audit log error:", err));
 
+  try {
+    realtimeHub.broadcast("team", "TEAM_REQUEST_UPDATED", {
+      userId: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      status: "active",
+      role,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
   user.password = undefined;
   return user;
 };
@@ -459,6 +497,17 @@ export const rejectAccessRequest = async (userId, adminId) => {
     targetUser: user._id,
   }).catch((err) => console.error("Audit log error:", err));
 
+  try {
+    realtimeHub.broadcast("team", "TEAM_REQUEST_UPDATED", {
+      userId: user._id.toString(),
+      email: user.email,
+      status: "rejected",
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
   user.password = undefined;
   return user;
 };
@@ -468,4 +517,260 @@ export const getTeamMembers = async () => {
     .select("fullName email role status isActive lastLogin createdAt")
     .sort({ createdAt: -1 })
     .lean();
+};
+
+export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
+  const allowedRoles = ["super_admin", "admin", "vendor", "user", "editor"];
+  if (!allowedRoles.includes(newRole)) {
+    throw new ApiError(
+      400,
+      `Invalid role specified. Must be one of: ${allowedRoles.join(", ")}`
+    );
+  }
+
+  // Prevent self-demotion or self-lockout
+  const adminIdStr = (adminUser?._id || adminUser?.id || "").toString();
+  if (targetUserId.toString() === adminIdStr) {
+    throw new ApiError(
+      400,
+      "You cannot modify your own role to prevent system lockout."
+    );
+  }
+
+  const user = await Auth.findById(targetUserId);
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  const previousRole = user.role;
+  user.role = newRole;
+  await user.save();
+
+  // Dual-collection synchronization with marketplace_users
+  const normalizedEmail = user.email.toLowerCase().trim();
+  const marketplaceRole =
+    newRole === "super_admin"
+      ? "superadmin"
+      : newRole === "admin" || newRole === "vendor"
+      ? "vendor"
+      : "user";
+
+  try {
+    const marketCol = mongoose.connection.db?.collection("marketplace_users");
+    if (marketCol) {
+      await marketCol.updateOne(
+        { email: normalizedEmail },
+        {
+          $set: {
+            role: marketplaceRole,
+            updatedAt: new Date(),
+          },
+        }
+      );
+    }
+  } catch (syncErr) {
+    console.error("Marketplace users synchronization error:", syncErr);
+  }
+
+  // Audit log entry
+  await AuditLog.create({
+    action: "member_role_changed",
+    performedBy: adminUser._id,
+    targetEmail: user.email,
+    targetUser: user._id,
+    metadata: {
+      previousRole,
+      newRole,
+      marketplaceRole,
+    },
+  }).catch((err) => console.error("Audit log error:", err));
+
+  // Real-time live synchronization broadcast
+  try {
+    realtimeHub.broadcast("team", "TEAM_MEMBER_ROLE_CHANGED", {
+      memberId: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      previousRole,
+      newRole,
+      marketplaceRole,
+      updatedBy: adminUser?.email || "Admin",
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
+  user.password = undefined;
+  return user;
+};
+
+export const toggleMemberStatus = async (targetUserId, isActive, adminUser) => {
+  // Prevent self-lockout
+  const adminIdStr = (adminUser?._id || adminUser?.id || "").toString();
+  const adminEmail = (adminUser?.email || "").toLowerCase().trim();
+
+  if (targetUserId.toString() === adminIdStr) {
+    throw new ApiError(
+      400,
+      "You cannot modify your own active status to prevent system lockout."
+    );
+  }
+
+  const user = await Auth.findById(targetUserId);
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  if (user.email.toLowerCase().trim() === adminEmail) {
+    throw new ApiError(
+      400,
+      "You cannot modify your own active status to prevent system lockout."
+    );
+  }
+
+  const previousStatus = user.status;
+  const previousIsActive = user.isActive;
+
+  const newStatus = isActive ? "active" : "suspended";
+  user.isActive = Boolean(isActive);
+  user.status = newStatus;
+  await user.save();
+
+  // Dual-collection synchronization with marketplace_users
+  const normalizedEmail = user.email.toLowerCase().trim();
+  try {
+    const marketCol = mongoose.connection.db?.collection("marketplace_users");
+    if (marketCol) {
+      await marketCol.updateOne(
+        { email: normalizedEmail },
+        {
+          $set: {
+            status: newStatus,
+            updatedAt: new Date(),
+          },
+        }
+      );
+    }
+  } catch (syncErr) {
+    console.error("Marketplace users synchronization error:", syncErr);
+  }
+
+  // Audit log entry
+  await AuditLog.create({
+    action: "member_status_toggled",
+    performedBy: adminUser._id,
+    targetEmail: user.email,
+    targetUser: user._id,
+    metadata: {
+      previousStatus,
+      previousIsActive,
+      newStatus,
+      isActive: Boolean(isActive),
+    },
+  }).catch((err) => console.error("Audit log error:", err));
+
+  // Real-time live synchronization broadcast
+  try {
+    realtimeHub.broadcast("team", "TEAM_MEMBER_STATUS_CHANGED", {
+      memberId: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      status: newStatus,
+      isActive: Boolean(isActive),
+      previousStatus,
+      updatedBy: adminUser?.email || "Admin",
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
+  user.password = undefined;
+  return user;
+};
+
+export const deleteTeamMember = async (targetUserId, adminUser) => {
+  // Prevent self-deletion / self-lockout
+  const adminIdStr = (adminUser?._id || adminUser?.id || "").toString();
+  const adminEmail = (adminUser?.email || "").toLowerCase().trim();
+
+  if (targetUserId.toString() === adminIdStr) {
+    throw new ApiError(
+      400,
+      "You cannot delete your own account to prevent system lockout."
+    );
+  }
+
+  const user = await Auth.findById(targetUserId);
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  if (user.email.toLowerCase().trim() === adminEmail) {
+    throw new ApiError(
+      400,
+      "You cannot delete your own account to prevent system lockout."
+    );
+  }
+
+  const userEmail = user.email.toLowerCase().trim();
+  const deletedUserData = {
+    _id: user._id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
+  };
+
+  // 1. Delete from Auth collection
+  await Auth.findByIdAndDelete(targetUserId);
+
+  // 2. Dual-collection synchronization: delete from marketplace_users
+  try {
+    const marketCol = mongoose.connection.db?.collection("marketplace_users");
+    if (marketCol) {
+      await marketCol.deleteOne({ email: userEmail });
+    }
+  } catch (syncErr) {
+    console.error("Marketplace users deletion error:", syncErr);
+  }
+
+  // 3. Clean up invitations for this email if any
+  try {
+    const invCol = mongoose.connection.db?.collection("invitations");
+    if (invCol) {
+      await invCol.deleteMany({ email: userEmail });
+    }
+  } catch (invErr) {
+    console.error("Invitation cleanup error:", invErr);
+  }
+
+  // 4. Audit log entry
+  await AuditLog.create({
+    action: "member_deleted",
+    performedBy: adminUser._id,
+    targetEmail: user.email,
+    targetUser: user._id,
+    metadata: {
+      deletedMember: deletedUserData,
+    },
+  }).catch((err) => console.error("Audit log error:", err));
+
+  // Real-time live synchronization broadcast
+  try {
+    realtimeHub.broadcast("team", "TEAM_MEMBER_DELETED", {
+      memberId: targetUserId.toString(),
+      email: userEmail,
+      fullName: user.fullName,
+      deletedBy: adminUser?.email || "Admin",
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime broadcast error:", rtErr);
+  }
+
+  return {
+    message: "Member successfully removed from team and access.",
+    deletedUser: deletedUserData,
+  };
 };

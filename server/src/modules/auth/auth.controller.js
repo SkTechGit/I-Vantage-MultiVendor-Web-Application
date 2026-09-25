@@ -4,6 +4,8 @@ import {
   signupSchema,
   createInviteSchema,
   approveRequestSchema,
+  updateRoleSchema,
+  toggleStatusSchema,
 } from "./auth.validation.js";
 import { AUTH_MESSAGES, AUTH_COOKIE } from "./auth.constants.js";
 import { setAuthCookies, clearAuthCookies } from "../../utils/cookie.js";
@@ -240,6 +242,62 @@ export const getTeamMembers = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/v1/auth/team/members/:id/role
+ */
+export const updateMemberRole = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = updateRoleSchema.parse(req.body);
+    const user = await authService.updateMemberRole(id, role, req.user);
+
+    res.status(200).json({
+      success: true,
+      message: `Role updated to ${role} successfully.`,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/v1/auth/team/members/:id/status
+ */
+export const toggleMemberStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = toggleStatusSchema.parse(req.body);
+    const user = await authService.toggleMemberStatus(id, isActive, req.user);
+
+    res.status(200).json({
+      success: true,
+      message: `Member status updated to ${isActive ? "active" : "suspended"} successfully.`,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/v1/auth/team/members/:id
+ */
+export const deleteTeamMember = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await authService.deleteTeamMember(id, req.user);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.deletedUser,
     });
   } catch (error) {
     next(error);

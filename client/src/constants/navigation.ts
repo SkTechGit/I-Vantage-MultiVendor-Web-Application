@@ -4,6 +4,10 @@ export const NAVIGATION = [
     href: "/",
   },
   {
+    label: "Coworking Spaces",
+    href: "/gurugram",
+  },
+  {
     label: "About",
     href: "/about",
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -17,20 +17,30 @@ import {
   TrendingUp,
   Globe,
   Loader2,
+  RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { Blog, BlogCategory, BlogStats, BlogStatus } from "@/modules/blog/blog.types";
-import { deleteBlog, updateBlogStatus } from "@/modules/blog/blog.api";
+import {
+  deleteBlog,
+  updateBlogStatus,
+  resetBlogViews,
+} from "@/modules/blog/blog.api";
 
 interface Props {
   initialBlogs: Blog[];
   initialStats: BlogStats;
   categories: BlogCategory[];
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export default function BlogTable({
   initialBlogs,
   initialStats,
   categories,
+  onRefresh,
+  isRefreshing,
 }: Props) {
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [stats, setStats] = useState<BlogStats>(initialStats);
@@ -39,6 +49,15 @@ export default function BlogTable({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Synchronize state when revalidated or refreshed
+  useEffect(() => {
+    setBlogs(initialBlogs);
+  }, [initialBlogs]);
+
+  useEffect(() => {
+    setStats(initialStats);
+  }, [initialStats]);
 
   // Client filtering
   const filteredBlogs = blogs.filter((b) => {
@@ -54,28 +73,56 @@ export default function BlogTable({
   });
 
   const handleStatusChange = async (id: string, newStatus: BlogStatus) => {
-    setActionLoading(id);
-    try {
-      const updated = await updateBlogStatus(id, newStatus);
-      setBlogs((prev) =>
-        prev.map((b) => (b._id === id ? { ...b, status: updated.status } : b))
-      );
+    const previousBlog = blogs.find((b) => b._id === id);
+    if (!previousBlog) return;
+    const oldStatus = previousBlog.status;
+    if (oldStatus === newStatus) return;
 
-      // Recalculate stats
+    setActionLoading(id);
+
+    // Optimistic state update
+    setBlogs((prev) =>
+      prev.map((b) => (b._id === id ? { ...b, status: newStatus } : b))
+    );
+    setStats((prev) => ({
+      ...prev,
+      published:
+        newStatus === "published"
+          ? prev.published + 1
+          : oldStatus === "published"
+          ? prev.published - 1
+          : prev.published,
+      drafts:
+        newStatus === "draft"
+          ? prev.drafts + 1
+          : oldStatus === "draft"
+          ? prev.drafts - 1
+          : prev.drafts,
+    }));
+
+    try {
+      await updateBlogStatus(id, newStatus);
+      toast.success(`Article marked as ${newStatus}`);
+    } catch (err: unknown) {
+      // Revert on failure
+      setBlogs((prev) =>
+        prev.map((b) => (b._id === id ? { ...b, status: oldStatus } : b))
+      );
       setStats((prev) => ({
         ...prev,
         published:
-          newStatus === "published"
+          oldStatus === "published"
             ? prev.published + 1
-            : prev.published - (blogs.find((b) => b._id === id)?.status === "published" ? 1 : 0),
+            : newStatus === "published"
+            ? prev.published - 1
+            : prev.published,
         drafts:
-          newStatus === "draft"
+          oldStatus === "draft"
             ? prev.drafts + 1
-            : prev.drafts - (blogs.find((b) => b._id === id)?.status === "draft" ? 1 : 0),
+            : newStatus === "draft"
+            ? prev.drafts - 1
+            : prev.drafts,
       }));
-
-      toast.success(`Article marked as ${newStatus}`);
-    } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to update status";
       toast.error(message);
@@ -95,6 +142,25 @@ export default function BlogTable({
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to delete blog";
+      toast.error(message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleResetViews = async (id: string, title: string) => {
+    if (!confirm(`Reset views count to 0 for "${title}"?`)) return;
+    setActionLoading(id);
+    try {
+      const updated = await resetBlogViews(id);
+      setBlogs((prev) =>
+        prev.map((b) => (b._id === id ? { ...b, viewsCount: updated.viewsCount } : b))
+      );
+      toast.success("Views count reset to 0");
+      onRefresh?.();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to reset views";
       toast.error(message);
     } finally {
       setActionLoading(null);
@@ -148,6 +214,20 @@ export default function BlogTable({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onRefresh?.()}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-60"
+            title="Refresh views and articles live"
+          >
+            <RefreshCw
+              size={15}
+              className={isRefreshing ? "animate-spin text-[#1E5BFF]" : "text-slate-500"}
+            />
+            <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
+          </button>
+
           <Link
             href="/admin/blogs/new"
             className="inline-flex items-center gap-2 rounded-xl bg-[#1E5BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1546CC]"
@@ -342,6 +422,17 @@ export default function BlogTable({
                         <Pencil size={16} />
                       </Link>
 
+                      {/* Reset Views Button (for testing) */}
+                      <button
+                        type="button"
+                        onClick={() => handleResetViews(blog._id, blog.title)}
+                        disabled={actionLoading === blog._id}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+                        title="Reset Views (Testing)"
+                      >
+                        <RotateCcw size={15} />
+                      </button>
+
                       {/* Quick Publish / Unpublish Toggle */}
                       {blog.status === "draft" && (
                         <button
@@ -439,6 +530,14 @@ export default function BlogTable({
                   >
                     <Pencil size={14} />
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleResetViews(blog._id, blog.title)}
+                    className="rounded-lg bg-amber-50 p-2 text-amber-600"
+                    title="Reset Views"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmId(blog._id)}

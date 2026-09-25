@@ -72,3 +72,22 @@ export const rejectAccessRequest = async (id: string) => {
   const { data } = await axiosInstance.post(`/auth/team/requests/${id}/reject`);
   return data;
 };
+
+export const updateMemberRole = async (id: string, role: string) => {
+  const { data } = await axiosInstance.patch(`/auth/team/members/${id}/role`, {
+    role,
+  });
+  return data;
+};
+
+export const toggleMemberStatus = async (id: string, isActive: boolean) => {
+  const { data } = await axiosInstance.patch(`/auth/team/members/${id}/status`, {
+    isActive,
+  });
+  return data;
+};
+
+export const deleteTeamMember = async (id: string) => {
+  const { data } = await axiosInstance.delete(`/auth/team/members/${id}`);
+  return data;
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   FolderOpen,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeEvent } from "@/context/RealtimeContext";
 import { getDashboard } from "../admin.api";
 import { DashboardStats } from "../admin.types";
 import StatCard from "./StatCard";
@@ -25,24 +26,25 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<DashboardStats | null>(null);
 
-  const fetchDashboard = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) {
+  const fetchDashboard = useCallback(async (mode: 'initial' | 'manual' | 'silent' = 'initial') => {
+    if (mode === 'manual') {
       setRefreshing(true);
-    } else {
+    } else if (mode === 'initial') {
       setLoading(true);
     }
+    // 'silent' mode: no loading state change at all
     setError(null);
 
     try {
       const data = await getDashboard();
       setDashboard(data);
-      if (isManualRefresh) {
+      if (mode === 'manual') {
         toast.success("Dashboard metrics updated.");
       }
     } catch (err: unknown) {
       console.error(err);
       setError("Unable to retrieve dashboard metrics. Please check connection.");
-      if (isManualRefresh) {
+      if (mode === 'manual') {
         toast.error("Failed to refresh dashboard.");
       }
     } finally {
@@ -55,7 +57,21 @@ export default function Dashboard() {
     fetchDashboard();
   }, [fetchDashboard]);
 
-  const userDisplayName = user?.fullName || "Admin";
+  // Debounced silent refetch for real-time events (prevents rapid cascade)
+  const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const silentRefresh = useCallback(() => {
+    if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
+    refetchTimerRef.current = setTimeout(() => {
+      fetchDashboard('silent');
+    }, 500);
+  }, [fetchDashboard]);
+
+  useRealtimeEvent("leads", silentRefresh);
+  useRealtimeEvent("listings", silentRefresh);
+  useRealtimeEvent("blogs", silentRefresh);
+  useRealtimeEvent("team", silentRefresh);
+
+  const userDisplayName = user?.fullName || user?.name || "Admin";
 
   /* =========================================================
      LOADING SKELETON STATE (Zero Layout Shift)
@@ -120,7 +136,7 @@ export default function Dashboard() {
         </div>
         <button
           type="button"
-          onClick={() => fetchDashboard(true)}
+          onClick={() => fetchDashboard('manual')}
           className="inline-flex items-center gap-2 rounded-xl bg-[#2563EB] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
         >
           <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
@@ -142,7 +158,7 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-500">
-            Welcome back, <span className="font-semibold text-slate-700">{userDisplayName}</span>. Here is your enterprise operations overview.
+            Welcome back, <span className="font-semibold text-slate-700" suppressHydrationWarning>{userDisplayName}</span>. Here is your enterprise operations overview.
           </p>
         </div>
 
@@ -150,7 +166,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
             type="button"
-            onClick={() => fetchDashboard(true)}
+            onClick={() => fetchDashboard('manual')}
             disabled={refreshing}
             title="Refresh dashboard metrics"
             className="inline-flex h-9 sm:h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:border-slate-300 active:scale-95 disabled:opacity-60"

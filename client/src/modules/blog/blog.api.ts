@@ -156,3 +156,15 @@ export const uploadBlogMedia = async (
 
   return data.data;
 };
+
+export const trackBlogView = async (
+  slug: string
+): Promise<{ viewsCount: number; incremented: boolean }> => {
+  const { data } = await axiosInstance.post(`/blogs/article/${slug}/view`);
+  return data.data;
+};
+
+export const resetBlogViews = async (id: string): Promise<Blog> => {
+  const { data } = await axiosInstance.post(`/blogs/admin/reset-views/${id}`);
+  return data.data;
+};

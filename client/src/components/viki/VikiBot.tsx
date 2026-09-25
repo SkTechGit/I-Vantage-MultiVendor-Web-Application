@@ -3,14 +3,14 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
-  Bot,
   ChevronDown,
+  RotateCcw,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
 
 import { useVikiChat } from "@/hooks/useVikiChat";
+import VikiIcon from "./VikiIcon";
 import VikiMessage from "./VikiMessage";
 import "./viki-motion.css";
 
@@ -427,7 +427,7 @@ export default function VikiBot() {
                   sm:w-10
                 "
               >
-                <Bot
+                <VikiIcon
                   size={19}
                   className="text-[#0759D9] sm:h-[21px] sm:w-[21px]"
                 />
@@ -573,7 +573,7 @@ export default function VikiBot() {
           {/* Subtle pulse ring */}
           <span className="absolute inset-0 rounded-full bg-[#0759D9]/20 animate-ping opacity-30" style={{ animationDuration: "3s" }} />
 
-          <Bot size={22} className="relative z-10 sm:h-[24px] sm:w-[24px]" />
+          <VikiIcon size={22} className="relative z-10 text-white sm:h-[24px] sm:w-[24px]" />
         </button>
       )}
 
@@ -682,7 +682,7 @@ export default function VikiBot() {
                     ${chatStatus === "opening" ? "viki-header-avatar-enter" : ""}
                   `}
                 >
-                  <Bot
+                  <VikiIcon
                     size={21}
                     className="text-[#0759D9] sm:h-[25px] sm:w-[25px]"
                   />
@@ -747,7 +747,7 @@ export default function VikiBot() {
                   aria-label="Clear conversation"
                   title="New conversation"
                 >
-                  <Sparkles size={16} className="sm:h-[17px] sm:w-[17px]" />
+                  <RotateCcw size={16} className="sm:h-[17px] sm:w-[17px]" />
                 </button>
 
                 <button
@@ -817,8 +817,8 @@ export default function VikiBot() {
                       ${chatStatus === "opening" ? "viki-welcome-avatar-enter" : ""}
                     `}
                   >
-                    <Bot
-                      size={25}
+                    <VikiIcon
+                      size={28}
                       className="text-[#0759D9] sm:h-8 sm:w-8"
                     />
                   </div>
@@ -836,88 +836,94 @@ export default function VikiBot() {
                 </div>
 
                 {/* Quick Actions */}
-                <div
-                  className="
-                    grid
-                    grid-cols-1
-                    gap-2
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Popular Inquiries
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#1E5BFF]">
+                      1-Tap Answers
+                    </span>
+                  </div>
 
-                    sm:block
-                    sm:space-y-2.5
-                  "
-                >
-                  {QUICK_ACTIONS.map(
-                    (action, index) => (
+                  <div className="space-y-2">
+                    {QUICK_ACTIONS.map((action, index) => (
                       <button
                         key={action.label}
                         type="button"
                         onClick={() =>
-                          handleQuickAction(
-                            action.question
-                          )
+                          handleQuickAction(action.question)
                         }
                         disabled={isLoading}
                         style={{ "--card-index": index } as React.CSSProperties}
                         className={`
+                          group
                           flex
-                          min-h-[42px]
+                          min-h-[44px]
                           w-full
                           items-center
                           justify-between
-                          rounded-xl
+                          rounded-2xl
                           border
-                          border-[#DCE6F7]
+                          border-blue-100/90
                           bg-white
-                          px-3
+                          px-3.5
                           py-2.5
                           text-left
                           text-xs
-                          font-medium
+                          font-semibold
                           text-[#071F66]
-                          transition
-
-                          hover:border-[#0759D9]
-                          hover:bg-blue-50
-
+                          shadow-[0_2px_8px_rgba(10,31,102,0.03)]
+                          transition-all
+                          duration-200
+                          hover:border-[#1E5BFF]/60
+                          hover:bg-gradient-to-r
+                          hover:from-blue-50/90
+                          hover:via-indigo-50/50
+                          hover:to-white
+                          hover:shadow-[0_4px_16px_rgba(30,91,255,0.12)]
+                          hover:-translate-y-0.5
+                          active:translate-y-0
+                          active:scale-[0.99]
                           disabled:cursor-not-allowed
                           disabled:opacity-60
-
-                          sm:px-4
-                          sm:py-3
-                          sm:text-sm
+                          cursor-pointer
                           ${chatStatus === "opening" ? "viki-card-stagger" : ""}
                         `}
                       >
-                        <span className="pr-2">
-                          {action.label}
-                        </span>
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-100/80 flex items-center justify-center text-[#1E5BFF] shrink-0 group-hover:bg-[#1E5BFF] group-hover:text-white group-hover:border-[#1E5BFF] transition-all duration-200">
+                            <span className="text-[10px] font-bold">
+                              0{index + 1}
+                            </span>
+                          </div>
+                          <span className="truncate pr-2 font-medium text-slate-700 group-hover:text-[#071F66]">
+                            {action.label}
+                          </span>
+                        </div>
 
-                        <ChevronDown
-                          size={15}
-                          className="
-                            shrink-0
-                            -rotate-90
-                            text-[#0759D9]
-
-                            sm:h-4
-                            sm:w-4
-                          "
-                        />
+                        <div className="w-6 h-6 rounded-lg bg-slate-50 group-hover:bg-[#1E5BFF] flex items-center justify-center text-slate-400 group-hover:text-white shrink-0 transition-all duration-200">
+                          <ChevronDown
+                            size={14}
+                            className="-rotate-90 group-hover:translate-x-0.5 transition-transform"
+                          />
+                        </div>
                       </button>
-                    )
-                  )}
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">
-                {messages.map(
-                  (message) => (
-                    <VikiMessage
-                      key={message.id}
-                      message={message}
-                    />
-                  )
-                )}
+                {messages.map((message, index) => (
+                  <VikiMessage
+                    key={message.id}
+                    message={message}
+                    isLatest={index === messages.length - 1}
+                    isLoading={isLoading}
+                    onSelectSuggestion={handleQuickAction}
+                  />
+                ))}
 
                 {/* Loading indicator */}
                 {isLoading && (

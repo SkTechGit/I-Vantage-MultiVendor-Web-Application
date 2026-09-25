@@ -13,6 +13,9 @@ import {
   approveAccessRequest,
   rejectAccessRequest,
   getTeamMembers,
+  updateMemberRole,
+  toggleMemberStatus,
+  deleteTeamMember,
 } from "./auth.controller.js";
 import { authenticate, authorize } from "./auth.middleware.js";
 
@@ -41,8 +44,12 @@ router.get("/me", authenticate, me);
 
 // Only super_admin and admin can manage team access and invitations
 const adminOnly = [authenticate, authorize(["super_admin", "admin"])];
+const superAdminOnly = [authenticate, authorize(["super_admin"])];
 
 router.get("/team/members", adminOnly, getTeamMembers);
+router.patch("/team/members/:id/role", superAdminOnly, updateMemberRole);
+router.patch("/team/members/:id/status", superAdminOnly, toggleMemberStatus);
+router.delete("/team/members/:id", superAdminOnly, deleteTeamMember);
 router.post("/team/invite", adminOnly, createInvitation);
 router.get("/team/invitations", adminOnly, getInvitations);
 router.post("/team/invitations/:id/revoke", adminOnly, revokeInvitation);

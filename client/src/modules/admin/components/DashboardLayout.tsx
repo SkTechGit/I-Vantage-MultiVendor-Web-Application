@@ -92,6 +92,8 @@ export default function DashboardLayout({ children }: Props) {
         <Header
           onOpenMobileSidebar={() => setMobileDrawerOpen(true)}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         />
 
         {/* Main Content Area */}

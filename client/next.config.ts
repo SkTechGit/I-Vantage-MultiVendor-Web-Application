@@ -1,13 +1,18 @@
 
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   allowedDevOrigins: [
     "localhost",
     "127.0.0.1",
     "192.168.1.4",
     "192.168.1.5",
     "192.168.1.7",
+    "192.168.8.41",
     "*.trycloudflare.com",
     "roll-weblog-trademark-label.trycloudflare.com",
     "*.loca.lt",
@@ -16,6 +21,7 @@ const nextConfig: NextConfig = {
     "192.168.1.4:3000",
     "192.168.1.5:3000",
     "192.168.1.7:3000",
+    "192.168.8.41:3000",
     "*.local",
   ],
   images: {

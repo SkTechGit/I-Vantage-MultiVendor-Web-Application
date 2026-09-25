@@ -77,4 +77,19 @@ export const approveRequestSchema = z.object({
       errorMap: () => ({ message: "Role must be 'admin' or 'editor'." }),
     })
     .default("admin"),
-});
+});
+
+export const updateRoleSchema = z.object({
+  role: z.enum(["super_admin", "admin", "vendor", "user", "editor"], {
+    errorMap: () => ({
+      message: "Role must be 'super_admin', 'admin', 'vendor', or 'user'.",
+    }),
+  }),
+});
+
+export const toggleStatusSchema = z.object({
+  isActive: z.boolean({
+    required_error: "isActive boolean is required.",
+  }),
+});
+

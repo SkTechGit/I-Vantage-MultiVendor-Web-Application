@@ -16,6 +16,8 @@ import {
   createBlogCategory,
   deleteBlogCategory,
   uploadBlogMedia,
+  trackView,
+  resetViews,
 } from "./blog.controller.js";
 import { authenticate, authorize } from "../auth/auth.middleware.js";
 import upload from "../../middlewares/upload.middleware.js";
@@ -32,6 +34,7 @@ router.get("/categories", getBlogCategories);
 router.get("/tags", getBlogTags);
 router.get("/related", getRelatedBlogs);
 router.get("/article/:slug", getPublicBlogBySlug);
+router.post("/article/:slug/view", trackView);
 
 /* -------------------------------------------------------------------------- */
 /*                           Admin Protected Routes                           */
@@ -58,5 +61,8 @@ router.post(
   upload.single("image"),
   uploadBlogMedia
 );
+
+// Admin Reset Views (for testing & analytics recalibration)
+router.post("/admin/reset-views/:id", ...adminAuth, resetViews);
 
 export default router;

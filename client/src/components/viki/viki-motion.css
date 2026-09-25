@@ -272,7 +272,8 @@
   .viki-welcome-greeting-enter,
   .viki-card-stagger,
   .viki-input-enter,
-  .viki-send-btn-enter {
+  .viki-send-btn-enter,
+  .viki-suggestion-item {
     animation-duration: 0.12s !important;
     animation-delay: 0s !important;
     transform: none !important;
@@ -289,4 +290,23 @@
     transform: none !important;
     opacity: 0 !important;
   }
+}
+
+/* --------------------------------------------------------------------------
+   9. ULTRA-PREMIUM SUGGESTION CHIPS (STAGGERED CHOREOGRAPHY)
+   -------------------------------------------------------------------------- */
+@keyframes viki-suggestion-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.viki-suggestion-item {
+  animation: viki-suggestion-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(0.08s + var(--sugg-index, 0) * 0.045s);
 }

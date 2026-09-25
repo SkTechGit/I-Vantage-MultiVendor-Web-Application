@@ -1,106 +1,120 @@
 import Container from "@/components/common/Container";
-import SectionHeading from "@/components/common/SectionHeading";
 import {
   Search,
   MousePointerClick,
-  FileText,
-  CheckCircle,
+  FileCheck,
+  Building2,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 const steps = [
   {
+    step: "01",
     icon: Search,
-    title: "Find Services",
-    description: "Search and explore the services you need.",
+    title: "Discover Spaces",
+    description: "Browse verified private suites, shared desks, and boardrooms across Gurugram's prime hubs.",
+    badge: "Browse & Compare",
   },
   {
+    step: "02",
     icon: MousePointerClick,
     title: "Select Services",
-    description: "Choose as many services that fit your needs.",
+    description: "Tailor desk capacity, required amenities, and bundled corporate support solutions.",
+    badge: "Custom Configuration",
   },
   {
-    icon: FileText,
-    title: "Share Details",
-    description: "Submit your contact details and support services.",
+    step: "03",
+    icon: FileCheck,
+    title: "Direct Zero Brokerage",
+    description: "Submit inquiry directly with partner-guaranteed transparent rates and zero middleman markup.",
+    badge: "Guaranteed Pricing",
   },
   {
-    icon: CheckCircle,
-    title: "Get Connected",
-    description: "Our team will contact you within 1 hour.",
+    step: "04",
+    icon: Building2,
+    title: "Move-In & Scale",
+    description: "Dedicated i-VANTAGE relationship manager confirms your booking within 60 minutes.",
+    badge: "1-Hour Onboarding SLA",
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-16 sm:py-20">
+    <section className="relative py-20 sm:py-24 bg-white overflow-hidden border-t border-slate-100">
+      {/* Subtle Glow Accents */}
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-blue-50/40 to-transparent pointer-events-none" />
+
       <Container>
-        <SectionHeading
-          title="How It Works"
-          subtitle="Get the right business support in just a few simple steps."
-        />
+        {/* Section Heading */}
+        <div className="mx-auto max-w-3xl text-center space-y-3 mb-16">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#0A1F66] bg-blue-50 border border-blue-100 shadow-2xs">
+            <Sparkles className="w-3 h-3 text-[#F4A900]" />
+            <span>Effortless Onboarding Workflow</span>
+          </div>
 
-        <div className="mx-auto mt-10 max-w-6xl">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-3">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isLast = index === steps.length - 1;
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
+            How i-VANTAGE{" "}
+            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+              Powers Your Workspace
+            </span>
+          </h2>
 
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            From initial search to same-day access, experience India's most streamlined corporate workspace and business support journey.
+          </p>
+        </div>
+
+        {/* Steps Grid with Progressive Connecting Line */}
+        <div className="relative mx-auto mt-12 max-w-6xl">
+          {/* Subtle connecting gradient line for desktop */}
+          <div className="hidden lg:block absolute top-1/2 left-8 right-8 h-[2px] -translate-y-12 bg-gradient-to-r from-[#0A1F66]/20 via-[#1E5BFF]/30 to-[#F4A900]/30 z-0 pointer-events-none" />
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+            {steps.map((item, index) => {
+              const Icon = item.icon;
               return (
                 <div
-                  key={step.title}
-                  className="flex flex-1 items-stretch lg:items-center"
+                  key={item.step}
+                  className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-[0_4px_20px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_32px_rgba(30,91,255,0.08)] hover:border-[#1E5BFF]/40 transition-all duration-300 hover:-translate-y-1"
                 >
-                  {/* Step Card */}
-                  <div className="flex w-full items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 transition-all hover:border-blue-200 hover:bg-blue-50/40 sm:p-6 lg:min-h-[220px] lg:flex-col lg:items-center lg:justify-center lg:p-5 lg:text-center">
-                    {/* Icon */}
-                    <div className="relative shrink-0">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white text-[#1E5BFF] shadow-sm ring-1 ring-slate-200">
-                        <Icon size={25} strokeWidth={2} />
-                      </div>
+                  {/* Watermark Step Number */}
+                  <span className="absolute right-5 top-4 text-4xl font-black text-slate-100 select-none transition-colors group-hover:text-blue-50">
+                    {item.step}
+                  </span>
 
-                      {/* Step Number */}
-                      <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#1E5BFF] text-[10px] font-bold text-white shadow-sm">
+                  <div>
+                    {/* Icon Badge */}
+                    <div className="relative mb-6 inline-flex">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/80 shadow-xs transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
+                        <Icon size={26} strokeWidth={2.2} />
+                      </div>
+                      <span className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#1E5BFF] text-[10px] font-black text-white shadow-sm">
                         {index + 1}
                       </span>
                     </div>
 
-                    {/* Content */}
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#D99000]">
-                        Step {index + 1}
-                      </p>
+                    {/* Step Micro-Badge */}
+                    <p className="text-[10px] font-black uppercase tracking-wider text-[#B45309] mb-1.5">
+                      {item.badge}
+                    </p>
 
-                      <h3 className="mt-1 text-base font-bold text-[#0A1F66] sm:text-lg">
-                        {step.title}
-                      </h3>
+                    {/* Title */}
+                    <h3 className="text-base sm:text-lg font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors">
+                      {item.title}
+                    </h3>
 
-                      <p className="mx-auto mt-2 max-w-[210px] text-xs leading-5 text-slate-500 sm:text-sm">
-                        {step.description}
-                      </p>
-                    </div>
+                    {/* Description */}
+                    <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-slate-600">
+                      {item.description}
+                    </p>
                   </div>
 
-                  {/* Connector */}
-                  {!isLast && (
-                    <>
-                      {/* Desktop Arrow */}
-                      <div className="hidden w-8 shrink-0 items-center justify-center lg:flex">
-                        <ArrowRight
-                          size={17}
-                          className="text-slate-800"
-                        />
-                      </div>
-
-                      {/* Mobile Arrow */}
-                      <div className="flex h-4 shrink-0 items-center justify-center lg:hidden">
-                        <ArrowRight
-                          size={16}
-                          className="rotate-90 text-slate-300"
-                        />
-                      </div>
-                    </>
-                  )}
+                  {/* Bottom Indicator */}
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400 group-hover:text-[#1E5BFF] transition-colors">
+                    <span>Phase {item.step}</span>
+                    <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </div>
                 </div>
               );
             })}

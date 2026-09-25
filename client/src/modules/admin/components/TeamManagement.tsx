@@ -13,6 +13,12 @@ import {
   RefreshCw,
   Users,
   Key,
+  Building,
+  User as UserIcon,
+  ChevronDown,
+  Loader2,
+  Trash2,
+  AlertCircle,
 } from "lucide-react";
 
 const getErrorMessage = (err: unknown, fallback: string) => {
@@ -23,6 +29,8 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 };
 
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
+import { useRealtimeEvent } from "@/context/RealtimeContext";
 import {
   getTeamMembers,
   getInvitations,
@@ -31,6 +39,9 @@ import {
   revokeInvitation,
   approveAccessRequest,
   rejectAccessRequest,
+  updateMemberRole,
+  toggleMemberStatus,
+  deleteTeamMember,
 } from "@/modules/auth/auth.api";
 
 interface Member {
@@ -90,8 +101,143 @@ export default function TeamManagement() {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: string }>({});
 
-  const loadData = async () => {
-    setLoading(true);
+  // SuperAdmin role & access management state
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin =
+    currentUser?.role === "super_admin" || currentUser?.role === "superadmin";
+  const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
+  const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null);
+
+  // Delete member modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleRoleChange = async (
+    memberId: string,
+    memberName: string,
+    newRole: string
+  ) => {
+    setUpdatingRoleId(memberId);
+    try {
+      await updateMemberRole(memberId, newRole);
+      setMembers((prev) =>
+        prev.map((m) => (m._id === memberId ? { ...m, role: newRole } : m))
+      );
+      const roleLabel =
+        newRole === "super_admin"
+          ? "Super Admin"
+          : newRole === "admin" || newRole === "vendor"
+          ? "Admin / Vendor"
+          : "User";
+      toast.success(`Role updated to "${roleLabel}" for ${memberName}.`);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update member role."));
+      loadData();
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  };
+
+  const handleToggleStatus = async (member: Member) => {
+    const isSelf = Boolean(
+      (currentUser?._id && member._id === currentUser._id) ||
+      (currentUser?.id && member._id === currentUser.id) ||
+      (currentUser?.email &&
+        member.email.toLowerCase() === currentUser.email.toLowerCase())
+    );
+
+    if (isSelf) {
+      toast.error("You cannot modify your own active status to prevent system lockout.");
+      return;
+    }
+
+    const currentIsActive = member.isActive !== false && member.status === "active";
+    const nextIsActive = !currentIsActive;
+
+    setTogglingStatusId(member._id);
+
+    // Optimistic local state update (instant UI flip)
+    setMembers((prev) =>
+      prev.map((m) =>
+        m._id === member._id
+          ? {
+              ...m,
+              isActive: nextIsActive,
+              status: nextIsActive ? "active" : "suspended",
+            }
+          : m
+      )
+    );
+
+    try {
+      await toggleMemberStatus(member._id, nextIsActive);
+      if (nextIsActive) {
+        toast.success(`Account for ${member.fullName} is now Active.`);
+      } else {
+        toast.warning(
+          `Account for ${member.fullName} is now Inactive & Blocked across all portals.`
+        );
+      }
+    } catch (err: unknown) {
+      // Rollback on failure
+      setMembers((prev) =>
+        prev.map((m) =>
+          m._id === member._id
+            ? {
+                ...m,
+                isActive: currentIsActive,
+                status: currentIsActive ? "active" : "suspended",
+              }
+            : m
+        )
+      );
+      toast.error(getErrorMessage(err, "Failed to update member status."));
+      loadData(true);
+    } finally {
+      setTogglingStatusId(null);
+    }
+  };
+
+  const handleOpenDeleteModal = (member: Member) => {
+    const isSelf = Boolean(
+      (currentUser?._id && member._id === currentUser._id) ||
+      (currentUser?.id && member._id === currentUser.id) ||
+      (currentUser?.email &&
+        member.email.toLowerCase() === currentUser.email.toLowerCase())
+    );
+
+    if (isSelf) {
+      toast.error("You cannot delete your own account to prevent system lockout.");
+      return;
+    }
+
+    setMemberToDelete(member);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!memberToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteTeamMember(memberToDelete._id);
+      setMembers((prev) => prev.filter((m) => m._id !== memberToDelete._id));
+      toast.success(
+        `Member ${memberToDelete.fullName} (${memberToDelete.email}) permanently removed.`
+      );
+      setDeleteModalOpen(false);
+      setMemberToDelete(null);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to delete team member."));
+      loadData();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [membersData, invitesData, requestsData] = await Promise.all([
         getTeamMembers(),
@@ -106,7 +252,7 @@ export default function TeamManagement() {
         getErrorMessage(err, "Failed to load team management data.")
       );
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -133,6 +279,59 @@ export default function TeamManagement() {
       isMounted = false;
     };
   }, []);
+
+  // Real-time live synchronization listeners
+  useRealtimeEvent("team", "TEAM_MEMBER_STATUS_CHANGED", (payload) => {
+    setMembers((prev) =>
+      prev.map((m) =>
+        m._id === payload.memberId
+          ? {
+              ...m,
+              isActive: payload.isActive,
+              status: payload.status,
+            }
+          : m
+      )
+    );
+
+    // If updated by someone else, show friendly live notification
+    if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: ${payload.fullName}'s status changed to ${payload.isActive ? "Active" : "Inactive"} by ${payload.updatedBy}`
+      );
+    }
+  });
+
+  useRealtimeEvent("team", "TEAM_MEMBER_ROLE_CHANGED", (payload) => {
+    setMembers((prev) =>
+      prev.map((m) =>
+        m._id === payload.memberId ? { ...m, role: payload.newRole } : m
+      )
+    );
+    if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: ${payload.fullName}'s role updated to ${payload.newRole} by ${payload.updatedBy}`
+      );
+    }
+  });
+
+  useRealtimeEvent("team", "TEAM_MEMBER_DELETED", (payload) => {
+    setMembers((prev) => prev.filter((m) => m._id !== payload.memberId));
+    if (payload.deletedBy && payload.deletedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: Member ${payload.fullName || payload.email} was removed by ${payload.deletedBy}`
+      );
+    }
+  });
+
+  useRealtimeEvent("team", "TEAM_INVITATION_UPDATED", () => {
+    getInvitations().then((data) => setInvitations(data || [])).catch(() => {});
+  });
+
+  useRealtimeEvent("team", "TEAM_REQUEST_UPDATED", () => {
+    getAccessRequests().then((data) => setRequests(data || [])).catch(() => {});
+    getTeamMembers().then((data) => setMembers(data || [])).catch(() => {});
+  });
 
   const handleGenerateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,7 +436,7 @@ export default function TeamManagement() {
           <Button
             variant="outline"
             size="sm"
-            onClick={loadData}
+            onClick={() => loadData(false)}
             loading={loading}
             className="flex items-center gap-1.5"
           >
@@ -259,7 +458,12 @@ export default function TeamManagement() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div
+          onClick={() => setActiveTab("members")}
+          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md ${
+            activeTab === "members" ? "border-blue-400 ring-2 ring-blue-100" : "border-slate-200"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase text-slate-400">
               Active Team
@@ -268,17 +472,31 @@ export default function TeamManagement() {
               <Users size={20} />
             </div>
           </div>
-          <p className="mt-3 text-3xl font-bold text-[#0A1F66]">
-            {members.length}
-          </p>
+          <div className="mt-3 flex items-baseline gap-2">
+            <p className="text-3xl font-bold text-[#0A1F66]">
+              {members.filter((m) => m.isActive !== false && m.status === "active").length}
+            </p>
+            <span className="text-xs font-semibold text-slate-400">
+              / {members.length} Total
+            </span>
+          </div>
           <p className="mt-1 text-xs text-slate-500">
-            Active administrators & editors
+            {(() => {
+              const inactiveCount = members.filter(
+                (m) => m.isActive === false || m.status === "suspended"
+              ).length;
+              return inactiveCount > 0
+                ? `${inactiveCount} blocked / inactive`
+                : "All members active & authorized";
+            })()}
           </p>
         </div>
 
         <div
           onClick={() => setActiveTab("requests")}
-          className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300"
+          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md ${
+            activeTab === "requests" ? "border-amber-400 ring-2 ring-amber-100" : "border-slate-200"
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase text-slate-400">
@@ -305,7 +523,9 @@ export default function TeamManagement() {
 
         <div
           onClick={() => setActiveTab("invitations")}
-          className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300"
+          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-purple-300 hover:shadow-md ${
+            activeTab === "invitations" ? "border-purple-400 ring-2 ring-purple-100" : "border-slate-200"
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase text-slate-400">
@@ -398,65 +618,251 @@ export default function TeamManagement() {
                 <tr>
                   <th className="px-6 py-3.5">Name & Email</th>
                   <th className="px-6 py-3.5">Role</th>
-                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5">Status & Access</th>
                   <th className="px-6 py-3.5">Last Login</th>
                   <th className="px-6 py-3.5">Registered</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {members.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
                       No active members found.
                     </td>
                   </tr>
                 ) : (
-                  members.map((member) => (
-                    <tr key={member._id} className="hover:bg-slate-50/70">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">
-                          {member.fullName}
-                        </div>
-                        <div className="text-xs text-slate-400">{member.email}</div>
-                      </td>
+                  members.map((member) => {
+                    const isSelf = Boolean(
+                      (currentUser?._id && member._id === currentUser._id) ||
+                      (currentUser?.id && member._id === currentUser.id) ||
+                      (currentUser?.email &&
+                        member.email.toLowerCase() ===
+                          currentUser.email.toLowerCase())
+                    );
+                    const isMemberActive =
+                      member.isActive !== false && member.status === "active";
 
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            member.role === "super_admin"
-                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                              : member.role === "admin"
-                              ? "bg-blue-50 text-[#1E5BFF] border border-blue-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}
-                        >
-                          <Shield size={12} />
-                          {member.role === "super_admin"
-                            ? "Super Admin"
-                            : member.role === "editor"
-                            ? "Editor"
-                            : "Admin"}
-                        </span>
-                      </td>
+                    return (
+                      <tr key={member._id} className="hover:bg-slate-50/70">
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-slate-900">
+                            {member.fullName}
+                          </div>
+                          <div className="text-xs text-slate-400">{member.email}</div>
+                        </td>
 
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 size={12} />
-                          Active
-                        </span>
-                      </td>
+                        <td className="px-6 py-4">
+                          {(() => {
+                            if (isSuperAdmin && !isSelf) {
+                              const currentVal =
+                                member.role === "super_admin"
+                                  ? "super_admin"
+                                  : member.role === "admin" ||
+                                    member.role === "vendor"
+                                  ? "admin"
+                                  : "user";
 
-                      <td className="px-6 py-4 text-xs text-slate-500">
-                        {member.lastLogin
-                          ? new Date(member.lastLogin).toLocaleString()
-                          : "Never"}
-                      </td>
+                              return (
+                                <div className="relative inline-flex items-center">
+                                  <select
+                                    value={currentVal}
+                                    disabled={updatingRoleId === member._id}
+                                    onChange={(e) =>
+                                      handleRoleChange(
+                                        member._id,
+                                        member.fullName,
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`appearance-none cursor-pointer pl-7 pr-8 py-1.5 text-xs font-semibold rounded-full border transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
+                                      currentVal === "super_admin"
+                                        ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 focus:ring-indigo-400"
+                                        : currentVal === "admin"
+                                        ? "bg-blue-50 text-[#1E5BFF] border-blue-200 hover:bg-blue-100 focus:ring-blue-400"
+                                        : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 focus:ring-slate-400"
+                                    }`}
+                                    title="Change member role (Super Admin only)"
+                                  >
+                                    <option value="super_admin">Super Admin</option>
+                                    <option value="admin">Admin / Vendor</option>
+                                    <option value="user">User</option>
+                                  </select>
 
-                      <td className="px-6 py-4 text-xs text-slate-400">
-                        {new Date(member.createdAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))
+                                  <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
+                                    {updatingRoleId === member._id ? (
+                                      <Loader2
+                                        size={12}
+                                        className="animate-spin text-slate-500"
+                                      />
+                                    ) : currentVal === "super_admin" ? (
+                                      <Shield
+                                        size={12}
+                                        className="text-indigo-600"
+                                      />
+                                    ) : currentVal === "admin" ? (
+                                      <Building
+                                        size={12}
+                                        className="text-[#1E5BFF]"
+                                      />
+                                    ) : (
+                                      <UserIcon
+                                        size={12}
+                                        className="text-slate-600"
+                                      />
+                                    )}
+                                  </span>
+
+                                  <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <ChevronDown size={11} />
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            if (isSelf) {
+                              return (
+                                <div className="inline-flex items-center gap-1.5">
+                                  <span
+                                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                    title="You cannot alter your own role"
+                                  >
+                                    <Shield size={12} />
+                                    Super Admin
+                                  </span>
+                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200">
+                                    You
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                  member.role === "super_admin"
+                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                    : member.role === "admin" ||
+                                      member.role === "vendor"
+                                    ? "bg-blue-50 text-[#1E5BFF] border border-blue-200"
+                                    : "bg-slate-100 text-slate-700 border border-slate-200"
+                                }`}
+                                title="Managed by Super Admin"
+                              >
+                                <Shield size={12} />
+                                {member.role === "super_admin"
+                                  ? "Super Admin"
+                                  : member.role === "admin" ||
+                                    member.role === "vendor"
+                                  ? "Admin / Vendor"
+                                  : "User"}
+                              </span>
+                            );
+                          })()}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2.5">
+                            {isSuperAdmin && !isSelf ? (
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={isMemberActive}
+                                disabled={togglingStatusId === member._id}
+                                onClick={() => handleToggleStatus(member)}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1E5BFF] focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
+                                  isMemberActive ? "bg-emerald-500" : "bg-slate-300"
+                                }`}
+                                title={
+                                  isMemberActive
+                                    ? "Toggle Off to Deactivate & Block member across all portals"
+                                    : "Toggle On to Activate member and restore access"
+                                }
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
+                                    isMemberActive ? "translate-x-5" : "translate-x-0"
+                                  }`}
+                                >
+                                  {togglingStatusId === member._id && (
+                                    <Loader2
+                                      size={10}
+                                      className="animate-spin text-slate-500"
+                                    />
+                                  )}
+                                </span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled
+                                className={`relative inline-flex h-6 w-11 shrink-0 opacity-60 cursor-not-allowed rounded-full border-2 border-transparent ${
+                                  isMemberActive ? "bg-emerald-500" : "bg-slate-300"
+                                }`}
+                                title={
+                                  isSelf
+                                    ? "Self-lockout safeguard: You cannot deactivate your own account"
+                                    : "Only Super Admin can toggle member status"
+                                }
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 ${
+                                    isMemberActive ? "translate-x-5" : "translate-x-0"
+                                  }`}
+                                />
+                              </button>
+                            )}
+
+                            {isMemberActive ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 size={12} />
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200">
+                                <AlertCircle size={12} />
+                                Inactive (Blocked)
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 text-xs text-slate-500">
+                          {member.lastLogin
+                            ? new Date(member.lastLogin).toLocaleString()
+                            : "Never"}
+                        </td>
+
+                        <td className="px-6 py-4 text-xs text-slate-400">
+                          {new Date(member.createdAt).toLocaleDateString()}
+                        </td>
+
+                        <td className="px-6 py-4 text-right">
+                          {isSuperAdmin ? (
+                            isSelf ? (
+                              <span
+                                className="inline-flex items-center justify-center p-1.5 text-slate-300 cursor-not-allowed"
+                                title="Self-lockout safeguard: You cannot delete your own account"
+                              >
+                                <Trash2 size={16} />
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDeleteModal(member)}
+                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-200"
+                                title={`Delete ${member.fullName} permanently`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-slate-300 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -765,6 +1171,77 @@ export default function TeamManagement() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Member Confirmation Modal */}
+      {deleteModalOpen && memberToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#0A1F66]">
+                  Delete Team Member
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Permanent account deletion & access revocation
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-4 text-xs text-rose-800 space-y-1.5">
+              <p className="font-semibold text-rose-900">
+                Warning: This action cannot be undone.
+              </p>
+              <p>
+                You are about to permanently remove{" "}
+                <strong className="font-bold underline">
+                  {memberToDelete.fullName}
+                </strong>{" "}
+                ({memberToDelete.email}).
+              </p>
+              <p className="text-rose-700/80">
+                This user will be permanently deleted from the database and immediately
+                blocked from accessing the partner portal, administration console,
+                and all APIs.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setMemberToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    Deleting Member...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    Confirm Delete
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
