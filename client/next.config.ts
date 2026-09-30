@@ -2,6 +2,9 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api/v1";
+const cleanApiUrl = rawApiUrl.replace(/\/+$/, "");
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
@@ -43,7 +46,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        destination: `${cleanApiUrl}/:path*`,
       },
     ];
   },

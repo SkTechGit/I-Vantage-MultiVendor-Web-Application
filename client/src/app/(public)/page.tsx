@@ -85,14 +85,14 @@ export default async function Page() {
 
   try {
     categories = await getPublicCategories();
-  } catch (error) {
-    console.error("Failed to load categories on server:", error);
+  } catch (error: any) {
+    console.error("Failed to load categories on server:", error?.message || error);
   }
 
   try {
     services = await getPublicServices();
-  } catch (error) {
-    console.error("Failed to load services on server:", error);
+  } catch (error: any) {
+    console.error("Failed to load services on server:", error?.message || error);
   }
 
   return (
