@@ -1,44 +1,14 @@
-import axios from "axios";
+import axiosInstance from "@/lib/axios";
 
-const api = axios.create({
-  baseURL: "/api",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Cache-Control": "no-cache, no-store, must-revalidate",
-    Pragma: "no-cache",
-  },
-});
+const api = axiosInstance;
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (typeof window !== "undefined" && error.response?.status === 401) {
-      const pathname = window.location.pathname;
-      if (
-        pathname.startsWith("/vendor") &&
-        pathname !== "/vendor/login" &&
-        pathname !== "/vendor/signup"
-      ) {
-        window.location.href = "/vendor/login";
-      } else if (
-        pathname.startsWith("/admin") &&
-        pathname !== "/admin/login" &&
-        pathname !== "/admin/signup"
-      ) {
-        window.location.href = "/admin/login";
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 export const marketplaceApi = {
   // Auth
   login: async (payload: {
     email: string;
     password: string;
-    requiredRole?: "vendor" | "superadmin" | "admin" | "user";
+    requiredRole?: "vendor" | "superadmin" | "user";
   }) => {
     const { data } = await api.post("/auth/login", payload);
     return data.data;
@@ -47,12 +17,26 @@ export const marketplaceApi = {
     const { data } = await api.post("/auth/register", payload);
     return data.data;
   },
-  me: async () => {
-    const { data } = await api.get("/auth/me");
+  me: async (portal?: string) => {
+    let resolvedPortal = portal;
+    if (!resolvedPortal && typeof window !== "undefined") {
+      if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
+      else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+    }
+    const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
+    const { data } = await api.get(`/auth/me${query}`, {
+      headers: resolvedPortal ? { "x-portal": resolvedPortal } : undefined,
+    });
     return data.data;
   },
-  logout: async () => {
-    const { data } = await api.post("/auth/logout");
+  logout: async (portal?: string) => {
+    let resolvedPortal = portal;
+    if (!resolvedPortal && typeof window !== "undefined") {
+      if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
+      else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+    }
+    const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
+    const { data } = await api.post(`/auth/logout${query}`, { portal: resolvedPortal });
     return data;
   },
 
@@ -78,7 +62,7 @@ export const marketplaceApi = {
 
   // Taxonomy (Public)
   getCategories: async () => {
-    const { data } = await api.get("/categories");
+    const { data } = await api.get("/marketplace-categories");
     return data.data;
   },
   getAmenities: async () => {
@@ -228,6 +212,14 @@ export const marketplaceApi = {
     const { data } = await api.get(`/admin/leads?${query.toString()}`);
     return data.data;
   },
+  updateAdminLead: async (id: string, payload: { status?: string; note?: string }) => {
+    const { data } = await api.patch(`/admin/leads/${id}`, payload);
+    return data.data;
+  },
+  deleteAdminLead: async (id: string) => {
+    const { data } = await api.delete(`/admin/leads/${id}`);
+    return data;
+  },
   getAdminAnalytics: async () => {
     const { data } = await api.get("/admin/analytics");
     return data.data;
@@ -245,13 +237,16 @@ export const marketplaceApi = {
   },
   submitLead: async (payload: {
     listingId?: string;
+    listingTitle?: string;
+    spaceTitle?: string;
+    spaceLocation?: string;
     name: string;
     phone: string;
     email?: string;
     message?: string;
     source?: string;
   }) => {
-    const { data } = await api.post("/leads", payload);
+    const { data } = await api.post("/marketplace-leads", payload);
     return data.data;
   },
 };

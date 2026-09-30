@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marketplaceApi } from "@/lib/marketplace.api";
@@ -32,6 +32,14 @@ export default function VendorSignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get("email");
+      if (emailParam) setEmail(emailParam);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
@@ -53,7 +61,12 @@ export default function VendorSignupPage() {
       });
       router.push("/vendor");
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Registration failed. Please check your information and try again.");
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      const errorMsg =
+        serverMsg && !serverMsg.toLowerCase().includes("status code")
+          ? serverMsg
+          : "Registration failed. Please check your information and try again.";
+      setError(errorMsg);
       setLoading(false);
     }
   };
@@ -108,7 +121,7 @@ export default function VendorSignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-3.5" autoComplete="off">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                 Your Full Name *
@@ -118,6 +131,8 @@ export default function VendorSignupPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="name"
+                  suppressHydrationWarning
                   placeholder="e.g. Rahul Sharma"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -135,6 +150,8 @@ export default function VendorSignupPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="organization"
+                  suppressHydrationWarning
                   placeholder="e.g. Horizon Workspaces Pvt Ltd"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
@@ -153,6 +170,8 @@ export default function VendorSignupPage() {
                   <input
                     type="email"
                     required
+                    autoComplete="email"
+                    suppressHydrationWarning
                     placeholder="partner@brand.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -169,6 +188,8 @@ export default function VendorSignupPage() {
                   <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="tel"
+                    autoComplete="tel"
+                    suppressHydrationWarning
                     placeholder="+91 98765 43210"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -188,6 +209,8 @@ export default function VendorSignupPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   minLength={8}
+                  autoComplete="new-password"
+                  suppressHydrationWarning
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

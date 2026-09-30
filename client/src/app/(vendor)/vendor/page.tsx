@@ -39,8 +39,28 @@ export default function VendorDashboardOverview() {
   }, []);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    let ignore = false;
+    marketplaceApi.getVendorAnalytics()
+      .then((data) => {
+        if (!ignore && data) {
+          setStats(data.stats);
+          setRecentListings(data.recentListings || []);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Vendor analytics note:", msg);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -203,9 +223,9 @@ export default function VendorDashboardOverview() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {recentListings.map((item) => (
+              {recentListings.map((item, idx) => (
                 <div
-                  key={item._id}
+                  key={item._id || item.id || `recent-${idx}`}
                   className="py-3 flex items-center justify-between text-xs"
                 >
                   <div className="space-y-0.5">

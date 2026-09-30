@@ -23,7 +23,8 @@ import {
 import Image from "next/image";
 
 interface ListingItem {
-  _id: string;
+  _id?: string;
+  id?: string;
   title: string;
   slug: string;
   categoryId?: { name: string; slug: string };
@@ -60,8 +61,25 @@ export default function VendorListingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchListings();
-  }, [fetchListings]);
+    let ignore = false;
+    marketplaceApi.getVendorListings()
+      .then((data) => {
+        if (!ignore) setListings(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Vendor listings note:", msg);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,10 +91,13 @@ export default function VendorListingsPage() {
   });
 
   const filtered = listings.filter((item) => {
+    const title = item.title || "";
+    const area = item.location?.area || "";
+    const city = item.location?.city || "";
     const matchesSearch =
-      item.title.toLowerCase().includes(search.toLowerCase()) ||
-      item.location.area.toLowerCase().includes(search.toLowerCase()) ||
-      item.location.city.toLowerCase().includes(search.toLowerCase());
+      title.toLowerCase().includes(search.toLowerCase()) ||
+      area.toLowerCase().includes(search.toLowerCase()) ||
+      city.toLowerCase().includes(search.toLowerCase());
 
     if (statusFilter === "all") return matchesSearch;
     if (statusFilter === "live") return matchesSearch && item.isLive;
@@ -186,14 +207,15 @@ export default function VendorListingsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((item) => {
+          {filtered.map((item, idx) => {
+            const listingId = item._id || item.id || `vendor-listing-${item.slug || idx}`;
             const coverImage =
               item.media?.[0]?.mediaId?.secureUrl ||
               "https://images.unsplash.com/photo-1497366216548-37526070297c";
 
             return (
               <div
-                key={item._id}
+                key={listingId}
                 className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
@@ -201,7 +223,7 @@ export default function VendorListingsPage() {
                   <div className="relative aspect-video w-full bg-slate-100">
                     <Image
                       src={coverImage}
-                      alt={item.title}
+                      alt={item.title || "Workspace"}
                       fill
                       sizes="400px"
                       className="object-cover"
@@ -245,7 +267,7 @@ export default function VendorListingsPage() {
                     <p className="text-xs text-slate-500 flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                       <span className="truncate">
-                        {item.location.area}, {item.location.city.toUpperCase()}
+                        {item.location?.area || "Location"}, {(item.location?.city || "IN").toUpperCase()}
                       </span>
                     </p>
 
@@ -261,9 +283,9 @@ export default function VendorListingsPage() {
                           Starting At
                         </span>
                         <span className="text-base font-extrabold text-[#0A1F66]">
-                          ₹{item.pricing?.basePrice?.toLocaleString("en-IN")}{" "}
+                          ₹{item.pricing?.basePrice?.toLocaleString("en-IN") || "0"}{" "}
                           <span className="text-xs font-medium text-slate-500">
-                            /{item.pricing?.unit?.replace("per-", "")}
+                            /{item.pricing?.unit?.replace("per-", "") || "month"}
                           </span>
                         </span>
                       </div>
@@ -282,7 +304,7 @@ export default function VendorListingsPage() {
                 {/* Card Actions (CRU Only - NO DELETE HANDLER FOR VENDOR) */}
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                   <Link
-                    href={`/vendor/listings/${item._id}/edit`}
+                    href={`/vendor/listings/${listingId}/edit`}
                     className="inline-flex items-center gap-1 text-xs font-bold text-[#1E5BFF] hover:underline"
                   >
                     <Edit className="w-3.5 h-3.5" /> Edit Property
@@ -290,7 +312,7 @@ export default function VendorListingsPage() {
 
                   {item.isLive && (
                     <Link
-                      href={`/${item.location.city}/${item.categoryId?.slug || "space"}/${item.slug}`}
+                      href={`/${item.location?.city || "space"}/${item.categoryId?.slug || "space"}/${item.slug}`}
                       target="_blank"
                       className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800"
                     >

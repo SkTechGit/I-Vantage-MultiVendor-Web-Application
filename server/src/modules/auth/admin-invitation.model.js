@@ -11,8 +11,8 @@ const adminInvitationSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["super_admin", "admin", "editor"],
-      default: "admin",
+      enum: ["super_admin", "vendor", "user"],
+      default: "vendor",
       required: true,
     },
 

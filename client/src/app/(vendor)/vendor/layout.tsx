@@ -35,7 +35,7 @@ export default function VendorLayout({
 
   useEffect(() => {
     marketplaceApi
-      .me()
+      .me("vendor")
       .then((user) => {
         setVendor(user);
       })
@@ -46,7 +46,7 @@ export default function VendorLayout({
   }, [router]);
 
   const handleLogout = async () => {
-    await marketplaceApi.logout();
+    await marketplaceApi.logout("vendor");
     router.push("/vendor/login");
   };
 

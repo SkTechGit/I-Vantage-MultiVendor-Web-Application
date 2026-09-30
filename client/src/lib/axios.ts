@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: typeof window !== "undefined" ? "/api/v1" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"),
+  baseURL:
+    typeof window !== "undefined"
+      ? "/api/v1"
+      : process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -30,17 +33,73 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
+axiosInstance.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const path = window.location.pathname;
+    const url = config.url || "";
+    if (!config.headers["x-portal"]) {
+      if (url.includes("/admin") || path.startsWith("/admin")) {
+        config.headers["x-portal"] = "admin";
+      } else if (url.includes("/vendor") || path.startsWith("/vendor")) {
+        config.headers["x-portal"] = "vendor";
+      }
+    }
+  }
+  return config;
+});
+
 axiosInstance.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
+    const isTokenVersionMismatch =
+      error.response?.status === 401 &&
+      error.response?.data?.code === "TOKEN_VERSION_MISMATCH";
+
+    const clearClientSession = () => {
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
+        const reqUrl = originalRequest?.url || "";
+        const isAdmin = reqUrl.includes("/admin") || currentPath.startsWith("/admin");
+        const isVendor = reqUrl.includes("/vendor") || currentPath.startsWith("/vendor");
+
+        try {
+          if (isAdmin) {
+            localStorage.removeItem("iv_admin_user");
+          } else if (isVendor) {
+            localStorage.removeItem("iv_vendor_user");
+          } else {
+            localStorage.removeItem("iv_user");
+          }
+        } catch {}
+
+        if (
+          isAdmin &&
+          currentPath !== "/admin/login" &&
+          currentPath !== "/admin/signup"
+        ) {
+          window.location.href = "/admin/login?reason=session_invalidated";
+        } else if (
+          isVendor &&
+          currentPath !== "/vendor/login" &&
+          currentPath !== "/vendor/signup"
+        ) {
+          window.location.href = "/vendor/login?reason=session_invalidated";
+        }
+      }
+    };
 
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry
     ) {
+      if (isTokenVersionMismatch) {
+        clearClientSession();
+        return Promise.reject(error);
+      }
+
       const url = originalRequest.url || "";
 
       // Never try refresh for auth endpoints
@@ -67,27 +126,29 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
+      let portal = "all";
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
+        if (url.includes("/admin") || currentPath.startsWith("/admin")) {
+          portal = "admin";
+        } else if (url.includes("/vendor") || currentPath.startsWith("/vendor")) {
+          portal = "vendor";
+        }
+      }
+
       try {
-        await axiosInstance.post("/auth/refresh-token");
+        await axiosInstance.post(
+          `/auth/refresh-token?portal=${portal}`,
+          { portal },
+          { headers: { "x-portal": portal } }
+        );
 
         processQueue(null);
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-
-        if (typeof window !== "undefined") {
-          const currentPath = window.location.pathname;
-
-          if (
-            currentPath.startsWith("/admin") &&
-            currentPath !== "/admin/login" &&
-            currentPath !== "/admin/signup"
-          ) {
-            window.location.href = "/admin/login";
-          }
-        }
-
+        clearClientSession();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

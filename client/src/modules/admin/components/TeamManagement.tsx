@@ -3,32 +3,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import {
-  UserPlus,
-  Shield,
-  Clock,
-  CheckCircle2,
-  Copy,
-  Check,
-  RefreshCw,
-  Users,
-  Key,
-  Building,
-  User as UserIcon,
-  ChevronDown,
-  Loader2,
-  Trash2,
-  AlertCircle,
-} from "lucide-react";
-
-const getErrorMessage = (err: unknown, fallback: string) => {
-  if (axios.isAxiosError(err)) {
-    return err.response?.data?.message || fallback;
-  }
-  return fallback;
-};
+import { UserPlus, RefreshCw } from "lucide-react";
 
 import Button from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuth } from "@/context/AuthContext";
 import { useRealtimeEvent } from "@/context/RealtimeContext";
 import {
@@ -42,58 +20,50 @@ import {
   updateMemberRole,
   toggleMemberStatus,
   deleteTeamMember,
+  getAllPlatformUsers,
+  getAuditLogs,
+  updateVendorStatus,
+  updateVendorRole,
+  deleteVendor,
 } from "@/modules/auth/auth.api";
 
-interface Member {
-  _id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  status: string;
-  isActive: boolean;
-  lastLogin: string | null;
-  createdAt: string;
-}
+import {
+  Member,
+  Invitation,
+  AccessRequest,
+  TeamTab,
+  PlatformUser,
+  SecurityAuditItem,
+  TeamMetricsCards,
+  TeamMembersTable,
+  TeamInviteForm,
+  AccessRequestsTable,
+  InvitationsHistoryTable,
+  VendorsDirectoryTable,
+  AuditLogsTable,
+} from "./team";
 
-interface Invitation {
-  _id: string;
-  email: string;
-  role: string;
-  status: string;
-  expiresAt: string;
-  createdAt: string;
-  invitedBy?: {
-    fullName: string;
-    email: string;
-  };
-}
-
-interface AccessRequest {
-  _id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  status: string;
-  createdAt: string;
-}
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (axios.isAxiosError(err)) {
+    return err.response?.data?.message || fallback;
+  }
+  return fallback;
+};
 
 export default function TeamManagement() {
-  const [activeTab, setActiveTab] = useState<
-    "members" | "invite" | "requests" | "invitations"
-  >("members");
-
+  const [activeTab, setActiveTab] = useState<TeamTab>("members");
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [vendors, setVendors] = useState<PlatformUser[]>([]);
+  const [auditLogs, setAuditLogs] = useState<SecurityAuditItem[]>([]);
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "editor">("admin");
+  const [inviteRole, setInviteRole] = useState<"vendor" | "super_admin" | "user">("vendor");
   const [submittingInvite, setSubmittingInvite] = useState(false);
-  const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(
-    null
-  );
+  const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Approval state
@@ -102,17 +72,26 @@ export default function TeamManagement() {
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: string }>({});
 
   // SuperAdmin role & access management state
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const isSuperAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "superadmin";
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
-  const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null);
 
-  // Delete member modal state
+  // Delete team member modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Vendor CRUD management states
+  const [updatingVendorRoleId, setUpdatingVendorRoleId] = useState<string | null>(null);
+  const [updatingVendorStatusId, setUpdatingVendorStatusId] = useState<string | null>(null);
+  const [deleteVendorModalOpen, setDeleteVendorModalOpen] = useState(false);
+  const [vendorToDelete, setVendorToDelete] = useState<PlatformUser | null>(null);
+  const [isDeletingVendor, setIsDeletingVendor] = useState(false);
+
+  /* -------------------------------------------------------------------------- */
+  /*                       Admin Team Member Actions                            */
+  /* -------------------------------------------------------------------------- */
   const handleRoleChange = async (
     memberId: string,
     memberName: string,
@@ -121,16 +100,22 @@ export default function TeamManagement() {
     setUpdatingRoleId(memberId);
     try {
       await updateMemberRole(memberId, newRole);
-      setMembers((prev) =>
-        prev.map((m) => (m._id === memberId ? { ...m, role: newRole } : m))
-      );
       const roleLabel =
-        newRole === "super_admin"
+        newRole === "super_admin" || newRole === "superadmin"
           ? "Super Admin"
-          : newRole === "admin" || newRole === "vendor"
-          ? "Admin / Vendor"
+          : newRole === "vendor"
+          ? "Vendor (Partner)"
           : "User";
-      toast.success(`Role updated to "${roleLabel}" for ${memberName}.`);
+
+      if (newRole === "vendor" || newRole === "user") {
+        toast.success(
+          `Role updated to "${roleLabel}" for ${memberName}. Moved to Coworking Vendors directory.`
+        );
+      } else {
+        toast.success(`Role updated to "${roleLabel}" for ${memberName}.`);
+      }
+
+      await loadData(true);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Failed to update member role."));
       loadData();
@@ -154,8 +139,6 @@ export default function TeamManagement() {
 
     const currentIsActive = member.isActive !== false && member.status === "active";
     const nextIsActive = !currentIsActive;
-
-    setTogglingStatusId(member._id);
 
     // Optimistic local state update (instant UI flip)
     setMembers((prev) =>
@@ -194,8 +177,6 @@ export default function TeamManagement() {
       );
       toast.error(getErrorMessage(err, "Failed to update member status."));
       loadData(true);
-    } finally {
-      setTogglingStatusId(null);
     }
   };
 
@@ -235,18 +216,159 @@ export default function TeamManagement() {
     }
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                  Marketplace Vendor Actions & Handlers                    */
+  /* -------------------------------------------------------------------------- */
+  const handleToggleVendorStatus = async (vendor: PlatformUser) => {
+    const currentIsActive = vendor.status === "active" && vendor.isActive !== false;
+    const nextStatus: "active" | "suspended" = currentIsActive ? "suspended" : "active";
+    setUpdatingVendorStatusId(vendor._id);
+
+    // Optimistic UI update
+    setVendors((prev) =>
+      prev.map((v) =>
+        v._id === vendor._id
+          ? {
+              ...v,
+              status: nextStatus,
+              isActive: nextStatus === "active",
+            }
+          : v
+      )
+    );
+
+    try {
+      await updateVendorStatus(vendor._id, nextStatus);
+      if (nextStatus === "active") {
+        toast.success(
+          `Partner ${vendor.businessName || vendor.name} is now Active.`
+        );
+      } else {
+        toast.warning(
+          `Partner ${vendor.businessName || vendor.name} is now Suspended & Blocked.`
+        );
+      }
+    } catch (err: unknown) {
+      // Rollback on failure
+      setVendors((prev) =>
+        prev.map((v) =>
+          v._id === vendor._id
+            ? { ...v, status: vendor.status, isActive: vendor.isActive }
+            : v
+        )
+      );
+      toast.error(getErrorMessage(err, "Failed to update vendor status."));
+      loadVendorsAndAudit();
+    } finally {
+      setUpdatingVendorStatusId(null);
+    }
+  };
+
+  const handleVendorRoleChange = async (
+    vendorId: string,
+    vendorName: string,
+    newRole: string
+  ) => {
+    setUpdatingVendorRoleId(vendorId);
+    try {
+      await updateVendorRole(vendorId, newRole);
+      const roleLabel =
+        newRole === "vendor"
+          ? "Vendor (Partner)"
+          : newRole === "superadmin" || newRole === "super_admin"
+          ? "Super Admin"
+          : "Marketplace User";
+
+      if (newRole === "superadmin" || newRole === "super_admin") {
+        toast.success(
+          `Role updated to "${roleLabel}" for ${vendorName}. User promoted and moved to Authorized Administrators.`
+        );
+      } else {
+        toast.success(`Role updated to "${roleLabel}" for ${vendorName}.`);
+      }
+
+      await loadData(true);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update vendor role."));
+      loadData();
+    } finally {
+      setUpdatingVendorRoleId(null);
+    }
+  };
+
+  const handleOpenDeleteVendorModal = (vendor: PlatformUser) => {
+    setVendorToDelete(vendor);
+    setDeleteVendorModalOpen(true);
+  };
+
+  const handleConfirmDeleteVendor = async () => {
+    if (!vendorToDelete) return;
+    setIsDeletingVendor(true);
+    try {
+      await deleteVendor(vendorToDelete._id);
+      setVendors((prev) => prev.filter((v) => v._id !== vendorToDelete._id));
+      toast.success(
+        `Partner ${vendorToDelete.businessName || vendorToDelete.name} (${vendorToDelete.email}) permanently removed.`
+      );
+      setDeleteVendorModalOpen(false);
+      setVendorToDelete(null);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to delete vendor."));
+      loadVendorsAndAudit();
+    } finally {
+      setIsDeletingVendor(false);
+    }
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /*                            Data Fetching                                   */
+  /* -------------------------------------------------------------------------- */
+  const loadVendorsAndAudit = async () => {
+    try {
+      const [usersResult, logsResult] = await Promise.allSettled([
+        getAllPlatformUsers({ role: "vendor" }),
+        getAuditLogs({ limit: 50 }),
+      ]);
+      if (usersResult.status === "fulfilled" && usersResult.value?.users) {
+        setVendors(usersResult.value.users);
+      }
+      if (logsResult.status === "fulfilled") {
+        setAuditLogs(logsResult.value || []);
+      }
+    } catch {}
+  };
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [membersData, invitesData, requestsData] = await Promise.all([
-        getTeamMembers(),
-        getInvitations(),
-        getAccessRequests(),
-      ]);
-      setMembers(membersData || []);
-      setInvitations(invitesData || []);
-      setRequests(requestsData || []);
+      const [membersResult, invitesResult, requestsResult] =
+        await Promise.allSettled([
+          getTeamMembers(),
+          getInvitations(),
+          getAccessRequests(),
+        ]);
+
+      if (membersResult.status === "fulfilled") {
+        setMembers(membersResult.value || []);
+      }
+      if (invitesResult.status === "fulfilled") {
+        setInvitations(invitesResult.value || []);
+      }
+      if (requestsResult.status === "fulfilled") {
+        setRequests(requestsResult.value || []);
+      }
+
+      await loadVendorsAndAudit();
+
+      if (
+        membersResult.status === "rejected" &&
+        invitesResult.status === "rejected" &&
+        requestsResult.status === "rejected"
+      ) {
+        toast.error(
+          getErrorMessage(membersResult.reason, "Failed to load team management data.")
+        );
+      }
     } catch (err: unknown) {
       toast.error(
         getErrorMessage(err, "Failed to load team management data.")
@@ -258,18 +380,40 @@ export default function TeamManagement() {
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([getTeamMembers(), getInvitations(), getAccessRequests()])
-      .then(([membersData, invitesData, requestsData]) => {
+    Promise.allSettled([
+      getTeamMembers(),
+      getInvitations(),
+      getAccessRequests(),
+      getAllPlatformUsers({ role: "vendor" }),
+      getAuditLogs({ limit: 50 }),
+    ])
+      .then(([membersResult, invitesResult, requestsResult, vendorsResult, logsResult]) => {
         if (!isMounted) return;
-        setMembers(membersData || []);
-        setInvitations(invitesData || []);
-        setRequests(requestsData || []);
-      })
-      .catch((err: unknown) => {
-        if (!isMounted) return;
-        toast.error(
-          getErrorMessage(err, "Failed to load team management data.")
-        );
+        if (membersResult.status === "fulfilled") {
+          setMembers(membersResult.value || []);
+        }
+        if (invitesResult.status === "fulfilled") {
+          setInvitations(invitesResult.value || []);
+        }
+        if (requestsResult.status === "fulfilled") {
+          setRequests(requestsResult.value || []);
+        }
+        if (vendorsResult.status === "fulfilled" && vendorsResult.value?.users) {
+          setVendors(vendorsResult.value.users);
+        }
+        if (logsResult.status === "fulfilled") {
+          setAuditLogs(logsResult.value || []);
+        }
+
+        if (
+          membersResult.status === "rejected" &&
+          invitesResult.status === "rejected" &&
+          requestsResult.status === "rejected"
+        ) {
+          toast.error(
+            getErrorMessage(membersResult.reason, "Failed to load team management data.")
+          );
+        }
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -280,7 +424,9 @@ export default function TeamManagement() {
     };
   }, []);
 
-  // Real-time live synchronization listeners
+  /* -------------------------------------------------------------------------- */
+  /*                 Real-time Live Synchronization Listeners                   */
+  /* -------------------------------------------------------------------------- */
   useRealtimeEvent("team", "TEAM_MEMBER_STATUS_CHANGED", (payload) => {
     setMembers((prev) =>
       prev.map((m) =>
@@ -294,7 +440,6 @@ export default function TeamManagement() {
       )
     );
 
-    // If updated by someone else, show friendly live notification
     if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
       toast.info(
         `Live Update: ${payload.fullName}'s status changed to ${payload.isActive ? "Active" : "Inactive"} by ${payload.updatedBy}`
@@ -312,6 +457,27 @@ export default function TeamManagement() {
       toast.info(
         `Live Update: ${payload.fullName}'s role updated to ${payload.newRole} by ${payload.updatedBy}`
       );
+    }
+    const isCurrentUserTarget = Boolean(
+      (currentUser?._id && payload.memberId === currentUser._id) ||
+      (currentUser?.id && payload.memberId === currentUser.id) ||
+      (currentUser?.email && payload.email?.toLowerCase() === currentUser.email.toLowerCase())
+    );
+
+    if (isCurrentUserTarget) {
+      if (payload.newRole !== "super_admin" && payload.newRole !== "superadmin") {
+        toast.error("Your Super Administrator privileges have been revoked by an administrator. Redirecting to login...");
+        try {
+          localStorage.removeItem("iv_user");
+          sessionStorage.clear();
+        } catch {}
+        setTimeout(() => {
+          window.location.href = "/admin/login?reason=demoted";
+        }, 1200);
+      } else {
+        toast.info("Your account permissions have been updated. Refreshing session...");
+        refreshUser();
+      }
     }
   });
 
@@ -331,6 +497,118 @@ export default function TeamManagement() {
   useRealtimeEvent("team", "TEAM_REQUEST_UPDATED", () => {
     getAccessRequests().then((data) => setRequests(data || [])).catch(() => {});
     getTeamMembers().then((data) => setMembers(data || [])).catch(() => {});
+  });
+
+  // Granular Real-time Vendor Event Handlers
+  useRealtimeEvent("users", "VENDOR_STATUS_CHANGED", (payload) => {
+    setVendors((prev) =>
+      prev.map((v) =>
+        v._id === payload.vendorId
+          ? { ...v, status: payload.status, isActive: payload.isActive }
+          : v
+      )
+    );
+    if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: Partner ${payload.name}'s status changed to ${payload.isActive ? "Active" : "Suspended"}`
+      );
+    }
+  });
+
+  useRealtimeEvent("users", "VENDOR_ROLE_CHANGED", (payload) => {
+    setVendors((prev) =>
+      prev.map((v) =>
+        v._id === payload.vendorId ? { ...v, role: payload.newRole } : v
+      )
+    );
+    if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: Partner ${payload.name}'s role updated to ${payload.newRole}`
+      );
+    }
+  });
+
+  useRealtimeEvent("users", "VENDOR_DELETED", (payload) => {
+    setVendors((prev) => prev.filter((v) => v._id !== payload.vendorId));
+    if (payload.deletedBy && payload.deletedBy !== currentUser?.email) {
+      toast.info(
+        `Live Update: Partner ${payload.name || payload.email} was deleted by ${payload.deletedBy}`
+      );
+    }
+  });
+
+  // Real-time Vendor & Admin Login Live Activity Synchronization
+  useRealtimeEvent("users", "USER_LOGIN", (payload) => {
+    if (!payload?.email && !payload?.userId) return;
+
+    setVendors((prev) =>
+      prev.map((v) => {
+        const isMatch =
+          v._id === payload.userId ||
+          (payload.email && v.email?.toLowerCase() === payload.email.toLowerCase());
+
+        if (isMatch) {
+          return {
+            ...v,
+            lastLogin: payload.lastLogin || new Date().toISOString(),
+            lastLoginIp: payload.lastLoginIp || payload.ipAddress || v.lastLoginIp || "127.0.0.1",
+            loginCount: typeof payload.loginCount === "number" ? payload.loginCount : (v.loginCount || 0) + 1,
+          };
+        }
+        return v;
+      })
+    );
+
+    setMembers((prev) =>
+      prev.map((m) => {
+        const isMatch =
+          m._id === payload.userId ||
+          (payload.email && m.email?.toLowerCase() === payload.email.toLowerCase());
+
+        if (isMatch) {
+          return {
+            ...m,
+            lastLogin: payload.lastLogin || new Date().toISOString(),
+          };
+        }
+        return m;
+      })
+    );
+
+    loadVendorsAndAudit();
+  });
+
+  useRealtimeEvent("team", "USER_LOGIN", (payload) => {
+    if (!payload?.email && !payload?.userId) return;
+
+    setVendors((prev) =>
+      prev.map((v) => {
+        const isMatch =
+          v._id === payload.userId ||
+          (payload.email && v.email?.toLowerCase() === payload.email.toLowerCase());
+
+        if (isMatch) {
+          return {
+            ...v,
+            lastLogin: payload.lastLogin || new Date().toISOString(),
+            lastLoginIp: payload.lastLoginIp || payload.ipAddress || v.lastLoginIp || "127.0.0.1",
+            loginCount: typeof payload.loginCount === "number" ? payload.loginCount : (v.loginCount || 0) + 1,
+          };
+        }
+        return v;
+      })
+    );
+  });
+
+  // General users & directory sync (e.g. on new signup, login, role migration)
+  useRealtimeEvent("users", () => {
+    loadData(true);
+  });
+  useRealtimeEvent("team", "USER_DIRECTORY_UPDATED", () => {
+    loadData(true);
+  });
+  useRealtimeEvent("users", "USER_DIRECTORY_UPDATED", () => {
+    loadData(true);
   });
 
   const handleGenerateInvite = async (e: React.FormEvent) => {
@@ -374,7 +652,7 @@ export default function TeamManagement() {
   };
 
   const handleApprove = async (id: string) => {
-    const role = selectedRoles[id] || "admin";
+    const role = selectedRoles[id] || "vendor";
     setApprovingId(id);
     try {
       const res = await approveAccessRequest(id, role);
@@ -418,17 +696,42 @@ export default function TeamManagement() {
     }
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                     Calculated Real-Time Metrics                           */
+  /* -------------------------------------------------------------------------- */
+  const activeMembersCount = members.filter(
+    (m) => m.isActive !== false && m.status === "active"
+  ).length;
+
+  const activeVendorsCount = vendors.filter(
+    (v) => v.status === "active" && v.isActive !== false
+  ).length;
+
+  const suspendedVendorsCount = vendors.filter(
+    (v) => v.status === "suspended" || v.isActive === false
+  ).length;
+
+  const loggedInVendorsCount = vendors.filter(
+    (v) => Boolean(v.lastLogin) || (v.loginCount && v.loginCount > 0)
+  ).length;
+
+  const neverLoggedInVendorsCount = vendors.length - loggedInVendorsCount;
+
+  const totalVendorLogins = vendors.reduce(
+    (sum, v) => sum + (v.loginCount || (v.lastLogin ? 1 : 0)),
+    0
+  );
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#0A1F66]">
-            Team & Access Control
+            Team &amp; Access Control
           </h1>
           <p className="text-sm text-slate-500">
-            Authorize administrators, issue cryptographically secure invitations,
-            and review access requests.
+            Authorize administrators, oversee registered marketplace vendors, and monitor real-time logins.
           </p>
         </div>
 
@@ -437,10 +740,10 @@ export default function TeamManagement() {
             variant="outline"
             size="sm"
             onClick={() => loadData(false)}
-            loading={loading}
+            disabled={loading}
             className="flex items-center gap-1.5"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={loading ? "animate-spin text-[#1E5BFF]" : ""} />
             Refresh
           </Button>
 
@@ -456,112 +759,63 @@ export default function TeamManagement() {
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div
-          onClick={() => setActiveTab("members")}
-          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md ${
-            activeTab === "members" ? "border-blue-400 ring-2 ring-blue-100" : "border-slate-200"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">
-              Active Team
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF]">
-              <Users size={20} />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#0A1F66]">
-              {members.filter((m) => m.isActive !== false && m.status === "active").length}
-            </p>
-            <span className="text-xs font-semibold text-slate-400">
-              / {members.length} Total
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            {(() => {
-              const inactiveCount = members.filter(
-                (m) => m.isActive === false || m.status === "suspended"
-              ).length;
-              return inactiveCount > 0
-                ? `${inactiveCount} blocked / inactive`
-                : "All members active & authorized";
-            })()}
-          </p>
-        </div>
+      {/* Real-time Metric Cards (Signups, Logins, Sessions, Administrators) */}
+      <TeamMetricsCards
+        totalVendors={vendors.length}
+        activeVendorsCount={activeVendorsCount}
+        suspendedVendorsCount={suspendedVendorsCount}
+        loggedInVendorsCount={loggedInVendorsCount}
+        neverLoggedInVendorsCount={neverLoggedInVendorsCount}
+        totalVendorLogins={totalVendorLogins}
+        totalMembers={members.length}
+        activeMembersCount={activeMembersCount}
+        pendingRequestsCount={requests.length}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+      />
 
-        <div
-          onClick={() => setActiveTab("requests")}
-          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md ${
-            activeTab === "requests" ? "border-amber-400 ring-2 ring-amber-100" : "border-slate-200"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">
-              Pending Requests
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Clock size={20} />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-[#0A1F66]">
-              {requests.length}
-            </p>
-            {requests.length > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                Action Required
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Waiting for admin review
-          </p>
-        </div>
-
-        <div
-          onClick={() => setActiveTab("invitations")}
-          className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition hover:border-purple-300 hover:shadow-md ${
-            activeTab === "invitations" ? "border-purple-400 ring-2 ring-purple-100" : "border-slate-200"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">
-              Active Invitations
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <Key size={20} />
-            </div>
-          </div>
-          <p className="mt-3 text-3xl font-bold text-[#0A1F66]">
-            {invitations.filter((i) => i.status === "pending").length}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Valid single-use invite tokens
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
+      {/* Navigation Tabs */}
       <div className="flex border-b border-slate-200 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab("members")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap ${
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
             activeTab === "members"
               ? "border-[#1E5BFF] text-[#1E5BFF]"
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          Active Members ({members.length})
+          Active Administrators ({members.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("vendors")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
+            activeTab === "vendors"
+              ? "border-[#1E5BFF] text-[#1E5BFF]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          Coworking Vendors ({vendors.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("audit")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
+            activeTab === "audit"
+              ? "border-[#1E5BFF] text-[#1E5BFF]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          Login &amp; Activity Stream
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("invite")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap ${
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
             activeTab === "invite"
               ? "border-[#1E5BFF] text-[#1E5BFF]"
               : "border-transparent text-slate-500 hover:text-slate-800"
@@ -573,7 +827,7 @@ export default function TeamManagement() {
         <button
           type="button"
           onClick={() => setActiveTab("requests")}
-          className={`relative border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap ${
+          className={`relative border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
             activeTab === "requests"
               ? "border-[#1E5BFF] text-[#1E5BFF]"
               : "border-transparent text-slate-500 hover:text-slate-800"
@@ -590,7 +844,7 @@ export default function TeamManagement() {
         <button
           type="button"
           onClick={() => setActiveTab("invitations")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap ${
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
             activeTab === "invitations"
               ? "border-[#1E5BFF] text-[#1E5BFF]"
               : "border-transparent text-slate-500 hover:text-slate-800"
@@ -602,648 +856,158 @@ export default function TeamManagement() {
 
       {/* TAB 1: MEMBERS */}
       {activeTab === "members" && (
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-bold text-[#0A1F66]">
-              Authorized Administrators & Team Members
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Users with privileged access to i-VANTAGE administration portal.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3.5">Name & Email</th>
-                  <th className="px-6 py-3.5">Role</th>
-                  <th className="px-6 py-3.5">Status & Access</th>
-                  <th className="px-6 py-3.5">Last Login</th>
-                  <th className="px-6 py-3.5">Registered</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {members.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      No active members found.
-                    </td>
-                  </tr>
-                ) : (
-                  members.map((member) => {
-                    const isSelf = Boolean(
-                      (currentUser?._id && member._id === currentUser._id) ||
-                      (currentUser?.id && member._id === currentUser.id) ||
-                      (currentUser?.email &&
-                        member.email.toLowerCase() ===
-                          currentUser.email.toLowerCase())
-                    );
-                    const isMemberActive =
-                      member.isActive !== false && member.status === "active";
-
-                    return (
-                      <tr key={member._id} className="hover:bg-slate-50/70">
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-slate-900">
-                            {member.fullName}
-                          </div>
-                          <div className="text-xs text-slate-400">{member.email}</div>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {(() => {
-                            if (isSuperAdmin && !isSelf) {
-                              const currentVal =
-                                member.role === "super_admin"
-                                  ? "super_admin"
-                                  : member.role === "admin" ||
-                                    member.role === "vendor"
-                                  ? "admin"
-                                  : "user";
-
-                              return (
-                                <div className="relative inline-flex items-center">
-                                  <select
-                                    value={currentVal}
-                                    disabled={updatingRoleId === member._id}
-                                    onChange={(e) =>
-                                      handleRoleChange(
-                                        member._id,
-                                        member.fullName,
-                                        e.target.value
-                                      )
-                                    }
-                                    className={`appearance-none cursor-pointer pl-7 pr-8 py-1.5 text-xs font-semibold rounded-full border transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
-                                      currentVal === "super_admin"
-                                        ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 focus:ring-indigo-400"
-                                        : currentVal === "admin"
-                                        ? "bg-blue-50 text-[#1E5BFF] border-blue-200 hover:bg-blue-100 focus:ring-blue-400"
-                                        : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 focus:ring-slate-400"
-                                    }`}
-                                    title="Change member role (Super Admin only)"
-                                  >
-                                    <option value="super_admin">Super Admin</option>
-                                    <option value="admin">Admin / Vendor</option>
-                                    <option value="user">User</option>
-                                  </select>
-
-                                  <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
-                                    {updatingRoleId === member._id ? (
-                                      <Loader2
-                                        size={12}
-                                        className="animate-spin text-slate-500"
-                                      />
-                                    ) : currentVal === "super_admin" ? (
-                                      <Shield
-                                        size={12}
-                                        className="text-indigo-600"
-                                      />
-                                    ) : currentVal === "admin" ? (
-                                      <Building
-                                        size={12}
-                                        className="text-[#1E5BFF]"
-                                      />
-                                    ) : (
-                                      <UserIcon
-                                        size={12}
-                                        className="text-slate-600"
-                                      />
-                                    )}
-                                  </span>
-
-                                  <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                                    <ChevronDown size={11} />
-                                  </span>
-                                </div>
-                              );
-                            }
-
-                            if (isSelf) {
-                              return (
-                                <div className="inline-flex items-center gap-1.5">
-                                  <span
-                                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                    title="You cannot alter your own role"
-                                  >
-                                    <Shield size={12} />
-                                    Super Admin
-                                  </span>
-                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200">
-                                    You
-                                  </span>
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                  member.role === "super_admin"
-                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                    : member.role === "admin" ||
-                                      member.role === "vendor"
-                                    ? "bg-blue-50 text-[#1E5BFF] border border-blue-200"
-                                    : "bg-slate-100 text-slate-700 border border-slate-200"
-                                }`}
-                                title="Managed by Super Admin"
-                              >
-                                <Shield size={12} />
-                                {member.role === "super_admin"
-                                  ? "Super Admin"
-                                  : member.role === "admin" ||
-                                    member.role === "vendor"
-                                  ? "Admin / Vendor"
-                                  : "User"}
-                              </span>
-                            );
-                          })()}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2.5">
-                            {isSuperAdmin && !isSelf ? (
-                              <button
-                                type="button"
-                                role="switch"
-                                aria-checked={isMemberActive}
-                                disabled={togglingStatusId === member._id}
-                                onClick={() => handleToggleStatus(member)}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1E5BFF] focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
-                                  isMemberActive ? "bg-emerald-500" : "bg-slate-300"
-                                }`}
-                                title={
-                                  isMemberActive
-                                    ? "Toggle Off to Deactivate & Block member across all portals"
-                                    : "Toggle On to Activate member and restore access"
-                                }
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
-                                    isMemberActive ? "translate-x-5" : "translate-x-0"
-                                  }`}
-                                >
-                                  {togglingStatusId === member._id && (
-                                    <Loader2
-                                      size={10}
-                                      className="animate-spin text-slate-500"
-                                    />
-                                  )}
-                                </span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                disabled
-                                className={`relative inline-flex h-6 w-11 shrink-0 opacity-60 cursor-not-allowed rounded-full border-2 border-transparent ${
-                                  isMemberActive ? "bg-emerald-500" : "bg-slate-300"
-                                }`}
-                                title={
-                                  isSelf
-                                    ? "Self-lockout safeguard: You cannot deactivate your own account"
-                                    : "Only Super Admin can toggle member status"
-                                }
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 ${
-                                    isMemberActive ? "translate-x-5" : "translate-x-0"
-                                  }`}
-                                />
-                              </button>
-                            )}
-
-                            {isMemberActive ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                                <CheckCircle2 size={12} />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200">
-                                <AlertCircle size={12} />
-                                Inactive (Blocked)
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 text-xs text-slate-500">
-                          {member.lastLogin
-                            ? new Date(member.lastLogin).toLocaleString()
-                            : "Never"}
-                        </td>
-
-                        <td className="px-6 py-4 text-xs text-slate-400">
-                          {new Date(member.createdAt).toLocaleDateString()}
-                        </td>
-
-                        <td className="px-6 py-4 text-right">
-                          {isSuperAdmin ? (
-                            isSelf ? (
-                              <span
-                                className="inline-flex items-center justify-center p-1.5 text-slate-300 cursor-not-allowed"
-                                title="Self-lockout safeguard: You cannot delete your own account"
-                              >
-                                <Trash2 size={16} />
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenDeleteModal(member)}
-                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-200"
-                                title={`Delete ${member.fullName} permanently`}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )
-                          ) : (
-                            <span className="text-slate-300 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TeamMembersTable
+          members={members}
+          currentUserId={currentUser?._id || currentUser?.id}
+          currentUserEmail={currentUser?.email}
+          isSuperAdmin={isSuperAdmin}
+          updatingRoleId={updatingRoleId}
+          onRoleChange={handleRoleChange}
+          onToggleStatus={handleToggleStatus}
+          onOpenDeleteModal={handleOpenDeleteModal}
+        />
       )}
 
-      {/* TAB 2: INVITE FORM */}
+      {/* TAB 2: VENDORS (Full CRUD identical to TeamMembersTable) */}
+      {activeTab === "vendors" && (
+        <VendorsDirectoryTable
+          vendors={vendors}
+          loading={loading}
+          isSuperAdmin={isSuperAdmin}
+          updatingRoleId={updatingVendorRoleId}
+          updatingStatusId={updatingVendorStatusId}
+          onRefresh={loadVendorsAndAudit}
+          onToggleStatus={handleToggleVendorStatus}
+          onRoleChange={handleVendorRoleChange}
+          onOpenDeleteModal={handleOpenDeleteVendorModal}
+        />
+      )}
+
+      {/* TAB 3: AUDIT LOGS */}
+      {activeTab === "audit" && (
+        <AuditLogsTable
+          logs={auditLogs}
+          loading={loading}
+          onRefresh={loadVendorsAndAudit}
+        />
+      )}
+
+      {/* TAB 4: INVITE FORM */}
       {activeTab === "invite" && (
-        <div className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-[#0A1F66]">
-              Issue Secure Team Invitation
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Generate a single-use, 72-hour cryptographic invitation link. The
-              recipient will register directly with their pre-authorized role.
-            </p>
-          </div>
-
-          <form onSubmit={handleGenerateInvite} className="space-y-4">
-            <div>
-              <label
-                htmlFor="inviteEmail"
-                className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
-              >
-                Recipient Work Email
-              </label>
-              <input
-                id="inviteEmail"
-                type="email"
-                required
-                placeholder="colleague@company.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="inviteRole"
-                className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
-              >
-                Assign Role
-              </label>
-              <select
-                id="inviteRole"
-                value={inviteRole}
-                onChange={(e) =>
-                  setInviteRole(e.target.value as "admin" | "editor")
-                }
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="admin">Administrator (Full CMS Management)</option>
-                <option value="editor">Content Editor (Content & Leads Access)</option>
-              </select>
-            </div>
-
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-[#0A1F66]">
-                🔒 Enterprise Security Policy:
-              </p>
-              <p>
-                The invitation token is cryptographically random and strictly
-                bound to the specified email address. It expires in 72 hours and
-                cannot be reused.
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              loading={submittingInvite}
-            >
-              Generate Invitation Link
-            </Button>
-          </form>
-
-          {/* Generated Link Display */}
-          {generatedInviteUrl && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
-                <CheckCircle2 size={18} className="text-emerald-600" />
-                Invitation Link Ready
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={generatedInviteUrl}
-                  className="w-full rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-mono text-slate-700 outline-none select-all"
-                />
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={handleCopyLink}
-                  className="shrink-0 flex items-center justify-center gap-1.5"
-                >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? "Copied!" : "Copy Link"}
-                </Button>
-              </div>
-
-              <p className="text-xs text-emerald-700">
-                Send this link to the team member. They can open it directly to
-                complete their signup.
-              </p>
-            </div>
-          )}
-        </div>
+        <TeamInviteForm
+          inviteEmail={inviteEmail}
+          setInviteEmail={setInviteEmail}
+          inviteRole={inviteRole}
+          setInviteRole={setInviteRole}
+          submittingInvite={submittingInvite}
+          generatedInviteUrl={generatedInviteUrl}
+          copied={copied}
+          onSubmit={handleGenerateInvite}
+          onCopyLink={handleCopyLink}
+        />
       )}
 
-      {/* TAB 3: ACCESS REQUESTS */}
+      {/* TAB 5: ACCESS REQUESTS */}
       {activeTab === "requests" && (
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-bold text-[#0A1F66]">
-              Pending Administrator Access Requests
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Users who registered via public access request and require
-              administrative authorization before login is enabled.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3.5">Applicant</th>
-                  <th className="px-6 py-3.5">Requested Date</th>
-                  <th className="px-6 py-3.5">Assign Role</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {requests.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-10 text-center text-slate-400">
-                      <CheckCircle2
-                        size={32}
-                        className="mx-auto mb-2 text-emerald-500"
-                      />
-                      No pending requests. All access applications have been reviewed.
-                    </td>
-                  </tr>
-                ) : (
-                  requests.map((req) => (
-                    <tr key={req._id} className="hover:bg-slate-50/70">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">
-                          {req.fullName}
-                        </div>
-                        <div className="text-xs text-slate-400">{req.email}</div>
-                      </td>
-
-                      <td className="px-6 py-4 text-xs text-slate-500">
-                        {new Date(req.createdAt).toLocaleString()}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <select
-                          value={selectedRoles[req._id] || "admin"}
-                          onChange={(e) =>
-                            setSelectedRoles((prev) => ({
-                              ...prev,
-                              [req._id]: e.target.value,
-                            }))
-                          }
-                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-[#1E5BFF]"
-                        >
-                          <option value="admin">Administrator</option>
-                          <option value="editor">Content Editor</option>
-                        </select>
-                      </td>
-
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          loading={approvingId === req._id}
-                          disabled={
-                            approvingId === req._id || rejectingId === req._id
-                          }
-                          onClick={() => handleApprove(req._id)}
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          Approve
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          loading={rejectingId === req._id}
-                          disabled={
-                            approvingId === req._id || rejectingId === req._id
-                          }
-                          onClick={() => handleReject(req._id)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                        >
-                          Reject
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AccessRequestsTable
+          requests={requests}
+          selectedRoles={selectedRoles}
+          onRoleSelectChange={(id: string, role: string) =>
+            setSelectedRoles((prev) => ({ ...prev, [id]: role }))
+          }
+          approvingId={approvingId}
+          rejectingId={rejectingId}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
       )}
 
-      {/* TAB 4: INVITATIONS HISTORY */}
+      {/* TAB 6: INVITATIONS HISTORY */}
       {activeTab === "invitations" && (
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-bold text-[#0A1F66]">
-              Invitation History & Token Status
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Audit log of issued administrative invitation tokens.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3.5">Invited Email</th>
-                  <th className="px-6 py-3.5">Role</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Issued At</th>
-                  <th className="px-6 py-3.5">Expires At</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {invitations.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      No invitations issued yet.
-                    </td>
-                  </tr>
-                ) : (
-                  invitations.map((inv) => {
-                    const isExpired =
-                      inv.status === "pending" &&
-                      new Date() > new Date(inv.expiresAt);
-
-                    return (
-                      <tr key={inv._id} className="hover:bg-slate-50/70">
-                        <td className="px-6 py-4 font-semibold text-slate-900">
-                          {inv.email}
-                        </td>
-
-                        <td className="px-6 py-4 text-xs capitalize font-medium text-slate-700">
-                          {inv.role}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {inv.status === "accepted" ? (
-                            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                              Accepted
-                            </span>
-                          ) : inv.status === "revoked" ? (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
-                              Revoked
-                            </span>
-                          ) : isExpired ? (
-                            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 border border-red-200">
-                              Expired
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
-                              Active / Pending
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-4 text-xs text-slate-500">
-                          {new Date(inv.createdAt).toLocaleDateString()}
-                        </td>
-
-                        <td className="px-6 py-4 text-xs text-slate-500">
-                          {new Date(inv.expiresAt).toLocaleDateString()}
-                        </td>
-
-                        <td className="px-6 py-4 text-right">
-                          {inv.status === "pending" && !isExpired && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRevoke(inv._id)}
-                              className="text-xs text-red-600 border-red-200 hover:bg-red-50"
-                            >
-                              Revoke
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <InvitationsHistoryTable
+          invitations={invitations}
+          onRevoke={handleRevoke}
+        />
       )}
 
-      {/* Delete Member Confirmation Modal */}
-      {deleteModalOpen && memberToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 shrink-0">
-                <Trash2 size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-[#0A1F66]">
-                  Delete Team Member
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Permanent account deletion & access revocation
+      {/* Delete Admin Member Confirmation Accessible Modal */}
+      {memberToDelete && (
+        <ConfirmDialog
+          open={deleteModalOpen}
+          title="Delete Team Member"
+          variant="danger"
+          confirmLabel="Yes, Delete Member"
+          cancelLabel="Cancel"
+          loading={isDeleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            setDeleteModalOpen(false);
+            setMemberToDelete(null);
+          }}
+          description={
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Permanent account deletion &amp; access revocation
+              </p>
+              <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3.5 text-xs text-rose-800 space-y-1.5">
+                <p className="font-semibold text-rose-900">
+                  Warning: This action cannot be undone.
+                </p>
+                <p>
+                  You are about to permanently remove{" "}
+                  <strong className="font-bold underline">
+                    {memberToDelete.fullName}
+                  </strong>{" "}
+                  ({memberToDelete.email}).
+                </p>
+                <p className="text-rose-700/80">
+                  This user will be permanently deleted from the database and immediately
+                  blocked from accessing the administration console and all APIs.
                 </p>
               </div>
             </div>
+          }
+        />
+      )}
 
-            <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-4 text-xs text-rose-800 space-y-1.5">
-              <p className="font-semibold text-rose-900">
-                Warning: This action cannot be undone.
+      {/* Delete Vendor Confirmation Accessible Modal */}
+      {vendorToDelete && (
+        <ConfirmDialog
+          open={deleteVendorModalOpen}
+          title="Delete Marketplace Vendor"
+          variant="danger"
+          confirmLabel="Yes, Delete Vendor"
+          cancelLabel="Cancel"
+          loading={isDeletingVendor}
+          onConfirm={handleConfirmDeleteVendor}
+          onCancel={() => {
+            setDeleteVendorModalOpen(false);
+            setVendorToDelete(null);
+          }}
+          description={
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Permanent partner deletion &amp; marketplace revocation
               </p>
-              <p>
-                You are about to permanently remove{" "}
-                <strong className="font-bold underline">
-                  {memberToDelete.fullName}
-                </strong>{" "}
-                ({memberToDelete.email}).
-              </p>
-              <p className="text-rose-700/80">
-                This user will be permanently deleted from the database and immediately
-                blocked from accessing the partner portal, administration console,
-                and all APIs.
-              </p>
+              <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3.5 text-xs text-rose-800 space-y-1.5">
+                <p className="font-semibold text-rose-900">
+                  Warning: This action cannot be undone.
+                </p>
+                <p>
+                  You are about to permanently remove partner{" "}
+                  <strong className="font-bold underline">
+                    {vendorToDelete.businessName || vendorToDelete.name}
+                  </strong>{" "}
+                  ({vendorToDelete.email}).
+                </p>
+                <p className="text-rose-700/80">
+                  This partner will be permanently deleted from the database and immediately
+                  blocked from accessing the partner portal, managing listings, and accessing APIs.
+                </p>
+              </div>
             </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isDeleting}
-                onClick={() => {
-                  setDeleteModalOpen(false);
-                  setMemberToDelete(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleConfirmDelete}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin" />
-                    Deleting Member...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={13} />
-                    Confirm Delete
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+          }
+        />
       )}
     </div>
   );

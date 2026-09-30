@@ -40,7 +40,7 @@ router.post("/article/:slug/view", trackView);
 /*                           Admin Protected Routes                           */
 /* -------------------------------------------------------------------------- */
 
-const adminAuth = [authenticate, authorize(["super_admin", "admin", "editor"])];
+const adminAuth = [authenticate, authorize(["super_admin"])];
 
 router.get("/admin/list", ...adminAuth, getAdminBlogs);
 router.get("/admin/stats", ...adminAuth, getBlogDashboardStats);

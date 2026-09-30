@@ -3,52 +3,16 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import { useRealtimeEvent } from "@/context/RealtimeContext";
+import { Search, Filter, RefreshCw, Building } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui";
+import { DataTableShell } from "@/components/patterns";
+import { LeadsDesktopTable } from "./LeadsDesktopTable";
+import { LeadsMobileCards } from "./LeadsMobileCards";
+import { LeadDossierModal } from "./LeadDossierModal";
 import {
-  Search,
-  Building,
-  User,
-  Phone,
-  Mail,
-  Calendar,
-  Filter,
-  ArrowUpRight,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  RefreshCw,
-  Eye,
-  X,
-} from "lucide-react";
-
-interface MarketplaceLeadItem {
-  _id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  message?: string;
-  status: "new" | "contacted" | "converted" | "lost";
-  source: string;
-  listingId?: {
-    _id: string;
-    title: string;
-    slug: string;
-    location?: { area: string; city: string };
-  };
-  vendorId?: {
-    _id: string;
-    name: string;
-    businessName?: string;
-    email: string;
-    phone?: string;
-  };
-  notes?: Array<{
-    authorId: { name: string; role: string };
-    text: string;
-    createdAt: string;
-  }>;
-  createdAt: string;
-}
+  MarketplaceLeadItem,
+  MarketplaceLeadStatus,
+} from "./lead.table.types";
 
 export default function MarketplaceLeadsTable() {
   const [leads, setLeads] = useState<MarketplaceLeadItem[]>([]);
@@ -57,30 +21,177 @@ export default function MarketplaceLeadsTable() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedLead, setSelectedLead] = useState<MarketplaceLeadItem | null>(null);
 
+  // Status updating & note submitting state
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [submittingNote, setSubmittingNote] = useState(false);
+
+  // Delete dialog state
+  const [leadToDelete, setLeadToDelete] = useState<MarketplaceLeadItem | null>(null);
+  const [deletingLead, setDeletingLead] = useState(false);
+
   const fetchLeads = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const data = await marketplaceApi.getAdminLeads();
       setLeads(data || []);
-    } catch (err: any) {
-      console.warn("Could not load marketplace leads:", err?.message || err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Could not load marketplace leads:", msg);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+    let ignore = false;
+    async function init() {
+      try {
+        const data = await marketplaceApi.getAdminLeads();
+        if (!ignore) {
+          setLeads(data || []);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn("Could not load marketplace leads:", msg);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    init();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
-  // Debounced silent refetch for real-time events
+  // Real-time live synchronization for desktop and mobile
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
-  useRealtimeEvent("leads", () => {
+  useRealtimeEvent("leads", (payload: { type?: string; leadId?: string; status?: MarketplaceLeadStatus } | null) => {
+    // 1. Instant in-memory optimistic updates for other devices
+    if (payload?.type === "LEAD_DELETED" && payload?.leadId) {
+      setLeads((prev) => prev.filter((l) => l._id !== payload.leadId));
+      if (selectedLead?._id === payload.leadId) {
+        setSelectedLead(null);
+      }
+    } else if (payload?.type === "LEAD_UPDATED" && payload?.leadId && payload?.status) {
+      setLeads((prev) =>
+        prev.map((l) => (l._id === payload.leadId ? { ...l, status: payload.status! } : l))
+      );
+      if (selectedLead?._id === payload.leadId) {
+        setSelectedLead((prev) => (prev ? { ...prev, status: payload.status! } : null));
+      }
+    }
+
+    // 2. Debounced silent refetch to pull new leads or full populated relationships
     if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
     refetchTimerRef.current = setTimeout(() => {
       fetchLeads(true);
-    }, 300);
+    }, 250);
   });
+
+  // Mobile App / Phone Tab resume listener (visibilitychange)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchLeads(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [fetchLeads]);
+
+  // Handle status update (Optimistic with immediate broadcast sync)
+  const handleUpdateStatus = async (
+    leadId: string,
+    newStatus: MarketplaceLeadStatus
+  ) => {
+    const currentLead = leads.find((l) => l._id === leadId);
+    if (!currentLead || currentLead.status === newStatus) return;
+    const oldStatus = currentLead.status;
+
+    setUpdatingStatusId(leadId);
+
+    // Optimistic UI state update
+    setLeads((prev) =>
+      prev.map((l) => (l._id === leadId ? { ...l, status: newStatus } : l))
+    );
+    if (selectedLead && selectedLead._id === leadId) {
+      setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
+
+    try {
+      await marketplaceApi.updateAdminLead(leadId, { status: newStatus });
+    } catch (err: unknown) {
+      // Rollback on failure
+      setLeads((prev) =>
+        prev.map((l) => (l._id === leadId ? { ...l, status: oldStatus } : l))
+      );
+      if (selectedLead && selectedLead._id === leadId) {
+        setSelectedLead((prev) => (prev ? { ...prev, status: oldStatus } : null));
+      }
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      alert(apiErr.response?.data?.message || apiErr.message || "Failed to update lead status");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  // Handle add internal note
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead || !newNoteText.trim()) return;
+
+    setSubmittingNote(true);
+    const noteText = newNoteText.trim();
+    try {
+      const updated = await marketplaceApi.updateAdminLead(selectedLead._id, {
+        note: noteText,
+      });
+
+      const updatedLeadData = updated?.data || updated;
+      const updatedNotes = updatedLeadData?.notes || [
+        ...(selectedLead.notes || []),
+        {
+          authorName: "Administrator",
+          text: noteText,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+
+      setSelectedLead((prev) => (prev ? { ...prev, notes: updatedNotes } : null));
+      setLeads((prev) =>
+        prev.map((l) => (l._id === selectedLead._id ? { ...l, notes: updatedNotes } : l))
+      );
+      setNewNoteText("");
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      alert(apiErr.response?.data?.message || apiErr.message || "Failed to add note");
+    } finally {
+      setSubmittingNote(false);
+    }
+  };
+
+  // Handle delete lead with optimistic update
+  const handleDeleteLead = async () => {
+    if (!leadToDelete) return;
+    setDeletingLead(true);
+
+    try {
+      await marketplaceApi.deleteAdminLead(leadToDelete._id);
+      setLeads((prev) => prev.filter((l) => l._id !== leadToDelete._id));
+      if (selectedLead?._id === leadToDelete._id) {
+        setSelectedLead(null);
+      }
+      setLeadToDelete(null);
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      alert(apiErr.response?.data?.message || apiErr.message || "Failed to delete lead");
+    } finally {
+      setDeletingLead(false);
+    }
+  };
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -88,8 +199,12 @@ export default function MarketplaceLeadsTable() {
         lead.name.toLowerCase().includes(search.toLowerCase()) ||
         lead.phone.includes(search) ||
         (lead.email && lead.email.toLowerCase().includes(search.toLowerCase())) ||
-        (lead.listingId?.title && lead.listingId.title.toLowerCase().includes(search.toLowerCase())) ||
-        (lead.vendorId?.businessName && lead.vendorId.businessName.toLowerCase().includes(search.toLowerCase()));
+        (lead.listingId?.title &&
+          lead.listingId.title.toLowerCase().includes(search.toLowerCase())) ||
+        (lead.spaceTitle &&
+          lead.spaceTitle.toLowerCase().includes(search.toLowerCase())) ||
+        (lead.vendorId?.businessName &&
+          lead.vendorId.businessName.toLowerCase().includes(search.toLowerCase()));
 
       const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
 
@@ -103,33 +218,48 @@ export default function MarketplaceLeadsTable() {
       new: leads.filter((l) => l.status === "new").length,
       contacted: leads.filter((l) => l.status === "contacted").length,
       converted: leads.filter((l) => l.status === "converted").length,
+      lost: leads.filter((l) => l.status === "lost").length,
     };
   }, [leads]);
 
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Inquiries</p>
-          <p className="text-2xl font-black text-[#0A1F66] mt-1">{stats.total}</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* KPI Cards (Mobile: 2 cols, Desktop: 5 cols) */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3.5">
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Inquiries
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-[#0A1F66] mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white p-4.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">New Leads</p>
-          <p className="text-2xl font-black text-amber-600 mt-1">{stats.new}</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-amber-200/60 shadow-2xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-amber-700 uppercase tracking-wider">
+            New Leads
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-amber-600 mt-1">{stats.new}</p>
         </div>
-        <div className="bg-white p-4.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Contacted</p>
-          <p className="text-2xl font-black text-blue-600 mt-1">{stats.contacted}</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-blue-200/60 shadow-2xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-blue-700 uppercase tracking-wider">
+            Contacted
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-blue-600 mt-1">{stats.contacted}</p>
         </div>
-        <div className="bg-white p-4.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Converted</p>
-          <p className="text-2xl font-black text-emerald-600 mt-1">{stats.converted}</p>
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-emerald-200/60 shadow-2xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+            Converted
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">{stats.converted}</p>
+        </div>
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-rose-200/60 shadow-2xs col-span-2 sm:col-span-1">
+          <p className="text-[10px] sm:text-[11px] font-bold text-rose-700 uppercase tracking-wider">
+            Lost / Closed
+          </p>
+          <p className="text-xl sm:text-2xl font-black text-rose-600 mt-1">{stats.lost}</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch sm:items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -141,7 +271,7 @@ export default function MarketplaceLeadsTable() {
           />
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <Filter className="w-3.5 h-3.5" />
             <select
@@ -149,182 +279,89 @@ export default function MarketplaceLeadsTable() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E5BFF]"
             >
-              <option value="all">All Statuses</option>
-              <option value="new">New</option>
-              <option value="contacted">Contacted</option>
-              <option value="converted">Converted</option>
-              <option value="lost">Lost</option>
+              <option value="all">All Statuses ({leads.length})</option>
+              <option value="new">New ({stats.new})</option>
+              <option value="contacted">Contacted ({stats.contacted})</option>
+              <option value="converted">Converted ({stats.converted})</option>
+              <option value="lost">Lost ({stats.lost})</option>
             </select>
           </div>
 
           <button
+            type="button"
             onClick={() => fetchLeads(false)}
             disabled={loading}
             className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition active:scale-95"
-            title="Refresh Leads"
+            title="Refresh Leads Live"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[#1E5BFF]" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* Leads Table */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-[#1E5BFF]" />
-            <span className="text-xs">Loading marketplace enquiries...</span>
-          </div>
-        ) : filteredLeads.length === 0 ? (
-          <div className="py-16 text-center text-slate-400">
-            <Building className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            <p className="text-sm font-semibold">No property tour enquiries found</p>
-            <p className="text-xs text-slate-400 mt-1">Enquiries submitted on workspace listings will appear here in real-time.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 uppercase tracking-wider font-bold">
-                <tr>
-                  <th className="py-3 px-4">Client / Prospect</th>
-                  <th className="py-3 px-4">Property / Space</th>
-                  <th className="py-3 px-4">Space Partner (Vendor)</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Enquiry Date</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredLeads.map((item) => (
-                  <tr key={item._id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{item.name}</div>
-                      <div className="text-slate-500 flex items-center gap-1.5 mt-0.5">
-                        <Phone className="w-3 h-3 text-[#1E5BFF]" />
-                        <a href={`tel:${item.phone}`} className="hover:underline text-slate-600">
-                          {item.phone}
-                        </a>
-                      </div>
-                      {item.email && (
-                        <div className="text-slate-400 text-[11px] truncate max-w-[180px] mt-0.5">
-                          {item.email}
-                        </div>
-                      )}
-                    </td>
+      {/* Leads Container via DataTableShell */}
+      <DataTableShell
+        loading={loading}
+        skeletonRows={6}
+        skeletonCols={6}
+        isEmpty={filteredLeads.length === 0}
+        emptyTitle="No property tour enquiries found"
+        emptyDescription="Enquiries submitted on workspace listings will appear here in real-time."
+        emptyIcon={<Building className="w-6 h-6 text-slate-400" />}
+      >
+        {/* Desktop View (>= 768px) */}
+        <LeadsDesktopTable
+          leads={filteredLeads}
+          updatingStatusId={updatingStatusId}
+          onUpdateStatus={handleUpdateStatus}
+          onOpenDossier={(lead) => setSelectedLead(lead)}
+          onOpenDelete={(lead) => setLeadToDelete(lead)}
+        />
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800 line-clamp-1">
-                        {item.listingId?.title || "Direct Space Enquiry"}
-                      </div>
-                      {item.listingId?.location && (
-                        <div className="text-slate-400 text-[11px] mt-0.5">
-                          {item.listingId.location.area}, {item.listingId.location.city}
-                        </div>
-                      )}
-                    </td>
+        {/* Mobile View (< 768px) */}
+        <LeadsMobileCards
+          leads={filteredLeads}
+          updatingStatusId={updatingStatusId}
+          onUpdateStatus={handleUpdateStatus}
+          onOpenDossier={(lead) => setSelectedLead(lead)}
+          onOpenDelete={(lead) => setLeadToDelete(lead)}
+        />
+      </DataTableShell>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#0A1F66]">
-                        {item.vendorId?.businessName || item.vendorId?.name || "Direct / Admin"}
-                      </div>
-                      <div className="text-slate-400 text-[11px]">
-                        {item.vendorId?.email || "Platform"}
-                      </div>
-                    </td>
+      {/* Lead Detail & Management Dossier Modal */}
+      <LeadDossierModal
+        lead={selectedLead}
+        newNoteText={newNoteText}
+        submittingNote={submittingNote}
+        updatingStatusId={updatingStatusId}
+        onClose={() => setSelectedLead(null)}
+        onNoteTextChange={setNewNoteText}
+        onSubmitNote={handleAddNote}
+        onUpdateStatus={handleUpdateStatus}
+        onOpenDelete={(lead) => setLeadToDelete(lead)}
+      />
 
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                          item.status === "new"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : item.status === "contacted"
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : item.status === "converted"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                      {new Date(item.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => setSelectedLead(item)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-[#1E5BFF] text-slate-700 font-bold transition text-xs"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Lead Detail Modal */}
-      {selectedLead && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-lg font-black text-[#0A1F66]">Enquiry Dossier</h3>
-                <p className="text-xs text-slate-400">ID: {selectedLead._id}</p>
-              </div>
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="bg-slate-50 p-3.5 rounded-xl space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Prospect Contact</span>
-                <p className="font-bold text-slate-900 text-sm">{selectedLead.name}</p>
-                <p className="text-slate-600">Phone: {selectedLead.phone}</p>
-                {selectedLead.email && <p className="text-slate-600">Email: {selectedLead.email}</p>}
-              </div>
-
-              <div className="bg-slate-50 p-3.5 rounded-xl space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Property & Partner</span>
-                <p className="font-bold text-[#0A1F66]">{selectedLead.listingId?.title || "Direct Space Enquiry"}</p>
-                <p className="text-slate-600">
-                  Managing Partner: <strong>{selectedLead.vendorId?.businessName || selectedLead.vendorId?.name || "Direct"}</strong>
-                </p>
-                <p className="text-slate-500">Partner Contact: {selectedLead.vendorId?.email}</p>
-              </div>
-
-              {selectedLead.message && (
-                <div className="bg-amber-50/60 border border-amber-200/60 p-3.5 rounded-xl space-y-1">
-                  <span className="text-[11px] font-bold text-amber-800 uppercase">Client Requirement / Note</span>
-                  <p className="text-slate-700 italic">"{selectedLead.message}"</p>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Accessible Reusable Confirm Dialog for Lead Deletion */}
+      <ConfirmDialog
+        open={Boolean(leadToDelete)}
+        title="Delete Enquiry Lead?"
+        description={
+          leadToDelete ? (
+            <>
+              Are you sure you want to permanently delete the lead from{" "}
+              <strong>{leadToDelete.name}</strong> ({leadToDelete.phone})? This action cannot be undone.
+            </>
+          ) : (
+            ""
+          )
+        }
+        confirmLabel="Yes, Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deletingLead}
+        onConfirm={handleDeleteLead}
+        onCancel={() => setLeadToDelete(null)}
+      />
     </div>
   );
 }

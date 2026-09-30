@@ -126,7 +126,7 @@ export default function LegalDeskTermsPage() {
                 <li>Shareholders Agreements</li>
                 <li>Share Purchase Agreements</li>
                 <li>Investment Agreements</li>
-                <li>Founders' Agreements with complex vesting structures</li>
+                <li>Founders&apos; Agreements with complex vesting structures</li>
                 <li>Mergers &amp; Acquisitions documentation</li>
                 <li>Complex licensing agreements</li>
                 <li>International commercial agreements</li>
@@ -577,7 +577,7 @@ export default function LegalDeskTermsPage() {
 
               <p className="mt-5">
                 Review or approval of a document by the Legal Desk does not
-                transfer responsibility for the member's commercial decisions
+                transfer responsibility for the member&apos;s commercial decisions
                 to i-VANTAGE.
               </p>
             </TermsCard>

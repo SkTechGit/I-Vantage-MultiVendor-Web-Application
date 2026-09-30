@@ -61,7 +61,7 @@ export default function HowItWorks() {
           </h2>
 
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            From initial search to same-day access, experience India's most streamlined corporate workspace and business support journey.
+            From initial search to same-day access, experience India&apos;s most streamlined corporate workspace and business support journey.
           </p>
         </div>
 

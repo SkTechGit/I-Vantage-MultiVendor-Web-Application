@@ -233,7 +233,7 @@ const sections = [
         <p className="mt-4">
           Where a third party provides a refund, i-VANTAGE may pass the
           applicable refundable amount to the member after receipt, subject to
-          the third party's terms.
+          the third party&apos;s terms.
         </p>
       </>
     ),
@@ -330,7 +330,7 @@ const sections = [
 
         <p className="mt-4">
           Government tax liabilities, statutory payments, penalties, interest,
-          and other amounts payable by the member remain the member's
+          and other amounts payable by the member remain the member&apos;s
           responsibility.
         </p>
       </>
@@ -449,7 +449,7 @@ const sections = [
         </ul>
 
         <p className="mt-4">
-          Third-party technology costs are subject to the relevant provider's
+          Third-party technology costs are subject to the relevant provider&apos;s
           refund policy.
         </p>
       </>
@@ -539,7 +539,7 @@ const sections = [
     content: (
       <>
         <p>
-          If a payment is deducted from the customer's bank account but the
+          If a payment is deducted from the customer&apos;s bank account but the
           transaction is not successfully recorded by i-VANTAGE, the customer
           should contact us with the transaction details.
         </p>
@@ -547,7 +547,7 @@ const sections = [
         <p className="mt-4">After verification, the amount may be:</p>
 
         <ul>
-          <li>Reflected against the customer's account; or</li>
+          <li>Reflected against the customer&apos;s account; or</li>
           <li>Refunded through the applicable payment system.</li>
         </ul>
 
@@ -750,7 +750,7 @@ const sections = [
         </p>
 
         <p className="mt-4">
-          The time taken for the amount to appear in the customer's account may
+          The time taken for the amount to appear in the customer&apos;s account may
           depend on:
         </p>
 
@@ -797,7 +797,7 @@ const sections = [
           <li>Misrepresentation</li>
           <li>Abuse of services</li>
           <li>Repeated unreasonable refund requests</li>
-          <li>Unauthorized use of another person's payment method</li>
+          <li>Unauthorized use of another person&apos;s payment method</li>
           <li>Attempts to obtain services without payment</li>
         </ul>
 
@@ -913,7 +913,7 @@ const sections = [
           i-VANTAGE aims to deal with refund requests fairly and transparently.
           Refund eligibility depends on the nature of the service, whether
           work has commenced, third-party and statutory costs incurred, and the
-          specific terms applicable to the customer's purchase or membership.
+          specific terms applicable to the customer&apos;s purchase or membership.
         </p>
       </>
     ),
@@ -962,7 +962,7 @@ export default function RefundPolicyPage() {
                   <strong className="text-slate-900">
                     Asset Sense Private Limited
                   </strong>{" "}
-                  ("i-VANTAGE", "we", "us", or "our").
+                  (&quot;i-VANTAGE&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;).
                 </p>
 
                 <p>

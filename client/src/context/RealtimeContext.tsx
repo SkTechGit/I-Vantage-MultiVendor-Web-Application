@@ -8,10 +8,10 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 
 export interface RealtimeEvent<T = any> {
+  id?: string;
   channel: string;
   type: string;
   payload: T;
@@ -47,6 +47,12 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // BroadcastChannel for cross-tab communication on the same device
   const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+
+  // Set of recently processed event IDs / fingerprints to prevent duplicate dispatches
+  const seenEventKeysRef = useRef<Set<string>>(new Set());
+
+  // High-water mark timestamp for fast polling sync (initialized in effect for React 19 purity)
+  const lastPollTimestampRef = useRef<number>(0);
 
   // Dispatch an event to all local registered listeners
   const dispatchLocal = useCallback(
@@ -89,7 +95,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
 
-      // Propagate to other tabs via BroadcastChannel if this event originated from SSE
+      // Propagate to other tabs via BroadcastChannel if this event originated from SSE/Poll
       if (!fromTab && broadcastChannelRef.current) {
         try {
           broadcastChannelRef.current.postMessage({
@@ -106,7 +112,30 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // Setup BroadcastChannel for 0ms cross-tab synchronization
+  // Process an incoming event with deduplication
+  const processIncomingEvent = useCallback(
+    (evt: RealtimeEvent) => {
+      if (!evt || !evt.channel || !evt.type) return;
+
+      const eventKey = evt.id || `${evt.channel}:${evt.type}:${evt.timestamp || Date.now()}`;
+      if (seenEventKeysRef.current.has(eventKey)) {
+        return; // Already dispatched
+      }
+
+      seenEventKeysRef.current.add(eventKey);
+
+      // Keep seen set under 1000 items
+      if (seenEventKeysRef.current.size > 1000) {
+        const arr = Array.from(seenEventKeysRef.current);
+        seenEventKeysRef.current = new Set(arr.slice(arr.length - 500));
+      }
+
+      dispatchLocal(evt.channel, evt.type, evt.payload, false);
+    },
+    [dispatchLocal]
+  );
+
+  // Setup BroadcastChannel for 0ms cross-tab synchronization on the same device
   useEffect(() => {
     if (typeof window === "undefined" || !("BroadcastChannel" in window)) {
       return;
@@ -128,39 +157,73 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [dispatchLocal]);
 
-  // Connect to SSE stream
+  // Dual Real-Time Engine: SSE Stream + Ultra-Fast Fallback Polling (1.5s interval)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     let eventSource: EventSource | null = null;
-    let reconnectTimer: NodeJS.Timeout | null = null;
-    let reconnectDelay = 1000;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let sseReconnectTimer: NodeJS.Timeout | null = null;
     let isDisposed = false;
+    let isPollingActive = false;
 
+    // 1. FAST HTTP POLLING (Guaranteed across Cloudflare Tunnels, proxies & mobile NATs)
+    const runPoll = async () => {
+      if (isDisposed || isPollingActive) return;
+      isPollingActive = true;
+
+      try {
+        const since = lastPollTimestampRef.current || (Date.now() - 5000);
+        const res = await fetch(`/api/v1/realtime/poll?channels=*&since=${since}`, {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success) {
+            setIsConnected(true);
+            if (data.timestamp) {
+              lastPollTimestampRef.current = data.timestamp;
+            }
+            if (Array.isArray(data.events) && data.events.length > 0) {
+              data.events.forEach((evt: RealtimeEvent) => {
+                processIncomingEvent(evt);
+              });
+            }
+          }
+        }
+      } catch {
+        // network momentary pause
+      } finally {
+        isPollingActive = false;
+      }
+    };
+
+    // 2. SERVER-SENT EVENTS (SSE) STREAM
     const connectSSE = () => {
       if (isDisposed) return;
 
-      // Connect to native Next.js App Router SSE endpoint (no proxy buffering)
-      const sseUrl = "/api/realtime/stream?channels=*";
+      const sseUrl = "/api/v1/realtime/stream?channels=*";
 
       try {
         eventSource = new EventSource(sseUrl, { withCredentials: true });
 
         eventSource.onopen = () => {
           setIsConnected(true);
-          reconnectDelay = 1000; // Reset backoff on successful connection
         };
 
         eventSource.addEventListener("connected", () => {
           setIsConnected(true);
-          reconnectDelay = 1000;
         });
 
         eventSource.addEventListener("message", (e) => {
           try {
             const data: RealtimeEvent = JSON.parse(e.data);
             if (data && data.channel && data.type) {
-              dispatchLocal(data.channel, data.type, data.payload, false);
+              processIncomingEvent(data);
             }
           } catch (parseErr) {
             console.error("Failed to parse SSE message:", parseErr);
@@ -168,57 +231,60 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
         eventSource.onerror = () => {
-          setIsConnected(false);
           if (eventSource) {
             eventSource.close();
             eventSource = null;
           }
 
-          // Auto-reconnect with exponential backoff (1s -> 2s -> 4s -> max 8s)
-          if (!isDisposed && !reconnectTimer) {
-            reconnectTimer = setTimeout(() => {
-              reconnectTimer = null;
+          if (!isDisposed && !sseReconnectTimer) {
+            sseReconnectTimer = setTimeout(() => {
+              sseReconnectTimer = null;
               connectSSE();
-            }, reconnectDelay);
-            reconnectDelay = Math.min(reconnectDelay * 2, 8000);
+            }, 3000);
           }
         };
-      } catch (connErr) {
-        console.error("SSE connection error:", connErr);
-        if (!isDisposed && !reconnectTimer) {
-          reconnectTimer = setTimeout(() => {
-            reconnectTimer = null;
+      } catch {
+        if (!isDisposed && !sseReconnectTimer) {
+          sseReconnectTimer = setTimeout(() => {
+            sseReconnectTimer = null;
             connectSSE();
-          }, reconnectDelay);
-          reconnectDelay = Math.min(reconnectDelay * 2, 8000);
+          }, 3000);
         }
       }
     };
 
-    // Reconnect immediately when phone or tab wakes up
-    const handleVisibilityOrOnline = () => {
-      if (!isDisposed && document.visibilityState === "visible" && !eventSource) {
-        connectSSE();
+    // Start SSE stream
+    connectSSE();
+
+    // Start polling immediately, then every 1500ms
+    runPoll();
+    pollInterval = setInterval(runPoll, 1500);
+
+    // Re-sync immediately on visibility or network reconnection
+    const handleWakeup = () => {
+      if (!isDisposed && document.visibilityState === "visible") {
+        runPoll();
+        if (!eventSource) {
+          connectSSE();
+        }
       }
     };
 
-    window.addEventListener("online", handleVisibilityOrOnline);
-    document.addEventListener("visibilitychange", handleVisibilityOrOnline);
-
-    connectSSE();
+    window.addEventListener("online", handleWakeup);
+    document.addEventListener("visibilitychange", handleWakeup);
 
     return () => {
       isDisposed = true;
-      window.removeEventListener("online", handleVisibilityOrOnline);
-      document.removeEventListener("visibilitychange", handleVisibilityOrOnline);
-      if (reconnectTimer) clearTimeout(reconnectTimer);
+      window.removeEventListener("online", handleWakeup);
+      document.removeEventListener("visibilitychange", handleWakeup);
+      if (pollInterval) clearInterval(pollInterval);
+      if (sseReconnectTimer) clearTimeout(sseReconnectTimer);
       if (eventSource) {
         eventSource.close();
         eventSource = null;
       }
-      setIsConnected(false);
     };
-  }, [user, dispatchLocal]);
+  }, [user, processIncomingEvent]);
 
   // Subscribe method for components
   const subscribe = useCallback(

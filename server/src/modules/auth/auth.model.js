@@ -31,7 +31,7 @@ const authSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["super_admin", "admin", "vendor", "user", "editor", "pending"],
+      enum: ["super_admin", "vendor", "user", "pending"],
       default: "pending",
     },
 
@@ -62,6 +62,11 @@ const authSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -72,6 +77,11 @@ authSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
   this.password = await bcrypt.hash(this.password, 12);
+
+  // Bump tokenVersion on password change to invalidate all existing sessions
+  if (!this.isNew) {
+    this.tokenVersion = (this.tokenVersion || 0) + 1;
+  }
 });
 
 authSchema.methods.comparePassword = async function (password) {

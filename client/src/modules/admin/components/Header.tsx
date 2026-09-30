@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useRealtime } from "@/context/RealtimeContext";
 import { logout } from "@/modules/auth/auth.api";
+import NotificationBell from "./NotificationBell";
 
 interface Props {
   onOpenMobileSidebar?: () => void;
@@ -52,30 +53,26 @@ export default function Header({
   const { isConnected } = useRealtime();
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notificationOpen, setNotificationOpen] = useState(false);
-
   const profileRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
       if (
         profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
+        !profileRef.current.contains(target)
       ) {
         setProfileOpen(false);
-      }
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setNotificationOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -113,13 +110,13 @@ export default function Header({
   return (
     <header className="sticky top-0 z-30 flex h-16 sm:h-[68px] w-full items-center justify-between border-b border-slate-200/90 bg-white/95 backdrop-blur-md px-3 sm:px-6 lg:px-8 transition-colors">
       {/* Left: Mobile hamburger + Desktop Sidebar Toggle + Clean Breadcrumbs */}
-      <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3.5 min-w-0 flex-1 mr-2">
         {/* Mobile Hamburger Menu */}
         <button
           type="button"
           onClick={onOpenMobileSidebar}
           aria-label="Open sidebar menu"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 active:scale-95 lg:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 active:scale-95 lg:hidden"
         >
           <Menu size={19} />
         </button>
@@ -131,22 +128,22 @@ export default function Header({
             onClick={onToggleCollapse}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95 cursor-pointer"
+            className="hidden lg:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95 cursor-pointer"
           >
             {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
         )}
 
         {/* Breadcrumb Context */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500">
-          <span className="text-slate-400 font-normal hidden md:inline">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500 min-w-0">
+          <span className="text-slate-400 font-normal hidden md:inline shrink-0">
             i-VANTAGE
           </span>
-          <ChevronRight size={14} className="text-slate-300 hidden md:inline" />
-          <span className="text-slate-500 hidden sm:inline">
+          <ChevronRight size={14} className="text-slate-300 hidden md:inline shrink-0" />
+          <span className="text-slate-500 hidden sm:inline shrink-0">
             {currentRoute.group}
           </span>
-          <ChevronRight size={14} className="text-slate-300 hidden sm:inline" />
+          <ChevronRight size={14} className="text-slate-300 hidden sm:inline shrink-0" />
           <span className="font-semibold text-slate-900 truncate">
             {currentRoute.label}
           </span>
@@ -171,7 +168,7 @@ export default function Header({
       </div>
 
       {/* Right: Actions, Notifications, Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Mobile Search button */}
         <button
           type="button"
@@ -220,84 +217,8 @@ export default function Header({
           <ExternalLink size={13} className="text-slate-400" />
         </Link>
 
-        {/* Notification Bell Popover */}
-        <div className="relative" ref={notificationRef}>
-          <button
-            type="button"
-            onClick={() => setNotificationOpen((prev) => !prev)}
-            aria-label="Notifications"
-            className={`relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl transition ${
-              notificationOpen
-                ? "bg-slate-100 text-slate-900"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-            }`}
-          >
-            <Bell size={18} />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />
-          </button>
-
-          {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-100 z-50">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 px-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-900">
-                    Notifications
-                  </span>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-600">
-                    Active
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400">Live System</span>
-              </div>
-
-              <div className="divide-y divide-slate-100 py-1 max-h-64 overflow-y-auto">
-                <div className="flex items-start gap-3 p-2.5 hover:bg-slate-50 rounded-xl transition">
-                  <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0">
-                    <CheckCircle2 size={15} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-900">
-                      System Operational
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Database connected, authentication active.
-                    </p>
-                    <span className="text-[10px] text-slate-400 mt-1 block">
-                      Just now
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-2.5 hover:bg-slate-50 rounded-xl transition">
-                  <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-                    <Sparkles size={15} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-900">
-                      Lead Pipeline Active
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      New enquiries are syncing automatically with CRM.
-                    </p>
-                    <span className="text-[10px] text-slate-400 mt-1 block">
-                      Automated monitor
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 pt-2 px-2">
-                <Link
-                  href="/admin/leads"
-                  onClick={() => setNotificationOpen(false)}
-                  className="flex w-full items-center justify-center rounded-lg py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition"
-                >
-                  View all leads pipeline →
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Real-time Dynamic Notification Bell */}
+        <NotificationBell />
 
         {/* User Profile Menu */}
         <div className="relative" ref={profileRef}>
@@ -331,7 +252,7 @@ export default function Header({
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 z-50">
+            <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 z-50">
               {/* User Identity Info */}
               <div className="border-b border-slate-100 px-3 py-2.5">
                 <p className="text-xs font-bold text-slate-900" suppressHydrationWarning>

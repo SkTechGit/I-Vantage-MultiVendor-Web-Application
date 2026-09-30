@@ -173,6 +173,15 @@ export default function Navbar() {
 
           {/* Mobile Right Actions */}
           <div className="flex items-center gap-2 lg:hidden" ref={mobilePortalRef}>
+            {/* Tablet/Large Phone quick List Space link */}
+            <Link
+              href="/vendor/signup"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#1E5BFF] bg-[#F0F5FF] border border-[#1E5BFF]/20 hover:bg-[#1E5BFF] hover:text-white transition-all shadow-xs active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+              <span>List Space</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => {
@@ -279,15 +288,16 @@ export default function Navbar() {
                 </div>
               </button>
 
-              {/* Register shortcut */}
+              {/* Register / List Space shortcut */}
               <div className="mt-3 pt-2.5 border-t border-slate-100 px-2 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">New space partner?</span>
+                <span className="text-slate-500">Have a workspace?</span>
                 <button
                   type="button"
                   onClick={() => handleNavigate("/vendor/signup")}
-                  className="font-bold text-[#1E5BFF] hover:underline cursor-pointer"
+                  className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
                 >
-                  Register Space &rarr;
+                  <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+                  <span>List Your Space &rarr;</span>
                 </button>
               </div>
             </div>

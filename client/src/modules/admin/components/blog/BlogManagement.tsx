@@ -47,7 +47,25 @@ export default function BlogManagement() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let ignore = false;
+    Promise.all([
+      getAdminBlogs({ page: 1, limit: 100 }),
+      getBlogDashboardStats(),
+      getBlogCategories(),
+    ])
+      .then(([blogsRes, statsRes, catsRes]) => {
+        if (!ignore) {
+          setBlogs(blogsRes.blogs || []);
+          setStats(statsRes);
+          setCategories(catsRes);
+        }
+      })
+      .catch((err) => {
+        if (!ignore) console.error("Failed to load blog admin data:", err);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
 
     // Revalidate when user returns to this browser tab
     const handleFocus = () => {
@@ -56,6 +74,7 @@ export default function BlogManagement() {
     window.addEventListener("focus", handleFocus);
 
     return () => {
+      ignore = true;
       window.removeEventListener("focus", handleFocus);
     };
   }, [loadData]);

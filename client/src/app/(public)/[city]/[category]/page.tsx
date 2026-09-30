@@ -1,11 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import connectDB from "@/lib/db";
-import mongoose from "mongoose";
-import Listing from "@/models/Listing";
-import Category from "@/models/Category";
-import Amenity from "@/models/Amenity";
 import MarketplaceFilterSidebar from "@/components/marketplace/MarketplaceFilterSidebar";
 import {
   Building2,
@@ -86,83 +81,60 @@ export default async function CategoryListingPage({ params, searchParams }: Prop
   const normalizedCity = decodeURIComponent(city).toLowerCase().trim();
   const normalizedCategory = decodeURIComponent(category).toLowerCase().trim();
 
-  await connectDB();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
-  // Find category doc
-  const categoryDoc = await Category.findOne({ slug: normalizedCategory }).lean();
+  // 1. Fetch categories from Express backend
+  let allCategories: any[] = [];
+  try {
+    const catRes = await fetch(`${apiUrl}/marketplace-categories`, {
+      next: { revalidate: 300 },
+    });
+    if (catRes.ok) {
+      const catJson = await catRes.json();
+      allCategories = catJson.data || [];
+    }
+  } catch (err) {
+    console.error("Error fetching categories from backend:", err);
+  }
+
+  const categoryDoc = allCategories.find((c) => c.slug === normalizedCategory);
 
   const cityName =
     normalizedCity.charAt(0).toUpperCase() + normalizedCity.slice(1);
   const categoryName = categoryDoc?.name || category.replace(/-/g, " ").toUpperCase();
 
-  // Build query: strictly isLive: true
-  const isGurgaonVariant = normalizedCity === "gurgaon" || normalizedCity === "gurugram";
-  const query: any = {
-    "location.city": isGurgaonVariant ? { $in: ["gurgaon", "gurugram"] } : normalizedCity,
-    isLive: true,
-  };
-
-  if (categoryDoc) {
-    query.categoryId = categoryDoc._id;
+  // 2. Fetch listings from Express backend
+  const queryParams = new URLSearchParams();
+  queryParams.set("city", normalizedCity);
+  if (categoryDoc?._id || categoryDoc?.id) {
+    queryParams.set("category", categoryDoc._id || categoryDoc.id);
   }
+  if (sParams.minPrice) queryParams.set("minPrice", sParams.minPrice);
+  if (sParams.maxPrice) queryParams.set("maxPrice", sParams.maxPrice);
+  if (sParams.capacity) queryParams.set("capacity", sParams.capacity);
+  if (sParams.amenities) queryParams.set("amenities", sParams.amenities);
+  if (sParams.page) queryParams.set("page", sParams.page);
+  queryParams.set("limit", "8");
 
-  if (sParams.area) {
-    query["location.area"] = { $regex: sParams.area, $options: "i" };
-  }
+  let dbListings: any[] = [];
+  let totalCount = 0;
 
-  if (sParams.capacity) {
-    query.capacity = { $gte: Number(sParams.capacity) };
-  }
-
-  if (sParams.minPrice || sParams.maxPrice) {
-    query["pricing.basePrice"] = {};
-    if (sParams.minPrice) query["pricing.basePrice"].$gte = Number(sParams.minPrice);
-    if (sParams.maxPrice) query["pricing.basePrice"].$lte = Number(sParams.maxPrice);
-  }
-
-  if (sParams.amenities) {
-    const amenityList = sParams.amenities.split(",").map((a) => a.trim()).filter(Boolean);
-    if (amenityList.length > 0) {
-      const validObjectIds = amenityList.filter((id) => mongoose.isValidObjectId(id));
-      const matchedAmenities = await Amenity.find({
-        $or: [
-          { name: { $in: amenityList.map((n) => new RegExp(`^${n}$`, "i")) } },
-          ...(validObjectIds.length > 0 ? [{ _id: { $in: validObjectIds } }] : []),
-        ],
-      }).select("_id").lean();
-
-      const matchedIds = matchedAmenities.map((a) => a._id);
-      const amenityRegexes = amenityList.map((n) => new RegExp(n, "i"));
-      query.$or = [
-        ...(matchedIds.length > 0 ? [{ amenityIds: { $in: matchedIds } }] : []),
-        { customAmenities: { $in: amenityRegexes } },
-      ];
+  try {
+    const listRes = await fetch(`${apiUrl}/listings?${queryParams.toString()}`, {
+      next: { revalidate: 60 },
+    });
+    if (listRes.ok) {
+      const listJson = await listRes.json();
+      dbListings = listJson.data || [];
+      totalCount = listJson.pagination?.total || 0;
     }
+  } catch (err) {
+    console.error("Error fetching listings from backend:", err);
   }
 
-  // Sorting
-  let sortObj: any = { "pricing.basePrice": 1, createdAt: -1 };
-  if (sParams.sort === "price_desc") sortObj = { "pricing.basePrice": -1 };
-  if (sParams.sort === "capacity_desc") sortObj = { capacity: -1 };
-  if (sParams.sort === "newest") sortObj = { createdAt: -1 };
-
-  // Pagination parameters
+  const categories = allCategories;
   const page = Math.max(1, Number(sParams.page) || 1);
   const limit = 8;
-  const skip = (page - 1) * limit;
-
-  const [dbListings, totalCount, categories] = await Promise.all([
-    Listing.find(query)
-      .populate("categoryId", "name slug")
-      .populate("media.mediaId", "secureUrl")
-      .populate("amenityIds", "name icon")
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    Listing.countDocuments(query),
-    Category.find({ isActive: true }).sort({ sortOrder: 1 }).lean(),
-  ]);
 
   // When DB has live listings matching query, use them.
   // If DB has 0 listings, gracefully filter fallback showcase so UI filtering never breaks.

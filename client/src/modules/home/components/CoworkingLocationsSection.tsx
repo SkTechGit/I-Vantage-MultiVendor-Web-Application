@@ -158,15 +158,16 @@ export default function CoworkingLocationsSection() {
 
   const fetchLiveListings = useCallback(async () => {
     try {
-      const res = await fetch(`/api/listings?limit=12&_t=${Date.now()}`, {
+      const res = await fetch(`/api/v1/listings?limit=12&_t=${Date.now()}`, {
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
         },
       });
       const json = await res.json();
-      if (json?.data?.listings && Array.isArray(json.data.listings)) {
-        const apiSpaces: SpaceCardItem[] = json.data.listings.map((l: any) => ({
+      const rawListings = Array.isArray(json?.data) ? json.data : (json?.data?.listings || []);
+      if (rawListings.length > 0) {
+        const apiSpaces: SpaceCardItem[] = rawListings.map((l: any) => ({
           id: l._id,
           title: l.title,
           category: l.categoryId?.name || "Coworking Space",
@@ -198,7 +199,46 @@ export default function CoworkingLocationsSection() {
   }, []);
 
   useEffect(() => {
-    fetchLiveListings();
+    let ignore = false;
+    fetch(`/api/v1/listings?limit=12&_t=${Date.now()}`, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      },
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (ignore) return;
+        const rawListings = Array.isArray(json?.data) ? json.data : (json?.data?.listings || []);
+        if (rawListings.length > 0) {
+          const apiSpaces: SpaceCardItem[] = rawListings.map((l: any) => ({
+            id: l._id,
+            title: l.title,
+            category: l.categoryId?.name || "Coworking Space",
+            city: l.location?.city || "gurugram",
+            area: l.location?.area || "Gurugram",
+            address: l.location?.address || `${l.location?.area}, Gurugram`,
+            price: l.pricing?.basePrice || 7999,
+            unit: l.pricing?.unit || "per-month",
+            capacity: l.capacity || 1,
+            image: l.media?.[0]?.mediaId?.secureUrl || "/images/workspace/conf3.webp",
+            amenities: l.amenityIds?.map((a: any) => a.name).slice(0, 5) || [
+              "High-Speed WiFi",
+              "24/7 Access",
+              "Cafeteria",
+            ],
+            vendorName: l.vendorId?.businessName || "Verified Partner",
+            slug: l._id,
+          }));
+
+          if (apiSpaces.length > 0) {
+            setSpaces([...apiSpaces, ...FEATURED_SPACES.slice(apiSpaces.length)]);
+          } else {
+            setSpaces(FEATURED_SPACES);
+          }
+        }
+      })
+      .catch(() => {});
 
     // Revalidate when user returns to this browser tab
     const handleFocus = () => {
@@ -206,6 +246,7 @@ export default function CoworkingLocationsSection() {
     };
     window.addEventListener("focus", handleFocus);
     return () => {
+      ignore = true;
       window.removeEventListener("focus", handleFocus);
     };
   }, [fetchLiveListings]);
@@ -255,7 +296,7 @@ export default function CoworkingLocationsSection() {
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-[1.15]">
             Discover Premium Coworking Across{" "}
             <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
-              Gurugram's Prime Hubs
+              Gurugram&apos;s Prime Hubs
             </span>
           </h2>
 

@@ -36,7 +36,7 @@ interface InviteData {
   invitedBy?: string;
 }
 
-type AccountType = "vendor" | "user" | "admin";
+type AccountType = "vendor" | "user";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function SignupForm() {
   const initialRoleParam = searchParams.get("role");
 
   const [accountType, setAccountType] = useState<AccountType>(
-    inviteToken ? "admin" : initialRoleParam === "user" ? "user" : "vendor"
+    initialRoleParam === "user" ? "user" : "vendor"
   );
 
   const [isPending, startTransition] = useTransition();
@@ -122,7 +122,6 @@ export default function SignupForm() {
         setInviteData(data);
         setValue("email", data.email);
         setValue("inviteToken", inviteToken);
-        setAccountType("admin");
         setInviteError(null);
       })
       .catch((err: unknown) => {
@@ -177,13 +176,19 @@ export default function SignupForm() {
           return;
         }
 
-        // Default: Admin registration
+        // Invited member or dynamic user registration
         const res = await signup(values);
         toast.success(
-          res.message || "Admin account created successfully! Welcome to i-VANTAGE."
+          res.message || "Account created successfully! Welcome to i-VANTAGE."
         );
         router.refresh();
-        router.push("/admin/dashboard");
+        if (inviteData?.role === "super_admin" || res?.user?.role === "super_admin") {
+          router.push("/admin/dashboard");
+        } else if (inviteData?.role === "vendor" || res?.user?.role === "vendor") {
+          router.push("/vendor");
+        } else {
+          router.push("/");
+        }
       } catch (error: unknown) {
         toast.error(
           (axios.isAxiosError(error) && (error.response?.data?.error || error.response?.data?.message)) ||
@@ -348,7 +353,7 @@ export default function SignupForm() {
 
         {/* Role Selector Tabs (Only if not invited via admin invite token) */}
         {!inviteToken && (
-          <div className="mb-5 grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl">
+          <div className="mb-5 grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
             <button
               type="button"
               onClick={() => setAccountType("vendor")}
@@ -359,7 +364,7 @@ export default function SignupForm() {
               }`}
             >
               <Building2 className={`w-4 h-4 mb-0.5 ${accountType === "vendor" ? "text-[#1E5BFF]" : ""}`} />
-              <span>Partner</span>
+              <span>Coworking Partner</span>
             </button>
 
             <button
@@ -372,20 +377,7 @@ export default function SignupForm() {
               }`}
             >
               <User className={`w-4 h-4 mb-0.5 ${accountType === "user" ? "text-[#1E5BFF]" : ""}`} />
-              <span>User</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setAccountType("admin")}
-              className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-bold transition ${
-                accountType === "admin"
-                  ? "bg-white text-[#0A1F66] shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              <ShieldCheck className={`w-4 h-4 mb-0.5 ${accountType === "admin" ? "text-[#1E5BFF]" : ""}`} />
-              <span>Admin</span>
+              <span>User / Client</span>
             </button>
           </div>
         )}
@@ -400,11 +392,11 @@ export default function SignupForm() {
                   Authorized Role
                 </p>
                 <p className="text-sm font-bold text-[#0A1F66] capitalize">
-                  {inviteData.role === "super_admin"
+                  {inviteData.role === "super_admin" || inviteData.role === "superadmin"
                     ? "Super Administrator"
-                    : inviteData.role === "editor"
-                    ? "Content Editor"
-                    : "Administrator"}
+                    : inviteData.role === "vendor"
+                    ? "Vendor Partner"
+                    : "Standard User"}
                 </p>
               </div>
             </div>
@@ -455,21 +447,19 @@ export default function SignupForm() {
           />
 
           {/* Phone (for Vendor & User) */}
-          {accountType !== "admin" && (
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                Mobile Number {accountType === "vendor" ? <span className="text-red-500">*</span> : "(Optional)"}
-              </label>
-              <input
-                type="tel"
-                required={accountType === "vendor"}
-                placeholder="+91 98765 43210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Mobile Number {accountType === "vendor" ? <span className="text-red-500">*</span> : "(Optional)"}
+            </label>
+            <input
+              type="tel"
+              required={accountType === "vendor"}
+              placeholder="+91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
+            />
+          </div>
 
           {/* Password with Show/Hide */}
           <div className="min-w-0 w-full">

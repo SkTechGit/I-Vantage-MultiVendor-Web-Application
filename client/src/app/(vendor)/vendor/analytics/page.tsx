@@ -30,8 +30,25 @@ export default function VendorAnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    let ignore = false;
+    marketplaceApi.getVendorAnalytics()
+      .then((data) => {
+        if (!ignore && data) setStats(data.stats);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Analytics fetch note:", msg);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);

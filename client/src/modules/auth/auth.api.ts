@@ -17,18 +17,48 @@ export const validateInvitation = async (token: string) => {
   return data.data;
 };
 
-export const getCurrentUser = async () => {
-  const { data } = await axiosInstance.get("/auth/me");
+export const getCurrentUser = async (portal?: string) => {
+  let resolvedPortal = portal;
+  if (!resolvedPortal && typeof window !== "undefined") {
+    if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
+    else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+  }
+  const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
+  const { data } = await axiosInstance.get(`/auth/me${query}`, {
+    headers: resolvedPortal ? { "x-portal": resolvedPortal } : undefined,
+  });
   return data;
 };
 
-export const logout = async () => {
-  const { data } = await axiosInstance.post("/auth/logout", {});
+export const getSessionUser = getCurrentUser;
+
+export const logout = async (portal?: string) => {
+  let resolvedPortal = portal;
+  if (!resolvedPortal && typeof window !== "undefined") {
+    if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
+    else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+  }
+  const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
+  const { data } = await axiosInstance.post(
+    `/auth/logout${query}`,
+    { portal: resolvedPortal },
+    { headers: resolvedPortal ? { "x-portal": resolvedPortal } : undefined }
+  );
   return data;
 };
 
-export const refreshTokenApi = async () => {
-  const { data } = await axiosInstance.post("/auth/refresh-token", {});
+export const refreshTokenApi = async (portal?: string) => {
+  let resolvedPortal = portal;
+  if (!resolvedPortal && typeof window !== "undefined") {
+    if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
+    else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+  }
+  const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
+  const { data } = await axiosInstance.post(
+    `/auth/refresh-token${query}`,
+    { portal: resolvedPortal },
+    { headers: resolvedPortal ? { "x-portal": resolvedPortal } : undefined }
+  );
   return data;
 };
 
@@ -89,5 +119,54 @@ export const toggleMemberStatus = async (id: string, isActive: boolean) => {
 
 export const deleteTeamMember = async (id: string) => {
   const { data } = await axiosInstance.delete(`/auth/team/members/${id}`);
+  return data;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                  Platform Users & Security Audit Trail APIs                 */
+/* -------------------------------------------------------------------------- */
+
+export const getAllPlatformUsers = async (params?: {
+  role?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const { data } = await axiosInstance.get("/admin/users", { params });
+  return data.data;
+};
+
+export const getAuditLogs = async (params?: {
+  limit?: number;
+  action?: string;
+  portal?: string;
+}) => {
+  const { data } = await axiosInstance.get("/admin/audit-logs", { params });
+  return data.data;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                        Vendor Management CRUD APIs                         */
+/* -------------------------------------------------------------------------- */
+
+export const updateVendorStatus = async (
+  vendorId: string,
+  status: "active" | "suspended"
+) => {
+  const { data } = await axiosInstance.patch(`/admin/vendors/${vendorId}/status`, {
+    status,
+  });
+  return data;
+};
+
+export const updateVendorRole = async (vendorId: string, role: string) => {
+  const { data } = await axiosInstance.patch(`/admin/vendors/${vendorId}/role`, {
+    role,
+  });
+  return data;
+};
+
+export const deleteVendor = async (vendorId: string) => {
+  const { data } = await axiosInstance.delete(`/admin/vendors/${vendorId}`);
   return data;
 };

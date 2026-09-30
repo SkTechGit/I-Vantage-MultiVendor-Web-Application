@@ -42,15 +42,43 @@ const AuthContext = createContext<AuthContextType | null>(
   null
 );
 
+const getStorageKey = () => {
+  if (typeof window === "undefined") return "iv_user";
+  const path = window.location.pathname;
+  if (path.startsWith("/admin")) return "iv_admin_user";
+  if (path.startsWith("/vendor")) return "iv_vendor_user";
+  return "iv_user";
+};
+
 export function AuthProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [user, setUserState] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const key = getStorageKey();
+      const saved =
+        localStorage.getItem(key) ||
+        (key !== "iv_user" ? null : localStorage.getItem("iv_user"));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          return {
+            ...parsed,
+            fullName: parsed.fullName || parsed.name,
+            name: parsed.name || parsed.fullName,
+          };
+        }
+      }
+    } catch {}
+    return null;
+  });
   const [loading, setLoading] = useState(true);
 
   const setUser = (newUser: User | null) => {
+    const key = getStorageKey();
     if (newUser) {
       const normalized: User = {
         ...newUser,
@@ -60,14 +88,14 @@ export function AuthProvider({
       setUserState(normalized);
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("iv_user", JSON.stringify(normalized));
+          localStorage.setItem(key, JSON.stringify(normalized));
         } catch {}
       }
     } else {
       setUserState(null);
       if (typeof window !== "undefined") {
         try {
-          localStorage.removeItem("iv_user");
+          localStorage.removeItem(key);
         } catch {}
       }
     }
@@ -80,8 +108,14 @@ export function AuthProvider({
       if (rawUser && (rawUser.email || rawUser._id || rawUser.id)) {
         setUser(rawUser);
       }
-    } catch {
-      // Keep existing user if session is still valid locally, or clear on auth error
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: { code?: string } } };
+      if (
+        axiosErr?.response?.status === 401 ||
+        axiosErr?.response?.data?.code === "TOKEN_VERSION_MISMATCH"
+      ) {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -98,26 +132,42 @@ export function AuthProvider({
 
   const logoutUser = async () => {
     try {
-      await logout();
+      const path = typeof window !== "undefined" ? window.location.pathname : "";
+      const portal = path.startsWith("/admin") ? "admin" : path.startsWith("/vendor") ? "vendor" : "all";
+      await logout(portal);
     } catch {}
     setUser(null);
   };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("iv_user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
-          setUserState({
-            ...parsed,
-            fullName: parsed.fullName || parsed.name,
-            name: parsed.name || parsed.fullName,
-          });
+    let ignore = false;
+    getCurrentUser()
+      .then((response) => {
+        if (ignore) return;
+        const rawUser = response?.data || response;
+        if (rawUser && (rawUser.email || rawUser._id || rawUser.id)) {
+          setUser(rawUser);
         }
-      }
-    } catch {}
-    refreshUser();
+      })
+      .catch((err: unknown) => {
+        if (ignore) return;
+        const axiosErr = err as { response?: { status?: number; data?: { code?: string } } };
+        if (
+          axiosErr?.response?.status === 401 ||
+          axiosErr?.response?.data?.code === "TOKEN_VERSION_MISMATCH"
+        ) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (

@@ -85,7 +85,7 @@ export default function Hero() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4A900] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F4A900]" />
               </span>
-              <span>INDIA'S PREMIER BUSINESS ECOSYSTEM & WORKSPACE NETWORK</span>
+              <span>INDIA&apos;S PREMIER BUSINESS ECOSYSTEM &amp; WORKSPACE NETWORK</span>
             </div>
 
             {/* High-Impact Headline */}

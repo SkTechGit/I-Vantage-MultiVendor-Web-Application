@@ -61,26 +61,22 @@ export default function CategoryForm({
   useEffect(() => {
     if (category) {
       setValue("name", category.name);
-      setValue(
-        "description",
-        category.description
-      );
-      setValue(
-        "sortOrder",
-        category.sortOrder
-      );
-      setValue(
-        "isActive",
-        category.isActive
-      );
+      setValue("description", category.description);
+      setValue("sortOrder", category.sortOrder);
+      setValue("isActive", category.isActive);
 
-      setPreview(category.image.url);
+      const timer = setTimeout(() => {
+        setPreview(category.image?.url || "");
+      }, 0);
+      return () => clearTimeout(timer);
     } else {
       reset();
 
-      setPreview("");
-
-      setFile(null);
+      const timer = setTimeout(() => {
+        setPreview("");
+        setFile(null);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [category, reset, setValue]);
 

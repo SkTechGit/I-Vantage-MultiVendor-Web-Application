@@ -31,9 +31,33 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Documentation files (Only README.md allowed)
+*.pdf
+*.doc
+*.docx
+master-doc.html
+generate-master-doc.js
+server/scripts/generate-master-doc.js
+server/scripts/master-doc.html
+docs/
+*.md
+!README.md
+!client/README.md
+
+# Testing & Scratch files
+test.html
+*.test.html
+test/
+tests/
+test-*.js
+test-*.ts
+*.test.js
+*.test.ts
+
 # Misc
 .DS_Store
 Thumbs.db
 *.pem
 *.tsbuildinfo
 next-env.d.ts
+

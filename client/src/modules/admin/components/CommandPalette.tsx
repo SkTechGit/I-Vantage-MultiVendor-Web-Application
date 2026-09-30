@@ -142,9 +142,12 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (isOpen) {
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => {
+        setQuery("");
+        setSelectedIndex(0);
+        inputRef.current?.focus();
+      }, 20);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

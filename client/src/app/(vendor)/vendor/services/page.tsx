@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import {
   Layers,
@@ -38,7 +38,7 @@ export default function VendorServicesPage() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     setLoading(true);
     try {
       const data = await marketplaceApi.getVendorServices();
@@ -48,10 +48,27 @@ export default function VendorServicesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchServices();
+    let ignore = false;
+    marketplaceApi.getVendorServices()
+      .then((data) => {
+        if (!ignore) setServices(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Vendor services note:", msg);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const openCreateModal = () => {

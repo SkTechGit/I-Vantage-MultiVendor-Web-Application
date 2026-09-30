@@ -41,27 +41,34 @@ const navItems = [
   },
   {
     num: "03",
+    label: "List Your Space",
+    href: "/vendor/signup",
+    icon: Sparkles,
+    description: "Partner with us & list your workspace",
+  },
+  {
+    num: "04",
     label: "About",
     href: "/about",
     icon: Users,
     description: "Who we are & our story",
   },
   {
-    num: "04",
+    num: "05",
     label: "Services",
     href: "/services",
     icon: BriefcaseBusiness,
     description: "Workspaces & business solutions",
   },
   {
-    num: "05",
+    num: "06",
     label: "Blogs",
     href: "/blogs",
     icon: BookOpen,
     description: "Insights, guides & updates",
   },
   {
-    num: "06",
+    num: "07",
     label: "Contact",
     href: "/contact",
     icon: PhoneCall,
@@ -193,14 +200,14 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                     style={{
                       transitionDelay: open ? `${80 + index * 45}ms` : "0ms",
                     }}
-                    className={`group relative flex items-center justify-between rounded-xl px-3.5 py-3 transition-all duration-300 ease-out ${
+                    className={`group relative flex items-center justify-between rounded-xl px-3.5 py-3 transition-all duration-200 ease-out ${
                       open
                         ? "opacity-100 translate-x-0"
                         : "opacity-0 translate-x-4"
                     } ${
                       isActive
-                        ? "bg-blue-50/80 border border-blue-200/80 shadow-2xs"
-                        : "hover:bg-slate-50 border border-transparent"
+                        ? "bg-blue-50/80 border border-[#1E5BFF]/30 shadow-2xs"
+                        : "border border-transparent hover:border-blue-200/60 hover:bg-slate-50 active:border-[#1E5BFF] active:bg-blue-50/60"
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -208,8 +215,8 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                       <span
                         className={`text-xs font-mono font-semibold transition-colors ${
                           isActive
-                            ? "text-[#1E5BFF]"
-                            : "text-slate-400 group-hover:text-[#1E5BFF]"
+                            ? "text-[#1E5BFF] font-bold"
+                            : "text-slate-400 group-hover:text-[#1E5BFF] group-active:text-[#1E5BFF]"
                         }`}
                       >
                         {item.num}
@@ -220,7 +227,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
                           isActive
                             ? "bg-[#0A1F66] text-white"
-                            : "bg-slate-100/80 text-slate-600 group-hover:bg-blue-50 group-hover:text-[#1E5BFF]"
+                            : "bg-slate-100/80 text-slate-600 group-hover:bg-blue-50 group-hover:text-[#1E5BFF] group-active:bg-[#0A1F66] group-active:text-white"
                         }`}
                       >
                         <Icon size={18} strokeWidth={1.85} />
@@ -233,7 +240,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                             className={`text-base font-bold tracking-tight transition-colors ${
                               isActive
                                 ? "text-[#0A1F66]"
-                                : "text-slate-800 group-hover:text-[#1E5BFF]"
+                                : "text-slate-800 group-hover:text-[#1E5BFF] group-active:text-[#1E5BFF]"
                             }`}
                           >
                             {item.label}
@@ -259,7 +266,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
                       className={`shrink-0 transition-transform duration-200 ${
                         isActive
                           ? "text-[#1E5BFF] translate-x-0.5"
-                          : "text-slate-300 group-hover:text-[#1E5BFF] group-hover:translate-x-1"
+                          : "text-slate-300 group-hover:text-[#1E5BFF] group-hover:translate-x-1 group-active:text-[#1E5BFF]"
                       }`}
                     />
                   </Link>
@@ -278,27 +285,36 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
             }`}
           >
             <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#1E5BFF]">
-              <Sparkles size={13} />
-              <span>Workspace Assistance</span>
+              <Sparkles size={13} className="text-[#F4A900]" />
+              <span>Workspace Solutions</span>
             </div>
 
             <h4 className="mt-1.5 text-sm font-bold text-[#0A1F66]">
-              Looking for the Right Solution?
+              Looking for the Right Space?
             </h4>
 
             <p className="mt-1 text-xs leading-relaxed text-slate-600">
-              Explore custom managed offices, coworking seats, or talk to our
-              business setup advisors.
+              Explore managed offices, dedicated desks, or partner with us to list your property.
             </p>
 
-            <Link
-              href="/contact"
-              onClick={onClose}
-              className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0A1F66] px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E5BFF] active:scale-[0.98]"
-            >
-              <span>Book a Visit</span>
-              <ArrowRight size={14} />
-            </Link>
+            <div className="mt-3.5 flex gap-2">
+              <Link
+                href="/contact"
+                onClick={onClose}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0A1F66] px-3.5 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E5BFF] active:scale-[0.98]"
+              >
+                <span>Book a Visit</span>
+                <ArrowRight size={13} />
+              </Link>
+              <Link
+                href="/vendor/signup"
+                onClick={onClose}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#1E5BFF]/30 bg-white px-3.5 py-2.5 text-xs font-bold text-[#1E5BFF] shadow-xs transition-all hover:bg-blue-50 active:scale-[0.98]"
+              >
+                <Sparkles size={13} className="text-[#F4A900]" />
+                <span>List Space</span>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -331,10 +347,16 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
             </Link>
           </div>
 
-          <div className="text-center pt-1 border-t border-slate-200/60">
-            <p className="text-[11px] text-slate-500">
-              Welldone Tech Park, Sector 48, Gurugram
-            </p>
+          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Have a space to monetize?</span>
+            <Link
+              href="/vendor/signup"
+              onClick={onClose}
+              className="font-bold text-[#1E5BFF] hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>List Your Space</span>
+              <span>&rarr;</span>
+            </Link>
           </div>
         </div>
       </div>

@@ -25,23 +25,31 @@ export default function CRMDrawer({ lead, onClose, refresh }: Props) {
 
   useEffect(() => {
     if (!lead) return;
+    const leadId = lead._id;
 
-    fetchCRMLead();
-  }, [lead]);
-
-  const fetchCRMLead = async () => {
-    try {
-      setLoading(true);
-
-      const data = await getCRMLead(lead!._id);
-
-      setCRMLead(data);
-
-      setStatus(data.status);
-    } finally {
-      setLoading(false);
+    let active = true;
+    async function loadLead() {
+      try {
+        setLoading(true);
+        const data = await getCRMLead(leadId);
+        if (active) {
+          setCRMLead(data);
+          setStatus(data.status);
+        }
+      } catch (err) {
+        console.error("Failed to load CRM lead:", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
     }
-  };
+    loadLead();
+
+    return () => {
+      active = false;
+    };
+  }, [lead]);
 
   const handleUpdate = () => {
     if (!crmLead) return;

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   login,
   signup,
+  register,
   validateInvitation,
   logout,
   refreshTokenHandler,
@@ -27,6 +28,7 @@ const router = Router();
 
 router.post("/login", login);
 router.post("/signup", signup);
+router.post("/register", register);
 router.post("/refresh-token", refreshTokenHandler);
 router.post("/refresh", refreshTokenHandler);
 router.get("/invitation/validate", validateInvitation);
@@ -37,25 +39,25 @@ router.post("/logout", logout);
 /* -------------------------------------------------------------------------- */
 
 router.get("/me", authenticate, me);
+router.get("/session", authenticate, me);
 
 /* -------------------------------------------------------------------------- */
 /*                      Admin Team Management Routes                          */
 /* -------------------------------------------------------------------------- */
 
-// Only super_admin and admin can manage team access and invitations
-const adminOnly = [authenticate, authorize(["super_admin", "admin"])];
+// Strictly super_admin only can manage team access, members, and invitations
 const superAdminOnly = [authenticate, authorize(["super_admin"])];
 
-router.get("/team/members", adminOnly, getTeamMembers);
+router.get("/team/members", superAdminOnly, getTeamMembers);
 router.patch("/team/members/:id/role", superAdminOnly, updateMemberRole);
 router.patch("/team/members/:id/status", superAdminOnly, toggleMemberStatus);
 router.delete("/team/members/:id", superAdminOnly, deleteTeamMember);
-router.post("/team/invite", adminOnly, createInvitation);
-router.get("/team/invitations", adminOnly, getInvitations);
-router.post("/team/invitations/:id/revoke", adminOnly, revokeInvitation);
+router.post("/team/invite", superAdminOnly, createInvitation);
+router.get("/team/invitations", superAdminOnly, getInvitations);
+router.post("/team/invitations/:id/revoke", superAdminOnly, revokeInvitation);
 
-router.get("/team/requests", adminOnly, getAccessRequests);
-router.post("/team/requests/:id/approve", adminOnly, approveAccessRequest);
-router.post("/team/requests/:id/reject", adminOnly, rejectAccessRequest);
+router.get("/team/requests", superAdminOnly, getAccessRequests);
+router.post("/team/requests/:id/approve", superAdminOnly, approveAccessRequest);
+router.post("/team/requests/:id/reject", superAdminOnly, rejectAccessRequest);
 
 export default router;

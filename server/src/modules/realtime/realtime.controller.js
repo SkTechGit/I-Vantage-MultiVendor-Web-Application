@@ -1,15 +1,30 @@
 import crypto from "crypto";
 import { realtimeHub } from "./realtime.hub.js";
 import { AUTH_COOKIE } from "../auth/auth.constants.js";
+import { SCOPED_COOKIES } from "../../utils/cookie.js";
 import { verifyAccessToken } from "../../utils/jwt.js";
 
 /**
  * Helper to optionally extract user info from access token or cookies
  */
 const extractUserInfo = (req) => {
-  let token =
-    req.cookies?.[AUTH_COOKIE.ACCESS_NAME] ||
-    req.cookies?.[AUTH_COOKIE.NAME];
+  const portal =
+    req.headers?.["x-portal"] ||
+    req.query?.portal ||
+    (req.query?.channels?.includes("team") ? "admin" : null);
+
+  let token = null;
+  if (portal === "admin") {
+    token = req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS];
+  } else if (portal === "vendor") {
+    token = req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS];
+  } else {
+    token =
+      req.cookies?.[AUTH_COOKIE.ACCESS_NAME] ||
+      req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS] ||
+      req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS] ||
+      req.cookies?.[AUTH_COOKIE.NAME];
+  }
 
   if (!token && req.headers.authorization?.startsWith("Bearer ")) {
     token = req.headers.authorization.split(" ")[1];
@@ -96,6 +111,28 @@ export const getRealtimeStatus = (req, res) => {
 };
 
 /**
+ * GET /api/v1/realtime/poll?channels=team,listings&since=1790500000000
+ * Fast polling endpoint for environments where SSE is buffered or restricted (e.g. Cloudflare tunnels)
+ */
+export const pollEvents = (req, res) => {
+  const since = Number(req.query.since) || 0;
+  const channelsParam = req.query.channels;
+  const channelList = channelsParam
+    ? channelsParam.split(",").map((c) => c.trim().toLowerCase()).filter(Boolean)
+    : ["*"];
+
+  const userInfo = extractUserInfo(req);
+  const events = realtimeHub.getEventsSince(since, channelList, userInfo);
+
+  res.status(200).json({
+    success: true,
+    events,
+    timestamp: Date.now(),
+    serverTime: new Date().toISOString(),
+  });
+};
+
+/**
  * POST /api/v1/realtime/broadcast
  * Allows services and Next.js handlers to dispatch real-time events to all connected clients
  */
@@ -113,4 +150,5 @@ export const broadcastEvent = (req, res) => {
     dispatchedTo: realtimeHub.getClientCount(),
   });
 };
+
 

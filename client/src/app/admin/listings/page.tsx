@@ -58,8 +58,24 @@ export default function AdminListingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchAllListings();
-  }, [fetchAllListings]);
+    let ignore = false;
+    marketplaceApi.getAdminListings()
+      .then((data) => {
+        if (!ignore) setListings(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error("Failed to load admin listings:", err);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events (prevents 2-3x redundant calls)
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);

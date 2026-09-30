@@ -12,7 +12,9 @@ export const loginSchema = z.object({
     .string({
       required_error: "Password is required.",
     })
-    .min(8, "Password must be at least 8 characters."),
+    .min(6, "Password must be at least 6 characters."),
+
+  requiredRole: z.enum(["vendor", "superadmin", "user"]).optional(),
 });
 
 export const signupSchema = z
@@ -65,24 +67,24 @@ export const createInviteSchema = z.object({
     .toLowerCase(),
 
   role: z
-    .enum(["admin", "editor"], {
-      errorMap: () => ({ message: "Role must be 'admin' or 'editor'." }),
+    .enum(["super_admin", "vendor", "user"], {
+      errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
     })
-    .default("admin"),
+    .default("vendor"),
 });
 
 export const approveRequestSchema = z.object({
   role: z
-    .enum(["admin", "editor"], {
-      errorMap: () => ({ message: "Role must be 'admin' or 'editor'." }),
+    .enum(["super_admin", "vendor", "user"], {
+      errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
     })
-    .default("admin"),
+    .default("vendor"),
 });
 
 export const updateRoleSchema = z.object({
-  role: z.enum(["super_admin", "admin", "vendor", "user", "editor"], {
+  role: z.enum(["super_admin", "vendor", "user"], {
     errorMap: () => ({
-      message: "Role must be 'super_admin', 'admin', 'vendor', or 'user'.",
+      message: "Role must be 'super_admin', 'vendor', or 'user'.",
     }),
   }),
 });

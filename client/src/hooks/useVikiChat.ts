@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export type VikiMessage = {
   id: string;
@@ -32,20 +32,20 @@ export function useVikiChat() {
   const [messages, setMessages] = useState<VikiMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [sessionId, setSessionId] = useState("");
-
-  useEffect(() => {
-    const storedSession = localStorage.getItem("viki_session_id");
-
-    if (storedSession) {
-      setSessionId(storedSession);
-    } else {
+  const [sessionId, setSessionId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const storedSession = localStorage.getItem("viki_session_id");
+      if (storedSession) {
+        return storedSession;
+      }
       const newSession = createSessionId();
-
       localStorage.setItem("viki_session_id", newSession);
-      setSessionId(newSession);
+      return newSession;
+    } catch {
+      return "";
     }
-  }, []);
+  });
 
   const sendMessage = useCallback(
     async (message: string) => {

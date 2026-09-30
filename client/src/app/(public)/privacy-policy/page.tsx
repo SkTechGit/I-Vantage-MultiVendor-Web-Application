@@ -743,7 +743,7 @@ const sections = [
 
         <p className="mt-4">
           The updated version will be published on this page with a revised
-          "Last Updated" date.
+          &quot;Last Updated&quot; date.
         </p>
       </>
     ),
@@ -881,7 +881,7 @@ export default function PrivacyPolicyPage() {
                   <strong className="text-slate-900">
                     Asset Sense Private Limited
                   </strong>{" "}
-                  ("i-VANTAGE", "we", "us", or "our").
+                  (&quot;i-VANTAGE&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;).
                 </p>
 
                 <p>

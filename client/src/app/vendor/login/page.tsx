@@ -1,10 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marketplaceApi } from "@/lib/marketplace.api";
-import { Building2, Lock, Mail, ArrowRight, ArrowLeft, Loader2, Sparkles, MapPin, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import {
+  Building2,
+  Lock,
+  Mail,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  MapPin,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  UserPlus,
+} from "lucide-react";
 import Logo from "@/components/common/Logo";
 
 export default function VendorLoginPage() {
@@ -14,7 +27,7 @@ export default function VendorLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentSession, setCurrentSession] = useState<any>(null);
+  const [notRegisteredEmail, setNotRegisteredEmail] = useState<string | null>(null);
   const [roleMismatch, setRoleMismatch] = useState<{
     currentRole?: string;
     requiredRole?: string;
@@ -23,29 +36,11 @@ export default function VendorLoginPage() {
     message?: string;
   } | null>(null);
 
-  useEffect(() => {
-    marketplaceApi
-      .me()
-      .then((user) => {
-        if (user && (user.email || user.name)) {
-          setCurrentSession(user);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleLogoutCurrent = async () => {
-    try {
-      await marketplaceApi.logout();
-      setCurrentSession(null);
-      router.refresh();
-    } catch {}
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNotRegisteredEmail(null);
     setRoleMismatch(null);
 
     try {
@@ -54,12 +49,13 @@ export default function VendorLoginPage() {
         password,
         requiredRole: "vendor",
       });
-      router.refresh();
-      if (res?.user?.role === "vendor") {
-        router.push("/vendor");
-      } else {
-        router.push("/vendor");
+      const vendorUser = res?.user || res?.data || res;
+      if (typeof window !== "undefined" && vendorUser) {
+        try {
+          localStorage.setItem("iv_vendor_user", JSON.stringify(vendorUser));
+        } catch {}
       }
+      router.push("/vendor");
     } catch (err: any) {
       const errData = err.response?.data;
       if (errData?.code === "ROLE_MISMATCH") {
@@ -68,10 +64,31 @@ export default function VendorLoginPage() {
           requiredRole: errData.requiredRole,
           correctPortalUrl: errData.correctPortalUrl || "/admin/login",
           signupUrl: errData.signupUrl || "/vendor/signup",
-          message: errData.error || "This account does not have vendor partner access.",
+          message: errData.error || errData.message || "This account does not have vendor partner access.",
         });
+      } else if (
+        errData?.code === "EMAIL_NOT_REGISTERED" ||
+        err.response?.status === 404 ||
+        errData?.message?.toLowerCase().includes("not registered")
+      ) {
+        setNotRegisteredEmail(email);
       } else {
-        setError(errData?.error || err.message || "Invalid partner credentials. Please check your email and password.");
+        const statusCode = err.response?.status;
+        const serverMsg = errData?.message || errData?.error;
+
+        if (
+          statusCode === 401 &&
+          (errData?.code === "INVALID_PASSWORD" ||
+            serverMsg?.toLowerCase().includes("password"))
+        ) {
+          setError("Invalid password. Please check your credentials.");
+        } else if (serverMsg && !serverMsg.toLowerCase().includes("status code")) {
+          setError(serverMsg);
+        } else if (!statusCode || statusCode >= 500) {
+          setError("Unable to connect to authentication server. Please ensure backend is running.");
+        } else {
+          setError("Invalid username or password");
+        }
       }
       setLoading(false);
     }
@@ -121,34 +138,37 @@ export default function VendorLoginPage() {
             </p>
           </div>
 
-          {/* Active Session Switch Notice */}
-          {currentSession && (
-            <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-200 text-xs text-slate-700 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-[#0A1F66] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Active Session Detected
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-200 text-blue-900">
-                  {currentSession.role}
-                </span>
+          {/* Unregistered Email Alert */}
+          {notRegisteredEmail && (
+            <div className="p-4 rounded-2xl bg-amber-50/95 border-2 border-amber-300 text-amber-950 text-xs space-y-3 shadow-xs animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-start gap-2.5">
+                <UserPlus className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-extrabold text-sm text-amber-900">
+                    This email ID is not registered
+                  </p>
+                  <p className="text-amber-800 leading-relaxed text-[11px]">
+                    No coworking partner account exists for{" "}
+                    <span className="font-bold underline text-amber-950">{notRegisteredEmail}</span>.
+                    Please register to list your spaces and access the vendor center.
+                  </p>
+                </div>
               </div>
-              <p className="text-slate-600 text-[11px]">
-                Signed in as <strong>{currentSession.name || currentSession.fullName || currentSession.email}</strong> ({currentSession.email}). Enter credentials below to switch accounts, or:
-              </p>
-              <div className="flex items-center gap-2 pt-1">
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-1 border-t border-amber-200/80">
                 <Link
-                  href={currentSession.role === "superadmin" ? "/admin/dashboard" : "/vendor"}
-                  className="px-3 py-1.5 rounded-lg bg-[#1E5BFF] text-white text-[11px] font-bold hover:bg-blue-700 transition"
+                  href={`/vendor/signup?email=${encodeURIComponent(notRegisteredEmail)}`}
+                  className="flex-1 py-2 px-3 rounded-xl bg-[#0A1F66] text-white text-center text-[11px] font-bold hover:bg-[#1E5BFF] transition shadow-2xs flex items-center justify-center gap-1.5"
                 >
-                  Go to {currentSession.role === "superadmin" ? "Admin Console" : "Vendor Center"} &rarr;
+                  <span>Register This Email</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
                 <button
                   type="button"
-                  onClick={handleLogoutCurrent}
-                  className="px-2.5 py-1.5 rounded-lg border border-slate-300 text-[11px] font-semibold text-slate-600 hover:bg-white transition"
+                  onClick={() => setNotRegisteredEmail(null)}
+                  className="px-3 py-1.5 rounded-xl border border-amber-300 text-amber-900 hover:bg-amber-100 text-center text-[11px] font-semibold transition"
                 >
-                  Sign Out
+                  Try Another Email
                 </button>
               </div>
             </div>
@@ -160,8 +180,9 @@ export default function VendorLoginPage() {
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-extrabold text-sm text-amber-900">
-                    {roleMismatch.currentRole === "superadmin" || roleMismatch.currentRole === "admin"
-                      ? "Enterprise Administrator Account Detected"
+                    {roleMismatch.currentRole === "super_admin" ||
+                    roleMismatch.currentRole === "superadmin"
+                      ? "Super Administrator Account Detected"
                       : "Non-Partner Account Detected"}
                   </p>
                   <p className="text-amber-800 leading-relaxed text-[11px]">
@@ -176,7 +197,12 @@ export default function VendorLoginPage() {
                     href={roleMismatch.correctPortalUrl}
                     className="flex-1 py-2 px-3 rounded-xl bg-[#0A1F66] text-white text-center text-[11px] font-bold hover:bg-blue-950 transition shadow-2xs"
                   >
-                    Go to {roleMismatch.currentRole === "superadmin" || roleMismatch.currentRole === "admin" ? "Admin Portal" : "Client Portal"} &rarr;
+                    Go to{" "}
+                    {roleMismatch.currentRole === "super_admin" ||
+                    roleMismatch.currentRole === "superadmin"
+                      ? "Admin Portal"
+                      : "Client Portal"}{" "}
+                    &rarr;
                   </Link>
                 )}
                 <Link
@@ -195,7 +221,7 @@ export default function VendorLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                 Registered Partner Email
@@ -205,9 +231,16 @@ export default function VendorLoginPage() {
                 <input
                   type="email"
                   required
+                  autoComplete="email"
+                  suppressHydrationWarning
                   placeholder="partner@coworking.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                    if (notRegisteredEmail) setNotRegisteredEmail(null);
+                    if (roleMismatch) setRoleMismatch(null);
+                  }}
                   className="w-full text-sm pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
                 />
               </div>
@@ -230,9 +263,14 @@ export default function VendorLoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  autoComplete="current-password"
+                  suppressHydrationWarning
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
                   className="w-full text-sm pl-10 pr-11 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
                 />
                 <button

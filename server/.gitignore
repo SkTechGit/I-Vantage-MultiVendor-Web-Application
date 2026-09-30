@@ -2,3 +2,10 @@ node_modules
 .env
 .env*
 !.env.example
+
+# Master documentation files (only README.md permitted)
+scripts/generate-master-doc.js
+scripts/master-doc.html
+*.pdf
+test.html
+*.test.js

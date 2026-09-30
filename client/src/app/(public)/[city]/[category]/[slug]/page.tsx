@@ -2,8 +2,6 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import connectDB from "@/lib/db";
-import Listing from "@/models/Listing";
 import ListingEnquiryForm from "@/components/marketplace/ListingEnquiryForm";
 import {
   Building2,
@@ -28,22 +26,22 @@ interface Props {
 export default async function ListingDetailPage({ params }: Props) {
   const { city, category, slug } = await params;
 
-  await connectDB();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  let listing: any = null;
 
-  const listing = await Listing.findOne({ slug })
-    .populate("vendorId", "name businessName email phone")
-    .populate("categoryId", "name slug")
-    .populate("serviceIds", "name size price description isGlobal")
-    .populate("amenityIds", "name icon")
-    .populate("media.mediaId", "secureUrl cloudinaryPublicId")
-    .lean();
-
-  if (!listing) {
-    notFound();
+  try {
+    const res = await fetch(`${apiUrl}/listings/${encodeURIComponent(slug)}`, {
+      next: { revalidate: 60 },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      listing = json.data;
+    }
+  } catch (err) {
+    console.error("Error fetching listing from backend API:", err);
   }
 
-  // NON-NEGOTIABLE: Public view must be isLive: true
-  if (!listing.isLive) {
+  if (!listing || !listing.isLive) {
     notFound();
   }
 

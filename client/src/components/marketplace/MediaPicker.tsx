@@ -52,7 +52,21 @@ export default function MediaPicker({
   };
 
   useEffect(() => {
-    loadGallery();
+    let active = true;
+    marketplaceApi.getMediaGallery(true)
+      .then((items) => {
+        if (active) setGallery(items || []);
+      })
+      .catch((err: unknown) => {
+        if (active) console.error("Failed to load media gallery:", err);
+      })
+      .finally(() => {
+        if (active) setLoadingGallery(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

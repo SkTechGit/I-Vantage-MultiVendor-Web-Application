@@ -47,7 +47,21 @@ export default function ServiceSelector({
   };
 
   useEffect(() => {
-    fetchServices();
+    let active = true;
+    marketplaceApi.getVendorServices()
+      .then((data) => {
+        if (active) setServices(data || []);
+      })
+      .catch((err: unknown) => {
+        if (active) console.error("Failed to load services:", err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const toggleService = (id: string) => {

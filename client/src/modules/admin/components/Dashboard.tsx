@@ -54,8 +54,31 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    let ignore = false;
+    async function init() {
+      try {
+        const data = await getDashboard();
+        if (!ignore) {
+          setDashboard(data);
+          setError(null);
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          console.error(err);
+          setError("Unable to retrieve dashboard metrics. Please check connection.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    init();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events (prevents rapid cascade)
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,7 +94,7 @@ export default function Dashboard() {
   useRealtimeEvent("blogs", silentRefresh);
   useRealtimeEvent("team", silentRefresh);
 
-  const userDisplayName = user?.fullName || user?.name || "Admin";
+  const userDisplayName = user?.fullName || user?.name || "Super Admin";
 
   /* =========================================================
      LOADING SKELETON STATE (Zero Layout Shift)

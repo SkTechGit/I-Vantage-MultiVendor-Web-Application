@@ -73,8 +73,25 @@ export default function VendorLeadsPage() {
   }, []);
 
   useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+    let ignore = false;
+    marketplaceApi.getVendorLeads()
+      .then((data) => {
+        if (!ignore) setLeads(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Vendor leads note:", msg);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);

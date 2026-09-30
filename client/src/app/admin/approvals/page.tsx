@@ -59,8 +59,24 @@ export default function AdminApprovalsPage() {
   }, []);
 
   useEffect(() => {
-    fetchPendingListings();
-  }, [fetchPendingListings]);
+    let ignore = false;
+    marketplaceApi.getAdminListings({ status: "pending_review" })
+      .then((data) => {
+        if (!ignore) setListings(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error("Failed to load approvals queue:", err);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Debounced silent refetch for real-time events
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);

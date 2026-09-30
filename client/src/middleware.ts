@@ -19,18 +19,6 @@ function decodeJwtPayload(token: string): { role?: string; id?: string } | null 
 }
 
 export function middleware(request: NextRequest) {
-  const accessToken = request.cookies.get("accessToken")?.value;
-  const refreshToken = request.cookies.get("refreshToken")?.value;
-  const hasToken = Boolean(accessToken || refreshToken);
-  const tokenPayload = accessToken ? decodeJwtPayload(accessToken) : null;
-  const rawRole = tokenPayload?.role;
-
-  const isSuperAdmin =
-    rawRole === "superadmin" ||
-    rawRole === "super_admin" ||
-    rawRole === "admin";
-  const isVendor = rawRole === "vendor";
-
   const { pathname } = request.nextUrl;
 
   const isAuthPage =
@@ -52,6 +40,37 @@ export function middleware(request: NextRequest) {
     (pathname.startsWith("/vendor/") &&
       pathname !== "/vendor/login" &&
       pathname !== "/vendor/signup");
+
+  // Multi-portal cookie resolution:
+  // On admin routes, check iv_admin_token first; on vendor routes, check iv_vendor_token first; then fallback to accessToken.
+  let accessToken: string | undefined;
+  let refreshToken: string | undefined;
+
+  if (isAdminRoute) {
+    accessToken = request.cookies.get("iv_admin_token")?.value || request.cookies.get("accessToken")?.value;
+    refreshToken = request.cookies.get("iv_admin_refresh")?.value || request.cookies.get("refreshToken")?.value;
+  } else if (isVendorRoute) {
+    accessToken = request.cookies.get("iv_vendor_token")?.value || request.cookies.get("accessToken")?.value;
+    refreshToken = request.cookies.get("iv_vendor_refresh")?.value || request.cookies.get("refreshToken")?.value;
+  } else {
+    accessToken =
+      request.cookies.get("accessToken")?.value ||
+      request.cookies.get("iv_admin_token")?.value ||
+      request.cookies.get("iv_vendor_token")?.value;
+    refreshToken =
+      request.cookies.get("refreshToken")?.value ||
+      request.cookies.get("iv_admin_refresh")?.value ||
+      request.cookies.get("iv_vendor_refresh")?.value;
+  }
+
+  const hasToken = Boolean(accessToken || refreshToken);
+  const tokenPayload = accessToken ? decodeJwtPayload(accessToken) : null;
+  const rawRole = tokenPayload?.role;
+
+  const isSuperAdmin =
+    rawRole === "superadmin" ||
+    rawRole === "super_admin";
+  const isVendor = rawRole === "vendor";
 
   // 1. Unauthenticated checks
   if (!hasToken) {
@@ -80,8 +99,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(adminLogin);
     }
 
-    if (isVendorRoute && !isVendor && !isSuperAdmin) {
-      // Regular user or unauthorized role trying to access vendor portal
+    if (isVendorRoute && !isVendor) {
+      // Non-vendor (including SuperAdmin or regular user) trying to access vendor portal
       const vendorLogin = new URL("/vendor/login", request.url);
       vendorLogin.searchParams.set("from", pathname);
       return NextResponse.redirect(vendorLogin);

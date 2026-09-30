@@ -43,6 +43,8 @@ export default function ListingEnquiryForm({
     try {
       await marketplaceApi.submitLead({
         listingId,
+        listingTitle,
+        spaceTitle: listingTitle,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -69,6 +71,11 @@ export default function ListingEnquiryForm({
         </h3>
         <p className="text-xs text-emerald-800 leading-relaxed">
           Thank you, <strong>{name}</strong>! The workspace partner and our concierge team have received your request. We will reach out shortly on {phone}.
+          {email && (
+            <span className="block mt-1.5 text-emerald-700 font-medium">
+              ✉️ A confirmation email with tour details has been sent to <strong>{email}</strong>.
+            </span>
+          )}
         </p>
         <button
           type="button"
@@ -101,7 +108,7 @@ export default function ListingEnquiryForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-3" suppressHydrationWarning>
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Your Full Name *
@@ -111,6 +118,8 @@ export default function ListingEnquiryForm({
             <input
               type="text"
               required
+              autoComplete="name"
+              suppressHydrationWarning
               placeholder="e.g. Rahul Sharma"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -128,6 +137,8 @@ export default function ListingEnquiryForm({
             <input
               type="tel"
               required
+              autoComplete="tel"
+              suppressHydrationWarning
               placeholder="+91 9876543210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -144,6 +155,8 @@ export default function ListingEnquiryForm({
             <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <input
               type="email"
+              autoComplete="email"
+              suppressHydrationWarning
               placeholder="rahul@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -158,6 +171,7 @@ export default function ListingEnquiryForm({
           </label>
           <textarea
             rows={2}
+            suppressHydrationWarning
             placeholder="e.g. Looking for a 6-seater cabin starting next month..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}

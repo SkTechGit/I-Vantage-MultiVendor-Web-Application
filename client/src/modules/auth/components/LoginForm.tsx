@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,8 @@ import { marketplaceApi } from "@/lib/marketplace.api";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams?.get("reason");
   const { user, setUser, refreshUser, logoutUser } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
@@ -48,18 +50,22 @@ export default function LoginForm() {
 
   useEffect(() => {
     marketplaceApi
-      .me()
+      .me("admin")
       .then((u) => {
         if (u && (u.email || u.name)) {
           setCurrentSession(u);
+        } else {
+          setCurrentSession(null);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCurrentSession(null);
+      });
   }, [user]);
 
   const handleLogoutCurrent = async () => {
     try {
-      await marketplaceApi.logout();
+      await marketplaceApi.logout("admin");
       if (logoutUser) await logoutUser();
       setCurrentSession(null);
       router.refresh();
@@ -83,34 +89,27 @@ export default function LoginForm() {
         setRoleMismatch(null);
         let userData: any = null;
 
-        // 1. Authenticate with Next.js Marketplace API with requiredRole: "superadmin"
+        // 1. Authenticate strictly with requiredRole: "superadmin"
         try {
-          const nextAuthRes = await marketplaceApi.login({
+          const res = await marketplaceApi.login({
             email: values.email,
             password: values.password,
             requiredRole: "superadmin",
           });
-          userData = nextAuthRes?.user;
-        } catch (nextErr: any) {
-          const errData = nextErr.response?.data;
+          userData = res?.user || res?.data || res;
+        } catch (err: any) {
+          const errData = err.response?.data;
           if (errData?.code === "ROLE_MISMATCH") {
             setRoleMismatch({
               currentRole: errData.currentRole,
               requiredRole: errData.requiredRole,
               correctPortalUrl: errData.correctPortalUrl || "/vendor/login",
-              message: errData.error || "Administrative privileges required.",
+              message: errData.error || errData.message || "Administrative privileges required.",
             });
             return;
           }
-          // If next auth fails for other reasons, attempt Express API
-          const expressRes = await login(values);
-          userData = expressRes?.data || expressRes?.user || expressRes;
+          throw err;
         }
-
-        // 2. Synchronize with Express backend if accessible
-        try {
-          await login(values);
-        } catch {}
 
         if (userData && (userData.email || userData.fullName || userData.name)) {
           setUser(userData);
@@ -123,11 +122,20 @@ export default function LoginForm() {
         router.refresh();
         router.push("/admin/dashboard");
       } catch (error: unknown) {
-        const errorMsg =
-          (axios.isAxiosError(error) &&
-            (error.response?.data?.error || error.response?.data?.message)) ||
-          (error as any)?.message ||
-          "Invalid administrator credentials or unauthorized access tier.";
+        let errorMsg = "Invalid username or password";
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          const msg = error.response?.data?.message || error.response?.data?.error;
+          if (status === 401 && msg) {
+            errorMsg = msg;
+          } else if (status === 404 && msg) {
+            errorMsg = msg;
+          } else if (msg && !msg.toLowerCase().includes("status code")) {
+            errorMsg = msg;
+          } else if (!status || status >= 500) {
+            errorMsg = "Unable to connect to authentication server. Please check backend service.";
+          }
+        }
         toast.error(errorMsg);
       }
     });
@@ -324,10 +332,10 @@ export default function LoginForm() {
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <Link
-                        href={currentSession.role === "superadmin" ? "/admin/dashboard" : "/vendor"}
+                        href={currentSession.role === "superadmin" || currentSession.role === "super_admin" ? "/admin/dashboard" : "/vendor"}
                         className="px-3 py-1.5 rounded-lg bg-[#1E5BFF] text-white text-[11px] font-bold hover:bg-blue-700 transition"
                       >
-                        Go to {currentSession.role === "superadmin" ? "Admin Console" : "Vendor Center"} &rarr;
+                        Go to {currentSession.role === "superadmin" || currentSession.role === "super_admin" ? "Admin Console" : "Vendor Center"} &rarr;
                       </Link>
                       <button
                         type="button"
@@ -365,6 +373,39 @@ export default function LoginForm() {
                         Go to {roleMismatch.currentRole === "vendor" ? "Coworking Partner Portal" : "Client Portal"} &rarr;
                       </Link>
                     </div>
+                  </div>
+                )}
+
+                {/* Reason Alerts (Demoted or Invalidation) */}
+                {reason === "demoted" && (
+                  <div className="p-3.5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-950 text-xs space-y-1.5 animate-in fade-in duration-150">
+                    <p className="font-extrabold flex items-center gap-1.5 text-rose-900 text-sm">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                      SuperAdmin Privileges Revoked
+                    </p>
+                    <p className="text-[11px] text-rose-800 leading-relaxed">
+                      Your SuperAdmin role was modified by another administrator. If your role was updated to Vendor Partner, please log in through the Coworking Partner Portal.
+                    </p>
+                    <div className="pt-1">
+                      <Link
+                        href="/vendor/login"
+                        className="inline-block px-3 py-1.5 rounded-lg bg-rose-700 text-white text-[11px] font-bold hover:bg-rose-800 transition"
+                      >
+                        Go to Partner Portal &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {reason === "session_invalidated" && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 text-xs space-y-1 animate-in fade-in duration-150">
+                    <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      Session Terminated For Security
+                    </p>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Your session was ended because your account permissions, role, or credentials changed. Please log in again to continue.
+                    </p>
                   </div>
                 )}
 

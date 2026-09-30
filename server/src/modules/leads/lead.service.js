@@ -3,6 +3,8 @@ import Service from "../services/service.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { LEAD_MESSAGES } from "./lead.constants.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
+import { sendGeneralEnquiryNotification } from "../../utils/email.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 // export const createLead = async (data) => {
 //   const services = await Service.find({
@@ -65,8 +67,32 @@ export const createLead = async (data) => {
       createdAt: lead.createdAt,
       timestamp: Date.now(),
     });
+
+    createNotification({
+      title: `New Enquiry: ${lead.name || "Client Prospect"}`,
+      message: `${lead.name} (${lead.phone || lead.email}) enquired for ${lead.location || "Workspace Solutions"}.`,
+      category: "lead",
+      priority: "high",
+      actionUrl: "/admin/leads",
+      metadata: { leadId: lead._id.toString(), email: lead.email, phone: lead.phone },
+    }).catch((notifErr) => console.error("Admin notification error:", notifErr.message));
   } catch (rtErr) {
     console.error("Realtime lead broadcast error:", rtErr);
+  }
+
+  // Send automated confirmation email to client and alert to admin
+  try {
+    const firstService = services && services.length > 0 ? services[0].name : "Business & Workspace Solutions";
+    sendGeneralEnquiryNotification({
+      fullName: lead.fullName || lead.name,
+      email: lead.email,
+      mobile: lead.mobile || lead.phone,
+      serviceName: firstService,
+      location: lead.location || "Gurugram - Welldone Tech Park",
+      message: lead.message,
+    }).catch((mailErr) => console.error("General lead notification error:", mailErr.message));
+  } catch (mailErr) {
+    console.error("Error triggering general lead email:", mailErr.message);
   }
 
   return lead;

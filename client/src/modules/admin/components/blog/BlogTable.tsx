@@ -52,11 +52,17 @@ export default function BlogTable({
 
   // Synchronize state when revalidated or refreshed
   useEffect(() => {
-    setBlogs(initialBlogs);
+    const timer = setTimeout(() => {
+      setBlogs(initialBlogs);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialBlogs]);
 
   useEffect(() => {
-    setStats(initialStats);
+    const timer = setTimeout(() => {
+      setStats(initialStats);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialStats]);
 
   // Client filtering

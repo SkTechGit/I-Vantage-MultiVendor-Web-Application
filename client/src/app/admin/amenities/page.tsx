@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import {
   Sparkles,
@@ -37,7 +37,7 @@ export default function AdminAmenitiesPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchAmenities = async () => {
+  const fetchAmenities = useCallback(async () => {
     setLoading(true);
     try {
       const data = await marketplaceApi.getAdminAmenities();
@@ -47,10 +47,26 @@ export default function AdminAmenitiesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAmenities();
+    let ignore = false;
+    marketplaceApi.getAdminAmenities()
+      .then((data) => {
+        if (!ignore) setAmenities(data || []);
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error("Failed to load amenities:", err);
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const openCreateModal = () => {

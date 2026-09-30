@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useTransition,
+  useCallback,
 } from "react";
 
 import { toast } from "sonner";
@@ -68,41 +69,44 @@ export default function LeadDrawer({
   |--------------------------------------------------------------------------
   */
 
-  useEffect(() => {
-    if (!lead) {
-      setLeadData(null);
-      return;
-    }
-
-    fetchLead();
-  }, [lead]);
-
-  const fetchLead = async () => {
+  const fetchLead = useCallback(async (silent = false) => {
     if (!lead) return;
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
-      const data = await getLeadById(
-        lead._id
-      );
+      const data = await getLeadById(lead._id);
 
       setLeadData(data);
-
       setStatus(data.status);
     } catch (error) {
-      console.error(
-        "FETCH LEAD ERROR:",
-        error
-      );
-
-      toast.error(
-        "Failed to load lead."
-      );
+      console.error("FETCH LEAD ERROR:", error);
+      toast.error("Failed to load lead.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, [lead]);
+
+  useEffect(() => {
+    if (!lead) return;
+
+    let active = true;
+    getLeadById(lead._id)
+      .then((data) => {
+        if (active) {
+          setLeadData(data);
+          setStatus(data.status);
+        }
+      })
+      .catch((error) => {
+        console.error("FETCH LEAD ERROR:", error);
+        toast.error("Failed to load lead.");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [lead]);
 
   /*
   |--------------------------------------------------------------------------

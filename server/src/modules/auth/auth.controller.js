@@ -8,7 +8,7 @@ import {
   toggleStatusSchema,
 } from "./auth.validation.js";
 import { AUTH_MESSAGES, AUTH_COOKIE } from "./auth.constants.js";
-import { setAuthCookies, clearAuthCookies } from "../../utils/cookie.js";
+import { setAuthCookies, clearAuthCookies, SCOPED_COOKIES } from "../../utils/cookie.js";
 
 /**
  * POST /api/v1/auth/login
@@ -16,9 +16,20 @@ import { setAuthCookies, clearAuthCookies } from "../../utils/cookie.js";
 export const login = async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
-    const { user, token, accessToken, refreshToken } = await authService.login(validatedData);
+    const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const { user, token, accessToken, refreshToken } = await authService.login({
+      ...validatedData,
+      ipAddress,
+      userAgent,
+    });
 
-    setAuthCookies(res, accessToken || token, refreshToken);
+    const portal =
+      req.headers["x-portal"] ||
+      (validatedData.requiredRole === "superadmin" ? "admin" : validatedData.requiredRole === "vendor" ? "vendor" : null) ||
+      (user?.role === "super_admin" || user?.role === "superadmin" || user?.role === "admin" ? "admin" : user?.role === "vendor" ? "vendor" : "all");
+
+    setAuthCookies(res, accessToken || token, refreshToken, user?.role, portal);
 
     res.status(200).json({
       success: true,
@@ -36,10 +47,17 @@ export const login = async (req, res, next) => {
 export const signup = async (req, res, next) => {
   try {
     const validatedData = signupSchema.parse(req.body);
-    const result = await authService.signup(validatedData);
+    const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const result = await authService.signup({
+      ...validatedData,
+      ipAddress,
+      userAgent,
+    });
 
+    const portal = req.headers["x-portal"] || (result.user?.role === "vendor" ? "vendor" : "admin");
     if (result.accessToken || result.token) {
-      setAuthCookies(res, result.accessToken || result.token, result.refreshToken);
+      setAuthCookies(res, result.accessToken || result.token, result.refreshToken, result.user?.role, portal);
     }
 
     res.status(201).json({
@@ -47,6 +65,32 @@ export const signup = async (req, res, next) => {
       type: result.type,
       message: result.message,
       data: result.user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/v1/auth/register
+ */
+export const register = async (req, res, next) => {
+  try {
+    const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const { user, token, accessToken, refreshToken } = await authService.register({
+      ...req.body,
+      ipAddress,
+      userAgent,
+    });
+
+    const portal = req.headers["x-portal"] || (user?.role === "vendor" ? "vendor" : "all");
+    setAuthCookies(res, accessToken || token, refreshToken, user?.role, portal);
+
+    res.status(201).json({
+      success: true,
+      message: "Account registered successfully.",
+      data: user,
     });
   } catch (error) {
     next(error);
@@ -84,15 +128,38 @@ export const me = async (req, res) => {
  * POST /api/v1/auth/refresh-token or /api/v1/auth/refresh
  */
 export const refreshTokenHandler = async (req, res, next) => {
+  const portal =
+    req.headers["x-portal"] ||
+    req.query?.portal ||
+    req.body?.portal ||
+    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+
   try {
-    const rawToken =
-      req.cookies[AUTH_COOKIE.REFRESH_NAME] ||
-      req.body?.refreshToken ||
-      req.headers["x-refresh-token"];
+    let rawToken = null;
+    if (portal === "admin") {
+      rawToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] || req.body?.refreshToken || req.headers["x-refresh-token"];
+    } else if (portal === "vendor") {
+      rawToken = req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] || req.body?.refreshToken || req.headers["x-refresh-token"];
+    } else {
+      rawToken =
+        req.cookies[AUTH_COOKIE.REFRESH_NAME] ||
+        req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] ||
+        req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] ||
+        req.body?.refreshToken ||
+        req.headers["x-refresh-token"];
+    }
+
+    if (!rawToken) {
+      clearAuthCookies(res, portal);
+      return res.status(401).json({
+        success: false,
+        message: "No active session refresh token found for this portal.",
+      });
+    }
 
     const { user, accessToken, refreshToken } = await authService.refreshToken(rawToken);
 
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, user?.role, portal);
 
     res.status(200).json({
       success: true,
@@ -103,7 +170,7 @@ export const refreshTokenHandler = async (req, res, next) => {
       },
     });
   } catch (error) {
-    clearAuthCookies(res);
+    clearAuthCookies(res, portal);
     next(error);
   }
 };
@@ -112,7 +179,12 @@ export const refreshTokenHandler = async (req, res, next) => {
  * POST /api/v1/auth/logout
  */
 export const logout = async (req, res) => {
-  clearAuthCookies(res);
+  const portal =
+    req.query?.portal ||
+    req.headers["x-portal"] ||
+    req.body?.portal ||
+    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+  clearAuthCookies(res, portal);
 
   res.status(200).json({
     success: true,
