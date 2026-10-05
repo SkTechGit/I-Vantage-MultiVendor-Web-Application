@@ -25,6 +25,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5000",
+  "http://127.0.0.1:5000",
 ].filter(Boolean);
 
 app.use(
@@ -60,10 +61,10 @@ app.use(
       if (
         process.env.NODE_ENV !== "production" &&
         (/^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-         /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-         /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
-         /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
-         /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin))
+          /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+          /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+          /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+          /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin))
       ) {
         return callback(null, true);
       }
@@ -96,13 +97,14 @@ app.use(noSqlSanitizer);
 // General volumetric rate limiter (300 requests / min per IP)
 app.use(apiRateLimiter(300, 60 * 1000));
 
-app.use("/api/v1", routes);
-app.use(errorHandler);
 app.get("/", (req, res) => {
   res.json({
     success: true,
     message: "Welcome to I-Vantage Business Hub API",
   });
 });
+
+app.use("/api/v1", routes);
+app.use(errorHandler);
 
 export default app;

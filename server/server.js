@@ -12,17 +12,17 @@ dns.setServers([
 dotenv.config();
 connectDB();
 
-const PORT = env.port || 3000;
+const PORT = env.port || 5000;
 
 const startServer = () => {
-    try {
-        app.listen(PORT, "0.0.0.0", () => {
-            console.log(`Server is running on port ${PORT} (0.0.0.0)`);
-        });
-    } catch (err) {
-        console.error("Error starting the server:", err);
-        process.exit(1); // Exit the process with an error code
-    }
+  try {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server is running on port ${PORT} (0.0.0.0)`);
+    });
+  } catch (err) {
+    console.error("Error starting the server:", err);
+    process.exit(1); // Exit the process with an error code
+  }
 };
 
 process.on("unhandledRejection", (reason, promise) => {

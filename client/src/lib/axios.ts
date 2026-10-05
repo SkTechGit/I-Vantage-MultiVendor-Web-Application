@@ -1,10 +1,18 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (typeof window !== "undefined") {
+    return "/api/v1";
+  }
+  const envUrl =
+    process.env.INTERNAL_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://127.0.0.1:5000/api/v1";
+  return envUrl.replace("//localhost", "//127.0.0.1");
+};
+
 const axiosInstance = axios.create({
-  baseURL:
-    typeof window !== "undefined"
-      ? "/api/v1"
-      : process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1",
+  baseURL: getBaseURL(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -72,7 +80,7 @@ axiosInstance.interceptors.response.use(
           } else {
             localStorage.removeItem("iv_user");
           }
-        } catch {}
+        } catch { }
 
         if (
           isAdmin &&
