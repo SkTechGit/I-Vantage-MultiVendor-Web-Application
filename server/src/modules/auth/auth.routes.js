@@ -19,6 +19,7 @@ import {
   deleteTeamMember,
 } from "./auth.controller.js";
 import { authenticate, authorize } from "./auth.middleware.js";
+import { authRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
@@ -26,9 +27,12 @@ const router = Router();
 /*                                Public Routes                               */
 /* -------------------------------------------------------------------------- */
 
-router.post("/login", login);
-router.post("/signup", signup);
-router.post("/register", register);
+// High-security brute-force rate limiting (25 requests per 15 minutes per IP)
+const authLimiter = authRateLimiter(25, 15 * 60 * 1000);
+
+router.post("/login", authLimiter, login);
+router.post("/signup", authLimiter, signup);
+router.post("/register", authLimiter, register);
 router.post("/refresh-token", refreshTokenHandler);
 router.post("/refresh", refreshTokenHandler);
 router.get("/invitation/validate", validateInvitation);

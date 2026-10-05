@@ -79,48 +79,48 @@ const amenityCategories: AmenityCategory[] = [
 
 export default function ServicesAmenities() {
   return (
-    <section className="bg-white py-16 sm:py-20 lg:py-24">
+    <section className="bg-white py-10 sm:py-20 lg:py-24">
       <Container>
         <SectionHeading
           title="Everything Your Workday Needs"
           subtitle="A complete infrastructure ecosystem built to eliminate operational friction and ensure productivity around the clock."
         />
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
+        <div className="mt-8 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
           {amenityCategories.map((cat) => {
             const CatIcon = cat.icon;
 
             return (
               <div
                 key={cat.title}
-                className="flex flex-col rounded-2xl border border-slate-200/80 bg-[#FDFEFF] p-6 shadow-xs transition-all duration-300 hover:border-blue-200 hover:shadow-lg sm:p-7"
+                className="flex flex-col rounded-xl sm:rounded-2xl border border-slate-200/80 bg-[#FDFEFF] p-4 shadow-xs transition-all duration-300 hover:border-blue-200 hover:shadow-lg sm:p-7"
               >
                 {/* Header */}
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF]">
-                    <CatIcon size={22} />
+                <div className="flex items-center gap-2.5 sm:gap-3 border-b border-slate-100 pb-3.5 sm:pb-5">
+                  <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-blue-50 text-[#1E5BFF]">
+                    <CatIcon className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-[#0A1F66]">
+                    <h3 className="text-sm sm:text-base font-bold text-[#0A1F66]">
                       {cat.title}
                     </h3>
-                    <p className="text-[11px] text-slate-500">{cat.subtitle}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500">{cat.subtitle}</p>
                   </div>
                 </div>
 
                 {/* Items */}
-                <ul className="mt-5 space-y-3.5">
+                <ul className="mt-3.5 sm:mt-5 space-y-2.5 sm:space-y-3.5">
                   {cat.items.map((item) => {
                     const ItemIcon = item.icon;
                     return (
                       <li
                         key={item.name}
-                        className="flex items-center gap-2.5 text-xs font-medium text-slate-700 sm:text-sm"
+                        className="flex items-center gap-2 sm:gap-2.5 text-xs font-medium text-slate-700 sm:text-sm"
                       >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-50/70 text-[#1E5BFF]">
-                          <ItemIcon size={13} />
+                        <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-md bg-blue-50/70 text-[#1E5BFF]">
+                          <ItemIcon className="h-3 w-3 sm:h-[13px] sm:w-[13px]" />
                         </span>
-                        <span>{item.name}</span>
+                        <span className="line-clamp-1 sm:line-clamp-none">{item.name}</span>
                       </li>
                     );
                   })}

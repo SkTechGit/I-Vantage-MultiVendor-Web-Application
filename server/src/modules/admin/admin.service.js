@@ -207,6 +207,9 @@ export const updateVendorRole = async (vendorId, newRole, adminUser) => {
       authDoc.role = "super_admin";
       authDoc.status = "active";
       authDoc.isActive = true;
+      if (vendor.passwordHash) {
+        authDoc.password = vendor.passwordHash;
+      }
       authDoc.tokenVersion = (authDoc.tokenVersion || 0) + 1;
       await authDoc.save();
     } else {

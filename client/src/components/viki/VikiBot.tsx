@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Send,
   X,
+  Sparkles,
 } from "lucide-react";
 
 import { useVikiChat } from "@/hooks/useVikiChat";
@@ -925,28 +926,48 @@ export default function VikiBot() {
                   />
                 ))}
 
-                {/* Loading indicator */}
+                {/* Ultra-Premium AI is Thinking State */}
                 {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-md border border-[#E5ECFA] bg-white px-3.5 py-2.5 shadow-sm sm:px-4 sm:py-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 animate-bounce rounded-full bg-[#0759D9]" />
+                  <div className="flex justify-start w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="relative group max-w-[92%] sm:max-w-[85%] rounded-2xl rounded-bl-md border border-blue-200/90 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/40 p-3 sm:p-3.5 shadow-[0_4px_20px_rgba(7,89,217,0.08)] backdrop-blur-md overflow-hidden">
+                      {/* Subtle Ambient Shimmer Overlay */}
+                      <div className="viki-thinking-glow absolute inset-0 pointer-events-none" />
 
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-[#0759D9]"
-                          style={{
-                            animationDelay:
-                              "120ms",
-                          }}
-                        />
+                      <div className="relative flex items-center gap-3">
+                        {/* Animated VIKI AI Avatar Icon */}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0A1F66] via-[#12319A] to-[#1E5BFF] flex items-center justify-center text-white shadow-xs ring-2 ring-blue-100">
+                            <Sparkles className="w-4 h-4 text-amber-300 animate-spin" style={{ animationDuration: "5s" }} />
+                          </div>
+                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
+                        </div>
 
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-[#0759D9]"
-                          style={{
-                            animationDelay:
-                              "240ms",
-                          }}
-                        />
+                        {/* AI Thinking Copy & Kinetic Audio-Style Pulse Wave */}
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black tracking-tight text-[#0A1F66] flex items-center gap-1.5">
+                              VIKI is Thinking
+                              <span className="inline-flex gap-1 items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#1E5BFF] animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#1E5BFF] animate-bounce" style={{ animationDelay: "150ms" }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#1E5BFF] animate-bounce" style={{ animationDelay: "300ms" }} />
+                              </span>
+                            </span>
+
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-100/80 text-[9px] font-extrabold uppercase tracking-wider text-[#1E5BFF]">
+                              AI Active
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] text-slate-500 font-medium leading-tight truncate">
+                            Analyzing workspace query &amp; synthesizing answer...
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Kinetic Energy Shimmer Bar */}
+                      <div className="mt-2.5 h-1 w-full bg-blue-100/70 rounded-full overflow-hidden">
+                        <div className="viki-thinking-bar h-full bg-gradient-to-r from-[#1E5BFF] via-[#00D2FF] to-[#1E5BFF] rounded-full" />
                       </div>
                     </div>
                   </div>

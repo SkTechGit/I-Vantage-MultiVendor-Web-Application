@@ -11,6 +11,7 @@ import {
   Building2,
   Sparkles,
   ChevronDown,
+  Check,
 } from "lucide-react";
 
 interface FilterSidebarProps {
@@ -19,6 +20,7 @@ interface FilterSidebarProps {
   availableAreas?: string[];
   categories?: Array<{ _id: string; name: string; slug: string }>;
   currentCategorySlug?: string;
+  topOffset?: number;
 }
 
 const DEFAULT_AREAS = [
@@ -31,30 +33,26 @@ const DEFAULT_AREAS = [
   "Sector 48",
 ];
 
-const PRICE_RANGES = [
-  { label: "All Budgets", min: "", max: "" },
-  { label: "Under ₹8,000", min: "0", max: "8000" },
-  { label: "₹8,000 - ₹15,000", min: "8000", max: "15000" },
-  { label: "₹15,000 - ₹30,000", min: "15000", max: "30000" },
-  { label: "Above ₹30,000", min: "30000", max: "" },
-];
+const POPULAR_HUBS = ["Sohna Road", "Cyber City", "Golf Course Road"];
 
 const CAPACITIES = [
-  { label: "Any Capacity", value: "" },
+  { label: "Any Size", value: "" },
   { label: "1 - 2 Desks", value: "1" },
   { label: "3 - 10 Seats", value: "3" },
-  { label: "11 - 25 Seats", value: "11" },
-  { label: "25+ Enterprise", value: "25" },
+  { label: "11+ Enterprise", value: "11" },
 ];
 
-const POPULAR_AMENITIES = [
+const PRIMARY_AMENITIES = [
   "High-Speed WiFi",
   "24/7 Access",
   "Metro Connectivity",
+  "Power Backup",
+];
+
+const EXTRA_AMENITIES = [
   "Cafeteria",
   "Meeting Credits",
   "Dedicated Parking",
-  "Power Backup",
 ];
 
 export default function MarketplaceFilterSidebar({
@@ -63,12 +61,14 @@ export default function MarketplaceFilterSidebar({
   availableAreas = DEFAULT_AREAS,
   categories = [],
   currentCategorySlug,
+  topOffset = 136,
 }: FilterSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   // Active query parameters
   const activeArea = searchParams.get("area") || "";
@@ -117,165 +117,219 @@ export default function MarketplaceFilterSidebar({
     Boolean(activeCapacity) ||
     activeAmenities.length > 0;
 
+  // Active budget bracket helper
+  const getSelectedBudget = () => {
+    if (activeMaxPrice === "8000") return "8000";
+    if (activeMinPrice === "8000" && activeMaxPrice === "15000") return "15000";
+    if (activeMinPrice === "15000" && activeMaxPrice === "30000") return "30000";
+    if (activeMinPrice === "30000") return "30000+";
+    return "";
+  };
+
+  const handleBudgetChange = (val: string) => {
+    if (!val) {
+      updateFilters({ minPrice: null, maxPrice: null });
+    } else if (val === "8000") {
+      updateFilters({ minPrice: null, maxPrice: "8000" });
+    } else if (val === "15000") {
+      updateFilters({ minPrice: "8000", maxPrice: "15000" });
+    } else if (val === "30000") {
+      updateFilters({ minPrice: "15000", maxPrice: "30000" });
+    } else if (val === "30000+") {
+      updateFilters({ minPrice: "30000", maxPrice: null });
+    }
+  };
+
   const FilterContent = (
-    <div className="space-y-6">
-      {/* Header & Reset */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+    <div className="space-y-4">
+      {/* 1. Card Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-[#1E5BFF]" />
-          <h3 className="text-sm font-extrabold text-[#0A1F66] uppercase tracking-wider">
-            Refine Spaces
-          </h3>
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-[#1E5BFF]">
+            <SlidersHorizontal size={14} />
+          </div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0A1F66]">
+              Refine Spaces
+            </h3>
+            <p className="text-[10px] text-slate-400 font-semibold">
+              {totalResults} Verified Hubs
+            </p>
+          </div>
         </div>
 
         {hasActiveFilters && (
           <button
+            type="button"
             onClick={handleClearAll}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 transition"
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 transition px-2 py-1 rounded-md hover:bg-red-50"
           >
-            <RotateCcw className="w-3 h-3" /> Reset
+            <RotateCcw size={11} />
+            <span>Reset</span>
           </button>
         )}
       </div>
 
-      {/* 1. Micro-Locations / Areas */}
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-[#1E5BFF]" /> Prime Locations
+      {/* 2. Micro-Locations Dropdown + Quick Pills */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+          <MapPin size={13} className="text-[#1E5BFF]" />
+          <span>Prime Location</span>
         </label>
-        <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 scrollbar-thin">
-          <button
-            onClick={() => updateFilters({ area: null })}
-            className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              !activeArea
-                ? "bg-[#0A1F66] text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            All Locations in {city}
-          </button>
-          {availableAreas.map((area) => (
-            <button
-              key={area}
-              onClick={() =>
-                updateFilters({ area: activeArea === area ? null : area })
-              }
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-between ${
-                activeArea.toLowerCase() === area.toLowerCase()
-                  ? "bg-[#0A1F66] text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <span>{area}</span>
-              {activeArea.toLowerCase() === area.toLowerCase() && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D99000]" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* 2. Budget Ranges */}
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#D99000]" /> Budget Bracket
-        </label>
-        <div className="space-y-1.5">
-          {PRICE_RANGES.map((pr, idx) => {
-            const isSelected =
-              activeMinPrice === pr.min && activeMaxPrice === pr.max;
+        <div className="relative">
+          <select
+            value={activeArea}
+            onChange={(e) => updateFilters({ area: e.target.value || null })}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold text-slate-800 outline-none transition focus:border-[#1E5BFF] focus:bg-white focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">All Locations in {city}</option>
+            {availableAreas.map((area) => (
+              <option key={area} value={area}>
+                {area}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Quick Hub Pills */}
+        <div className="flex flex-wrap gap-1 pt-1">
+          {POPULAR_HUBS.map((hub) => {
+            const isSelected = activeArea.toLowerCase() === hub.toLowerCase();
             return (
               <button
-                key={idx}
-                onClick={() =>
-                  updateFilters({
-                    minPrice: pr.min || null,
-                    maxPrice: pr.max || null,
-                  })
-                }
-                className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-between ${
+                key={hub}
+                type="button"
+                onClick={() => updateFilters({ area: isSelected ? null : hub })}
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition ${
                   isSelected
-                    ? "bg-[#1E5BFF] text-white"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-[#0A1F66] text-white border-[#0A1F66]"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                 }`}
               >
-                <span>{pr.label}</span>
-                {isSelected && (
-                  <span className="text-[10px] uppercase font-bold text-blue-100">
-                    Active
-                  </span>
-                )}
+                {hub.split(" ")[0]}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 3. Team Size / Capacity */}
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
-          <Building2 className="w-3.5 h-3.5 text-[#1E5BFF]" /> Team Size / Capacity
+      {/* 3. Budget Bracket Dropdown */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+          <Sparkles size={13} className="text-[#F4A900]" />
+          <span>Max Budget</span>
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {CAPACITIES.map((cap) => (
-            <button
-              key={cap.value}
-              onClick={() => updateFilters({ capacity: cap.value || null })}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold text-center transition ${
-                activeCapacity === cap.value
-                  ? "bg-[#0A1F66] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {cap.label}
-            </button>
-          ))}
+
+        <div className="relative">
+          <select
+            value={getSelectedBudget()}
+            onChange={(e) => handleBudgetChange(e.target.value)}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold text-slate-800 outline-none transition focus:border-[#1E5BFF] focus:bg-white focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">Any Budget</option>
+            <option value="8000">Under ₹8,000 / mo</option>
+            <option value="15000">₹8,000 - ₹15,000 / mo</option>
+            <option value="30000">₹15,000 - ₹30,000 / mo</option>
+            <option value="30000+">Enterprise Suites (₹30k+)</option>
+          </select>
+          <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 
-      {/* 4. Amenities Checklist */}
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5 block">
-          Key Amenities
+      {/* 4. Team Size / Capacity (2x2 Grid) */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+          <Building2 size={13} className="text-[#1E5BFF]" />
+          <span>Team Size</span>
         </label>
-        <div className="space-y-2">
-          {POPULAR_AMENITIES.map((amenity) => {
+
+        <div className="grid grid-cols-2 gap-1.5">
+          {CAPACITIES.map((cap) => {
+            const isSelected = activeCapacity === cap.value;
+            return (
+              <button
+                key={cap.label}
+                type="button"
+                onClick={() => updateFilters({ capacity: cap.value || null })}
+                className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center border ${
+                  isSelected
+                    ? "bg-[#0A1F66] text-white border-[#0A1F66] shadow-2xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {cap.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 5. Key Amenities (Compact 2-Column Grid) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+            Amenities
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowAllAmenities(!showAllAmenities)}
+            className="text-[10px] font-semibold text-[#1E5BFF] hover:underline"
+          >
+            {showAllAmenities ? "Less" : "+3 More"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5">
+          {(showAllAmenities
+            ? [...PRIMARY_AMENITIES, ...EXTRA_AMENITIES]
+            : PRIMARY_AMENITIES
+          ).map((amenity) => {
             const isChecked = activeAmenities.includes(amenity);
             return (
               <label
                 key={amenity}
                 onClick={() => toggleAmenity(amenity)}
-                className="flex items-center gap-2 text-xs text-slate-700 font-medium cursor-pointer select-none hover:text-[#1E5BFF] transition"
+                className={`flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] font-semibold cursor-pointer select-none transition ${
+                  isChecked
+                    ? "bg-blue-50/80 border-blue-200 text-[#0A1F66]"
+                    : "bg-white border-slate-200/90 text-slate-600 hover:border-slate-300"
+                }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => {}}
-                  className="rounded border-slate-300 text-[#1E5BFF] focus:ring-[#1E5BFF]"
-                />
-                <span>{amenity}</span>
+                <div
+                  className={`h-3.5 w-3.5 rounded flex items-center justify-center border transition ${
+                    isChecked
+                      ? "bg-[#1E5BFF] border-[#1E5BFF] text-white"
+                      : "border-slate-300 bg-white"
+                  }`}
+                >
+                  {isChecked && <Check size={10} strokeWidth={3} />}
+                </div>
+                <span className="truncate">{amenity}</span>
               </label>
             );
           })}
         </div>
       </div>
 
-      {/* 5. Sort Selector */}
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 block">
-          Sort Results
+      {/* 6. Sort Selector */}
+      <div className="space-y-1.5 pt-1 border-t border-slate-100">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+          Sort Spaces
         </label>
         <div className="relative">
           <select
             value={activeSort}
             onChange={(e) => updateFilters({ sort: e.target.value })}
-            className="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-[#1E5BFF]"
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-bold text-slate-800 outline-none transition focus:border-[#1E5BFF] focus:bg-white"
           >
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
             <option value="capacity_desc">Capacity: High to Low</option>
-            <option value="newest">Newest First</option>
+            <option value="newest">Newest Listed</option>
           </select>
+          <ChevronDown size={14} className="text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
     </div>
@@ -283,9 +337,12 @@ export default function MarketplaceFilterSidebar({
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:block w-72 shrink-0">
-        <div className="sticky top-24 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-6">
+      {/* Desktop Sticky Sidebar: Compact, rock-solid, never scrolls internally */}
+      <aside
+        className="hidden lg:block w-72 shrink-0 self-start sticky z-20"
+        style={{ top: `${topOffset}px` }}
+      >
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_4px_24px_rgba(10,31,102,0.05)]">
           {FilterContent}
         </div>
       </aside>
@@ -293,6 +350,7 @@ export default function MarketplaceFilterSidebar({
       {/* Mobile Filter Button */}
       <div className="lg:hidden mb-4 flex items-center justify-between gap-3">
         <button
+          type="button"
           onClick={() => setMobileOpen(true)}
           className="flex-1 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-[#0A1F66] text-xs font-extrabold shadow-sm flex items-center justify-center gap-2 active:scale-98"
         >
@@ -316,12 +374,13 @@ export default function MarketplaceFilterSidebar({
 
           {/* Drawer Panel */}
           <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-5 overflow-y-auto flex flex-col justify-between z-10 animate-in slide-in-from-right duration-200">
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b">
                 <span className="text-sm font-black text-[#0A1F66]">
                   Filters & Preferences
                 </span>
                 <button
+                  type="button"
                   onClick={() => setMobileOpen(false)}
                   className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
                 >
@@ -334,6 +393,7 @@ export default function MarketplaceFilterSidebar({
 
             <div className="pt-4 border-t mt-6">
               <button
+                type="button"
                 onClick={() => setMobileOpen(false)}
                 className="w-full py-3 bg-[#0A1F66] text-white rounded-xl text-xs font-extrabold shadow-md"
               >

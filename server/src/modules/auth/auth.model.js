@@ -17,6 +17,12 @@ const authSchema = new mongoose.Schema(
       trim: true,
     },
 
+    phone: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
     password: {
       type: String,
       required: true,
@@ -76,7 +82,11 @@ const authSchema = new mongoose.Schema(
 authSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(this.password, 12);
+  // Prevent double-hashing if password is already a valid bcrypt hash
+  const isAlreadyBcrypt = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(this.password);
+  if (!isAlreadyBcrypt) {
+    this.password = await bcrypt.hash(this.password, 12);
+  }
 
   // Bump tokenVersion on password change to invalidate all existing sessions
   if (!this.isNew) {

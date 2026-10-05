@@ -3,6 +3,12 @@
 import React, { useState } from "react";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import {
+  isValidIndianPhone,
+  isValidEmail,
+  normalizeIndianPhone,
+  VALIDATION_MESSAGES,
+} from "@/lib/validation";
+import {
   Send,
   Loader2,
   CheckCircle,
@@ -32,22 +38,42 @@ export default function ListingEnquiryForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) {
-      setErrorMsg("Name and phone number are required");
+    setErrorMsg(null);
+
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      setErrorMsg("Please enter your full name (minimum 2 characters).");
+      return;
+    }
+
+    if (!cleanPhone) {
+      setErrorMsg(VALIDATION_MESSAGES.PHONE_REQUIRED);
+      return;
+    }
+
+    if (!isValidIndianPhone(cleanPhone)) {
+      setErrorMsg(VALIDATION_MESSAGES.PHONE_INVALID);
+      return;
+    }
+
+    if (cleanEmail && !isValidEmail(cleanEmail)) {
+      setErrorMsg(VALIDATION_MESSAGES.EMAIL_INVALID);
       return;
     }
 
     setSubmitting(true);
-    setErrorMsg(null);
 
     try {
       await marketplaceApi.submitLead({
         listingId,
         listingTitle,
         spaceTitle: listingTitle,
-        name: name.trim(),
-        phone: phone.trim(),
-        email: email.trim() || undefined,
+        name: cleanName,
+        phone: normalizeIndianPhone(cleanPhone),
+        email: cleanEmail ? cleanEmail.toLowerCase() : undefined,
         message: message.trim() || `Interested in touring ${listingTitle}`,
         source: "listing_enquiry",
       });

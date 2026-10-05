@@ -68,7 +68,7 @@ const comparisonData: ComparisonRow[] = [
 
 export default function ServicesComparison() {
   return (
-    <section id="comparison" className="bg-[#F8FAFC] py-16 sm:py-20 lg:py-24">
+    <section id="comparison" className="bg-[#F8FAFC] py-10 sm:py-20 lg:py-24">
       <Container>
         <SectionHeading
           title="Compare Workspace Solutions"
@@ -126,35 +126,35 @@ export default function ServicesComparison() {
           </div>
         </div>
 
-        {/* Mobile View: Stacked Comparison Cards (Prevents Horizontal Overflow) */}
-        <div className="mt-8 space-y-4 md:hidden">
+        {/* Mobile View: Compact Stacked Comparison Cards */}
+        <div className="mt-6 space-y-2.5 md:hidden">
           {comparisonData.map((row) => (
             <div
               key={row.solution}
-              className={`rounded-2xl border p-5 shadow-2xs ${
+              className={`rounded-xl border p-3.5 shadow-2xs ${
                 row.highlight
-                  ? "border-[#1E5BFF]/50 bg-white ring-2 ring-[#1E5BFF]/10"
+                  ? "border-[#1E5BFF]/50 bg-white ring-1 ring-[#1E5BFF]/20"
                   : "border-slate-200/80 bg-white"
               }`}
             >
-              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
                 <div>
-                  <h3 className="text-base font-bold text-[#0A1F66]">
+                  <h3 className="text-sm font-bold text-[#0A1F66]">
                     {row.solution}
                   </h3>
-                  <p className="mt-0.5 text-xs text-slate-500">{row.bestFor}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">{row.bestFor}</p>
                 </div>
-                <div className="text-right">
-                  <span className="text-base font-extrabold text-[#0A1F66]">
+                <div className="text-right shrink-0">
+                  <span className="text-sm font-extrabold text-[#0A1F66]">
                     {row.price}
                   </span>
-                  <span className="block text-[11px] text-slate-500">
+                  <span className="block text-[10px] text-slate-500">
                     {row.period}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center justify-between pt-1 text-xs">
+              <div className="mt-2.5 flex items-center justify-between pt-0.5 text-[11px]">
                 <span className="font-medium text-slate-600">
                   Capacity:{" "}
                   <strong className="text-slate-800">{row.capacity}</strong>
@@ -164,10 +164,10 @@ export default function ServicesComparison() {
                   <Button
                     variant={row.highlight ? "primary" : "outline"}
                     size="sm"
-                    className="h-8 px-3 text-xs"
+                    className="h-7 px-2.5 text-[11px] font-semibold"
                   >
                     <span>Enquire</span>
-                    <ArrowRight size={12} />
+                    <ArrowRight size={11} />
                   </Button>
                 </Link>
               </div>

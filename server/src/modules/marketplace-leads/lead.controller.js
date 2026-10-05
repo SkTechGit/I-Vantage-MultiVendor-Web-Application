@@ -22,6 +22,39 @@ export const createLead = async (req, res, next) => {
       source = "listing_enquiry",
     } = req.body;
 
+    if (!name || String(name).trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Full name is required (minimum 2 characters).",
+      });
+    }
+
+    const digits = phone ? String(phone).replace(/\D/g, "") : "";
+    const cleanPhone =
+      digits.length === 12 && digits.startsWith("91")
+        ? digits.slice(2)
+        : digits.length === 11 && digits.startsWith("0")
+        ? digits.slice(1)
+        : digits;
+
+    if (!cleanPhone || !/^[6-9]\d{9}$/.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid 10-digit mobile number.",
+      });
+    }
+
+    const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+    if (
+      cleanEmail &&
+      !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+
     let vendorId = null;
     let vendorEmail = null;
     let vendorBusinessName = null;
@@ -64,9 +97,9 @@ export const createLead = async (req, res, next) => {
       vendorId: vendorId || null,
       spaceTitle: listingTitle,
       spaceLocation: spaceLocation,
-      name,
-      phone,
-      email,
+      name: name.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
       message,
       source,
       status: "new",
@@ -78,8 +111,8 @@ export const createLead = async (req, res, next) => {
       if (vendorId) {
         realtimeHub.broadcastToUser(vendorId.toString(), "leads", "NEW_LEAD", {
           leadId: lead._id.toString(),
-          name,
-          phone,
+          name: name.trim(),
+          phone: cleanPhone,
           listingTitle,
           spaceTitle: listingTitle,
           spaceLocation,
@@ -88,8 +121,8 @@ export const createLead = async (req, res, next) => {
       }
       realtimeHub.broadcast("leads", "NEW_LEAD", {
         leadId: lead._id.toString(),
-        name,
-        phone,
+        name: name.trim(),
+        phone: cleanPhone,
         listingTitle,
         spaceTitle: listingTitle,
         spaceLocation,

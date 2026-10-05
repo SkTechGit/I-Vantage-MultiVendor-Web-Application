@@ -2,6 +2,18 @@ import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
+function normalizePhone(val) {
+  if (!val) return "";
+  const digits = String(val).replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  return digits;
+}
+
 export const createLeadSchema = z.object({
   fullName: z
     .string()
@@ -11,12 +23,19 @@ export const createLeadSchema = z.object({
   email: z
     .string()
     .trim()
-    .email("Invalid email address."),
+    .toLowerCase()
+    .regex(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      "Invalid email address."
+    ),
 
   mobile: z
     .string()
     .trim()
-    .regex(/^[6-9]\d{9}$/, "Invalid mobile number."),
+    .transform(normalizePhone)
+    .refine((val) => /^[6-9]\d{9}$/.test(val), {
+      message: "Invalid mobile number. Please provide a valid 10-digit Indian mobile number.",
+    }),
 
   companyName: z
     .string()

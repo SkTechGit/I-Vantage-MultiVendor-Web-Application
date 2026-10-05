@@ -18,8 +18,19 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import Logo from "@/components/common/Logo";
+import PasswordStrengthMeter from "@/components/ui/PasswordStrengthMeter";
+import {
+  EMAIL_REGEX,
+  PHONE_REGEX,
+  isValidIndianPhone,
+  isValidEmail,
+  normalizeIndianPhone,
+  checkPasswordCriteria,
+  STRONG_PASSWORD_MESSAGE,
+} from "@/modules/auth/auth.schema";
 
 export default function VendorSignupPage() {
   const router = useRouter();
@@ -28,9 +39,12 @@ export default function VendorSignupPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -40,22 +54,67 @@ export default function VendorSignupPage() {
     }
   }, []);
 
+  const validateAll = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      errors.name = "Full name is required.";
+    } else if (name.trim().length < 2) {
+      errors.name = "Full name must be at least 2 characters.";
+    }
+
+    if (!businessName.trim()) {
+      errors.businessName = "Coworking brand or company name is required.";
+    } else if (businessName.trim().length < 2) {
+      errors.businessName = "Brand name must be at least 2 characters.";
+    }
+
+    if (!email.trim()) {
+      errors.email = "Official email address is required.";
+    } else if (!isValidEmail(email)) {
+      errors.email = "Please enter a valid official email address (e.g. partner@brand.com).";
+    }
+
+    if (!phone.trim()) {
+      errors.phone = "Phone number is required for account verification.";
+    } else if (!isValidIndianPhone(phone)) {
+      errors.phone = "Please enter a valid 10-digit mobile number (e.g. 9876543210).";
+    }
+
+    const passCheck = checkPasswordCriteria(password);
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (!passCheck.isStrong) {
+      errors.password = STRONG_PASSWORD_MESSAGE;
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm your password.";
+    } else if (confirmPassword !== password) {
+      errors.confirmPassword = "Passwords do not match.";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    setError(null);
+
+    if (!validateAll()) {
+      setError("Please resolve the highlighted validation errors before continuing.");
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       await marketplaceApi.register({
-        name,
-        businessName,
-        email,
-        phone,
+        name: name.trim(),
+        businessName: businessName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: normalizeIndianPhone(phone),
         password,
         role: "vendor",
       });
@@ -116,15 +175,17 @@ export default function VendorSignupPage() {
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
-              {error}
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5" autoComplete="off">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off" noValidate>
+            {/* Full Name */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Your Full Name *
+                Your Full Name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -132,18 +193,36 @@ export default function VendorSignupPage() {
                   type="text"
                   required
                   autoComplete="name"
-                  suppressHydrationWarning
                   placeholder="e.g. Rahul Sharma"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full text-sm pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (fieldErrors.name) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.name;
+                        return next;
+                      });
+                    }
+                  }}
+                  className={`w-full text-sm pl-10 pr-4 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    fieldErrors.name
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
                 />
               </div>
+              {fieldErrors.name && (
+                <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {fieldErrors.name}
+                </p>
+              )}
             </div>
 
+            {/* Coworking Brand Name */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Coworking Brand / Company Name *
+                Coworking Brand / Company Name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -151,19 +230,37 @@ export default function VendorSignupPage() {
                   type="text"
                   required
                   autoComplete="organization"
-                  suppressHydrationWarning
                   placeholder="e.g. Horizon Workspaces Pvt Ltd"
                   value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full text-sm pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                  onChange={(e) => {
+                    setBusinessName(e.target.value);
+                    if (fieldErrors.businessName) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.businessName;
+                        return next;
+                      });
+                    }
+                  }}
+                  className={`w-full text-sm pl-10 pr-4 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    fieldErrors.businessName
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
                 />
               </div>
+              {fieldErrors.businessName && (
+                <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {fieldErrors.businessName}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Email & Phone Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Official Email *
+                  Official Email <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -171,50 +268,97 @@ export default function VendorSignupPage() {
                     type="email"
                     required
                     autoComplete="email"
-                    suppressHydrationWarning
                     placeholder="partner@brand.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.email;
+                          return next;
+                        });
+                      }
+                    }}
+                    className={`w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                      fieldErrors.email
+                        ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                        : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                    }`}
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
+                    <span>•</span> {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Phone Number
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="tel"
+                    required
                     autoComplete="tel"
-                    suppressHydrationWarning
                     placeholder="+91 98765 43210"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (fieldErrors.phone) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.phone;
+                          return next;
+                        });
+                      }
+                    }}
+                    className={`w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                      fieldErrors.phone
+                        ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                        : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                    }`}
                   />
                 </div>
+                {fieldErrors.phone && (
+                  <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
+                    <span>•</span> {fieldErrors.phone}
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Create Password */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Create Password (min 8 chars) *
+                Create Strong Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  minLength={8}
                   autoComplete="new-password"
-                  suppressHydrationWarning
-                  placeholder="••••••••"
+                  placeholder="At least 8 chars with uppercase, number & symbol"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-sm pl-10 pr-11 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.password;
+                        return next;
+                      });
+                    }
+                  }}
+                  className={`w-full text-sm pl-10 pr-11 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    fieldErrors.password
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
                 />
                 <button
                   type="button"
@@ -225,6 +369,62 @@ export default function VendorSignupPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+
+              {/* Password Strength Meter */}
+              {password.length > 0 && (
+                <PasswordStrengthMeter password={password} className="mt-2.5" />
+              )}
+
+              {fieldErrors.password && (
+                <p className="mt-1.5 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {fieldErrors.password}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Re-type your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (fieldErrors.confirmPassword) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.confirmPassword;
+                        return next;
+                      });
+                    }
+                  }}
+                  className={`w-full text-sm pl-10 pr-11 py-2.5 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    fieldErrors.confirmPassword
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition p-1"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {fieldErrors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {fieldErrors.confirmPassword}
+                </p>
+              )}
             </div>
 
             <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-[11px] text-slate-600 flex items-start gap-2">

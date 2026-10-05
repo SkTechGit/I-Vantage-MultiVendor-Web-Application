@@ -38,8 +38,7 @@ export default function FloatingContactButtons() {
           sm:left-6
           sm:h-14
           sm:w-14
-          lg:bottom-5
-          lg:left-8
+          lg:hidden
         "
       >
         <svg
@@ -78,8 +77,7 @@ export default function FloatingContactButtons() {
           sm:left-6
           sm:h-14
           sm:w-14
-          lg:bottom-21
-          lg:left-8
+          lg:hidden
         "
       >
         <Phone

@@ -70,47 +70,47 @@ export default function WhyChooseUs() {
           </p>
         </div>
 
-        {/* 4 Feature Pillars Grid */}
-        <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
+        {/* 4 Feature Pillars Grid: 2-columns on mobile, 4-columns on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-8">
           {features.map((item) => {
             const Icon = item.icon;
 
             return (
               <div
                 key={item.title}
-                className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/85 bg-white p-7 sm:p-8 shadow-[0_4px_20px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_36px_rgba(30,91,255,0.09)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-1.5"
+                className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/85 bg-white p-3.5 sm:p-8 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_36px_rgba(30,91,255,0.09)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-1.5"
               >
                 {/* Background Watermark Number */}
-                <span className="absolute right-6 top-4 text-4xl font-black text-slate-100/90 select-none group-hover:text-blue-50 transition-colors">
+                <span className="absolute right-3 top-2 sm:right-6 sm:top-4 text-xl sm:text-4xl font-black text-slate-100/90 select-none group-hover:text-blue-50 transition-colors">
                   {item.num}
                 </span>
 
                 <div>
                   {/* Icon Box */}
-                  <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/80 shadow-xs transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
-                    <Icon size={26} strokeWidth={2.2} />
+                  <div className="mb-2.5 sm:mb-6 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/80 shadow-xs transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
+                    <Icon className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={2.2} />
                   </div>
 
                   {/* Micro Highlight Badge */}
-                  <p className="text-[10px] font-black uppercase tracking-wider text-[#B45309] mb-1.5">
+                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#B45309] mb-1">
                     {item.highlight}
                   </p>
 
                   {/* Title */}
-                  <h3 className="text-lg font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors leading-snug">
+                  <h3 className="text-xs sm:text-lg font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors leading-snug line-clamp-2">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  <p className="mt-1 sm:mt-3 text-[10px] sm:text-sm text-slate-600 leading-relaxed line-clamp-2 sm:line-clamp-none">
                     {item.description}
                   </p>
                 </div>
 
                 {/* Bottom Border Accent */}
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 group-hover:text-[#1E5BFF] transition-colors">
-                  <Zap className="w-3.5 h-3.5 text-[#F4A900]" />
-                  <span>Enterprise Grade Standard</span>
+                <div className="mt-3 sm:mt-6 pt-2 sm:pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-[#1E5BFF] transition-colors">
+                  <Zap className="w-3 h-3 text-[#F4A900]" />
+                  <span className="truncate">Enterprise Standard</span>
                 </div>
               </div>
             );

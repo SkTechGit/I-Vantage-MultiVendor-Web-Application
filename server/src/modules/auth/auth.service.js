@@ -27,6 +27,10 @@ export const login = async ({
   ipAddress = "127.0.0.1",
   userAgent = "Unknown",
 }) => {
+  if (typeof email !== "string" || typeof password !== "string") {
+    throw new ApiError(400, "Invalid credentials payload format.", "INVALID_PAYLOAD");
+  }
+
   const normalizedEmail = email.toLowerCase().trim();
 
   // 1. Try finding in Auth collection (SuperAdmin / Team members)
@@ -36,7 +40,12 @@ export const login = async ({
   let mUser = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
 
   if (!authUser && !mUser) {
-    throw new ApiError(404, "This email ID is not registered.", "EMAIL_NOT_REGISTERED");
+    // Perform dummy bcrypt comparison to neutralize timing attack email enumeration
+    await bcrypt.compare(
+      password,
+      "$2a$10$e8Z4wT5Z5M4O3bK0mE9tOe8gB0rWv/0s6O3lX.F5B4M6kL7P8R0yC"
+    ).catch(() => {});
+    throw new ApiError(401, "Invalid email address or password.", "INVALID_CREDENTIALS");
   }
 
   // 3. Determine authoritative role state across Auth and Marketplace collections
@@ -130,7 +139,16 @@ export const login = async ({
       throw new ApiError(403, AUTH_MESSAGES.ACCOUNT_DISABLED);
     }
 
-    const isMatch = await authUser.comparePassword(password);
+    let isMatch = await authUser.comparePassword(password);
+    if (!isMatch && mUser?.passwordHash) {
+      // Self-healing fallback: If promoted from vendor/marketplace user
+      const matchesMarketplaceHash = await bcrypt.compare(password, mUser.passwordHash);
+      if (matchesMarketplaceHash) {
+        isMatch = true;
+        authUser.password = password; // Will be safely hashed by pre-save
+        await authUser.save();
+      }
+    }
     if (!isMatch) {
       throw new ApiError(401, "Invalid password. Please check your credentials.", "INVALID_PASSWORD");
     }
@@ -211,7 +229,15 @@ export const login = async ({
       throw new ApiError(403, AUTH_MESSAGES.ACCOUNT_DISABLED);
     }
 
-    const isMatch = await bcrypt.compare(password, mUser.passwordHash || "");
+    let isMatch = await bcrypt.compare(password, mUser.passwordHash || "");
+    if (!isMatch && authUser) {
+      const authMatch = await authUser.comparePassword(password);
+      if (authMatch) {
+        isMatch = true;
+        mUser.passwordHash = await bcrypt.hash(password, 10);
+        await mUser.save();
+      }
+    }
     if (!isMatch) {
       throw new ApiError(401, "Invalid password. Please check your credentials.", "INVALID_PASSWORD");
     }
@@ -328,6 +354,14 @@ export const register = async ({
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+  const cleanPhone = phone ? String(phone).replace(/[\s\-\(\)]/g, "") : "";
+  const normalizedPhone = cleanPhone.startsWith("+91")
+    ? cleanPhone.slice(3)
+    : cleanPhone.startsWith("91") && cleanPhone.length === 12
+    ? cleanPhone.slice(2)
+    : cleanPhone.startsWith("0") && cleanPhone.length === 11
+    ? cleanPhone.slice(1)
+    : cleanPhone;
 
   // Check collision in Auth and User
   const [existingAuth, existingUser] = await Promise.all([
@@ -356,7 +390,7 @@ export const register = async ({
     name: name.trim(),
     email: normalizedEmail,
     passwordHash,
-    phone: phone?.trim(),
+    phone: normalizedPhone || phone?.trim(),
     businessName: businessName?.trim(),
     role: role === "superadmin" ? "vendor" : role, // Never allow self-registering as superadmin
     status: "active",
@@ -482,8 +516,16 @@ export const validateInvitation = async (rawToken) => {
 /*                                   Signup                                   */
 /* -------------------------------------------------------------------------- */
 
-export const signup = async ({ fullName, email, password, inviteToken }) => {
+export const signup = async ({ fullName, email, password, phone, inviteToken }) => {
   const normalizedEmail = email.toLowerCase().trim();
+  const cleanPhone = phone ? String(phone).replace(/[\s\-\(\)]/g, "") : "";
+  const normalizedPhone = cleanPhone.startsWith("+91")
+    ? cleanPhone.slice(3)
+    : cleanPhone.startsWith("91") && cleanPhone.length === 12
+    ? cleanPhone.slice(2)
+    : cleanPhone.startsWith("0") && cleanPhone.length === 11
+    ? cleanPhone.slice(1)
+    : cleanPhone;
 
   // Check if user already exists
   const existingUser = await Auth.findOne({ email: normalizedEmail });
@@ -527,6 +569,7 @@ export const signup = async ({ fullName, email, password, inviteToken }) => {
     const user = new Auth({
       fullName: fullName.trim(),
       email: normalizedEmail,
+      phone: normalizedPhone || null,
       password,
       role: invitation.role,
       status: "active",
@@ -547,7 +590,7 @@ export const signup = async ({ fullName, email, password, inviteToken }) => {
       action: "admin_invitation_accepted",
       targetEmail: normalizedEmail,
       targetUser: user._id,
-      metadata: { role: user.role, invitationId: invitation._id },
+      metadata: { role: user.role, invitationId: invitation._id, phone: normalizedPhone },
     }).catch((err) => console.error("Audit log error:", err));
 
     // Automatically generate session tokens for immediate login
@@ -583,6 +626,7 @@ export const signup = async ({ fullName, email, password, inviteToken }) => {
   const user = new Auth({
     fullName: fullName.trim(),
     email: normalizedEmail,
+    phone: normalizedPhone || null,
     password,
     role: assignedRole,
     status: "active",

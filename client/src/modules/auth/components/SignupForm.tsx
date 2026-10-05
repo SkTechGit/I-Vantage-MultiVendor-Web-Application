@@ -18,13 +18,15 @@ import {
   CheckCircle2,
   Building2,
   User,
+  Phone,
   Sparkles,
 } from "lucide-react";
 
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Logo from "@/components/common/Logo";
-import { signupSchema, SignupFormData } from "../auth.schema";
+import PasswordStrengthMeter from "@/components/ui/PasswordStrengthMeter";
+import { signupSchema, SignupFormData, normalizeIndianPhone } from "../auth.schema";
 import { signup, validateInvitation } from "../auth.api";
 import { marketplaceApi } from "@/lib/marketplace.api";
 
@@ -51,11 +53,6 @@ export default function SignupForm() {
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Vendor / User custom fields
-  const [businessName, setBusinessName] = useState("");
-  const [phone, setPhone] = useState("");
-
   // Invite state
   const [checkingInvite, setCheckingInvite] = useState(!!inviteToken);
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
@@ -79,35 +76,6 @@ export default function SignupForm() {
 
   const passwordValue = watch("password", "");
   const confirmPasswordValue = watch("confirmPassword", "");
-
-  // Password requirements calculation
-  const hasMinLength = passwordValue.length >= 8;
-  const hasUppercase = /[A-Z]/.test(passwordValue);
-  const hasLowercase = /[a-z]/.test(passwordValue);
-  const hasNumber = /\d/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
-
-  const passedCount = [
-    hasMinLength,
-    hasUppercase,
-    hasLowercase,
-    hasNumber,
-    hasSpecial,
-  ].filter(Boolean).length;
-
-  let strengthLabel = "Weak";
-  let strengthColor = "bg-red-500";
-  let strengthWidth = "w-1/3";
-
-  if (passedCount >= 4) {
-    strengthLabel = "Strong";
-    strengthColor = "bg-emerald-500";
-    strengthWidth = "w-full";
-  } else if (passedCount >= 3) {
-    strengthLabel = "Fair";
-    strengthColor = "bg-amber-500";
-    strengthWidth = "w-2/3";
-  }
 
   // Validate invitation token on mount
   useEffect(() => {
@@ -144,16 +112,19 @@ export default function SignupForm() {
     startTransition(async () => {
       try {
         if (accountType === "vendor") {
-          if (!businessName.trim()) {
+          if (!values.businessName?.trim()) {
             toast.error("Please enter your Coworking Space / Business name");
             return;
           }
+          const normalizedPhone = normalizeIndianPhone(values.phone);
+          const cleanEmail = values.email.trim().toLowerCase();
+
           await marketplaceApi.register({
-            name: values.fullName,
-            email: values.email,
+            name: values.fullName.trim(),
+            email: cleanEmail,
             password: values.password,
-            phone: phone.trim() || undefined,
-            businessName: businessName.trim(),
+            phone: normalizedPhone,
+            businessName: values.businessName.trim(),
             role: "vendor",
           });
 
@@ -163,11 +134,14 @@ export default function SignupForm() {
         }
 
         if (accountType === "user") {
+          const normalizedPhone = normalizeIndianPhone(values.phone);
+          const cleanEmail = values.email.trim().toLowerCase();
+
           await marketplaceApi.register({
-            name: values.fullName,
-            email: values.email,
+            name: values.fullName.trim(),
+            email: cleanEmail,
             password: values.password,
-            phone: phone.trim() || undefined,
+            phone: normalizedPhone,
             role: "user",
           });
 
@@ -177,7 +151,11 @@ export default function SignupForm() {
         }
 
         // Invited member or dynamic user registration
-        const res = await signup(values);
+        const res = await signup({
+          ...values,
+          email: values.email.trim().toLowerCase(),
+          phone: normalizeIndianPhone(values.phone),
+        });
         toast.success(
           res.message || "Account created successfully! Welcome to i-VANTAGE."
         );
@@ -413,14 +391,22 @@ export default function SignupForm() {
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
                 Coworking Space / Brand Name <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Horizon Workspaces"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
-              />
+              <div className="relative">
+                <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="e.g. Horizon Workspaces"
+                  {...register("businessName")}
+                  className={`w-full text-sm pl-10 pr-3.5 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none ${
+                    errors.businessName ? "border-red-500 focus:ring-red-100" : "border-slate-300"
+                  }`}
+                />
+              </div>
+              {errors.businessName && (
+                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <span>•</span> {errors.businessName.message}
+                </p>
+              )}
             </div>
           )}
 
@@ -449,16 +435,28 @@ export default function SignupForm() {
           {/* Phone (for Vendor & User) */}
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Mobile Number {accountType === "vendor" ? <span className="text-red-500">*</span> : "(Optional)"}
+              Mobile Number <span className="text-red-500">*</span>
             </label>
-            <input
-              type="tel"
-              required={accountType === "vendor"}
-              placeholder="+91 98765 43210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none"
-            />
+            <div className="relative">
+              <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="tel"
+                placeholder="+91 98765 43210"
+                {...register("phone")}
+                className={`w-full text-sm pl-10 pr-3.5 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none ${
+                  errors.phone ? "border-red-500 focus:ring-red-100" : "border-slate-300"
+                }`}
+              />
+            </div>
+            {errors.phone ? (
+              <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                <span>•</span> {errors.phone.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-slate-500">
+                10-digit mobile number for account access & SMS/call updates.
+              </p>
+            )}
           </div>
 
           {/* Password with Show/Hide */}
@@ -499,27 +497,7 @@ export default function SignupForm() {
 
             {/* Password Strength Meter */}
             {passwordValue.length > 0 && (
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 text-[11px]">Password strength:</span>
-                  <span
-                    className={`font-bold text-[11px] ${
-                      strengthLabel === "Strong"
-                        ? "text-emerald-600"
-                        : strengthLabel === "Fair"
-                        ? "text-amber-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {strengthLabel}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${strengthWidth} ${strengthColor}`}
-                  />
-                </div>
-              </div>
+              <PasswordStrengthMeter password={passwordValue} className="mt-2.5" />
             )}
           </div>
 

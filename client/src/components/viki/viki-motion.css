@@ -310,3 +310,45 @@
   animation: viki-suggestion-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(0.08s + var(--sugg-index, 0) * 0.045s);
 }
+
+/* --------------------------------------------------------------------------
+   10. ULTRA-PREMIUM AI THINKING WAVE & SHIMMER
+   -------------------------------------------------------------------------- */
+@keyframes viki-thinking-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes viki-thinking-wave {
+  0% {
+    transform: translateX(-30%);
+    width: 25%;
+  }
+  50% {
+    transform: translateX(100%);
+    width: 45%;
+  }
+  100% {
+    transform: translateX(250%);
+    width: 25%;
+  }
+}
+
+.viki-thinking-bar {
+  animation: viki-thinking-wave 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.viki-thinking-glow {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(30, 91, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: viki-thinking-shimmer 2.2s infinite;
+}
+

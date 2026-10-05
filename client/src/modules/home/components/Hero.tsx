@@ -74,22 +74,22 @@ export default function Hero() {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0a1f6608_1px,transparent_1px),linear-gradient(to_bottom,#0a1f6608_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_65%_55%_at_50%_35%,#000_65%,transparent_100%)]" />
 
       <Container>
-        <div className="relative z-10 grid items-center gap-10 py-10 sm:py-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:py-18 xl:grid-cols-[0.88fr_1.12fr]">
+        <div className="relative z-10 grid items-center gap-6 py-6 sm:py-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:py-18 xl:grid-cols-[0.88fr_1.12fr]">
           {/* =========================================================
               LEFT COLUMN: Executive Headline & Value Propositions
           ========================================================= */}
           <div className="flex min-w-0 flex-col">
             {/* Luminous Brand Badge */}
-            <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-blue-200/70 bg-white/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#0A1F66] shadow-xs backdrop-blur-md">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#0A1F66] shadow-xs backdrop-blur-md">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4A900] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F4A900]" />
               </span>
-              <span>INDIA&apos;S PREMIER BUSINESS ECOSYSTEM &amp; WORKSPACE NETWORK</span>
+              <span>INDIA&apos;S PREMIER BUSINESS ECOSYSTEM</span>
             </div>
 
             {/* High-Impact Headline */}
-            <h1 className="mt-5 max-w-2xl text-[29px] font-black leading-[1.08] tracking-[-0.03em] text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-[46px] lg:text-[46px] xl:text-[52px]">
+            <h1 className="mt-3 max-w-2xl text-[24px] font-black leading-[1.12] tracking-[-0.03em] text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-[46px] lg:text-[46px] xl:text-[52px]">
               Everything Your{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E5BFF] via-[#2563EB] to-[#1E5BFF]">
                 Business Needs
@@ -99,7 +99,7 @@ export default function Hero() {
             </h1>
 
             {/* Description */}
-            <p className="mt-5 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-6 sm:text-base sm:leading-7 lg:text-[15px] xl:text-base">
+            <p className="mt-2.5 max-w-xl text-xs leading-relaxed text-slate-600 sm:mt-6 sm:text-base sm:leading-7 lg:text-[15px] xl:text-base">
               i-VANTAGE unites luxury commercial workspaces, seamless corporate registrations,
               regulatory compliance, and 100+ business growth desks under one prestigious roof in Gurugram.
             </p>
@@ -107,7 +107,7 @@ export default function Hero() {
             {/* =========================================================
                 EXECUTIVE TELEMETRY BADGES
             ========================================================= */}
-            <div className="mt-6 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-xs backdrop-blur-md sm:mt-7">
+            <div className="mt-4 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-xs backdrop-blur-md sm:mt-7">
               {/* Stat 1 */}
               <div className="flex min-w-0 items-center gap-3 border-r border-slate-100 px-3.5 py-3.5 sm:px-5 sm:py-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs">
@@ -204,7 +204,7 @@ export default function Hero() {
                   height={600}
                   priority
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 55vw"
-                  className="h-[310px] w-full object-cover transition-transform duration-700 group-hover:scale-103 sm:h-[400px] md:h-[440px] lg:h-[420px] xl:h-[460px]"
+                  className="h-[210px] w-full object-cover transition-transform duration-700 group-hover:scale-103 sm:h-[400px] md:h-[440px] lg:h-[420px] xl:h-[460px]"
                 />
 
                 {/* Subtle Cinematic Vignette */}

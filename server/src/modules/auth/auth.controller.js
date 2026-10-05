@@ -2,6 +2,7 @@ import * as authService from "./auth.service.js";
 import {
   loginSchema,
   signupSchema,
+  registerSchema,
   createInviteSchema,
   approveRequestSchema,
   updateRoleSchema,
@@ -10,19 +11,40 @@ import {
 import { AUTH_MESSAGES, AUTH_COOKIE } from "./auth.constants.js";
 import { setAuthCookies, clearAuthCookies, SCOPED_COOKIES } from "../../utils/cookie.js";
 
+import {
+  checkAccountLockout,
+  recordFailedLogin,
+  resetFailedLogin,
+} from "../../middlewares/rateLimit.middleware.js";
+
 /**
  * POST /api/v1/auth/login
  */
 export const login = async (req, res, next) => {
+  const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
+  const userAgent = req.headers["user-agent"] || "Unknown";
+
   try {
     const validatedData = loginSchema.parse(req.body);
-    const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
-    const userAgent = req.headers["user-agent"] || "Unknown";
+
+    // 1. Check account lockout / brute-force protection
+    const lockout = checkAccountLockout(validatedData.email, ipAddress);
+    if (lockout.locked) {
+      return res.status(429).json({
+        success: false,
+        code: "ACCOUNT_LOCKED",
+        message: lockout.message,
+      });
+    }
+
     const { user, token, accessToken, refreshToken } = await authService.login({
       ...validatedData,
       ipAddress,
       userAgent,
     });
+
+    // 2. Successful authentication: Clear failed login attempts
+    resetFailedLogin(validatedData.email, ipAddress);
 
     const portal =
       req.headers["x-portal"] ||
@@ -37,6 +59,10 @@ export const login = async (req, res, next) => {
       data: user,
     });
   } catch (error) {
+    // Record failed attempt for rate limiting & account protection
+    if (error?.statusCode === 401 || error?.code === "INVALID_PASSWORD" || error?.code === "INVALID_CREDENTIALS") {
+      recordFailedLogin(req.body?.email, ipAddress);
+    }
     next(error);
   }
 };
@@ -76,10 +102,11 @@ export const signup = async (req, res, next) => {
  */
 export const register = async (req, res, next) => {
   try {
+    const validatedData = registerSchema.parse(req.body);
     const ipAddress = req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "127.0.0.1";
     const userAgent = req.headers["user-agent"] || "Unknown";
     const { user, token, accessToken, refreshToken } = await authService.register({
-      ...req.body,
+      ...validatedData,
       ipAddress,
       userAgent,
     });

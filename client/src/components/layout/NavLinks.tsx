@@ -21,9 +21,9 @@ export default function NavLinks({ onClick }: Props) {
           href={item.href}
           onClick={onClick}
           className={clsx(
-            "relative py-2 text-[15px] font-medium transition-all duration-300",
+            "relative py-2 text-[13.5px] xl:text-[15px] font-medium transition-all duration-300 whitespace-nowrap",
             pathname === item.href
-              ? "text-[#0B2E8A]"
+              ? "text-[#0B2E8A] font-semibold"
               : "text-slate-700 hover:text-[#1E5BFF]"
           )}
         >

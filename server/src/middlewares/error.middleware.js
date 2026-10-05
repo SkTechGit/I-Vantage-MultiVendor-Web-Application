@@ -29,13 +29,40 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Mongoose CastError (Invalid ObjectId)
+  if (err.name === "CastError") {
+    return res.status(400).json({
+      success: false,
+      code: "INVALID_IDENTIFIER",
+      message: "The requested resource identifier is invalid.",
+    });
+  }
+
+  // JWT Errors
+  if (err.name === "JsonWebTokenError") {
+    return res.status(401).json({
+      success: false,
+      code: "INVALID_TOKEN",
+      message: "Security authorization token is malformed or invalid.",
+    });
+  }
+
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({
+      success: false,
+      code: "TOKEN_EXPIRED",
+      message: "Your session token has expired. Please sign in again.",
+    });
+  }
+
   // Default Error
+  const isProduction = process.env.NODE_ENV === "production";
   return res.status(500).json({
     success: false,
-    message:
-      process.env.NODE_ENV !== "production" && err.message
-        ? err.message
-        : "Internal Server Error",
+    code: "INTERNAL_SERVER_ERROR",
+    message: isProduction
+      ? "An unexpected security or server error occurred. Please try again later."
+      : (err.message || "Internal Server Error"),
   });
 };
 

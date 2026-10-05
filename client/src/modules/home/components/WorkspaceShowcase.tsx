@@ -11,10 +11,10 @@ import {
 
 export default function WorkspaceShowcase() {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28 bg-gradient-to-b from-white via-slate-50/40 to-white border-t border-slate-100">
+    <section className="relative overflow-hidden py-10 sm:py-24 bg-gradient-to-b from-white via-slate-50/40 to-white border-t border-slate-100">
       <Container>
         {/* Section Header */}
-        <div className="mx-auto mb-14 max-w-3xl text-center space-y-3">
+        <div className="mx-auto mb-8 sm:mb-14 max-w-3xl text-center space-y-2 sm:space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-blue-50 border border-blue-100 text-[#0A1F66] uppercase tracking-wider shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
             <span>Infrastructure & Architectural Excellence</span>
@@ -27,23 +27,23 @@ export default function WorkspaceShowcase() {
             </span>
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600">
+          <p className="mx-auto mt-2 sm:mt-4 max-w-2xl text-xs sm:text-base leading-relaxed text-slate-600">
             Tour our flagship physical hub at Welldone Tech Park, Sector 48 Gurugram, equipped with ergonomic workstations, high-tech AV meeting suites, and executive reception.
           </p>
         </div>
 
         {/* Conference Rooms Section */}
-        <div className="mb-20 sm:mb-24">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-slate-200/80">
+        <div className="mb-10 sm:mb-24">
+          <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 pb-3 sm:pb-4 border-b border-slate-200/80">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#1E5BFF]">
                 <Building2 className="w-3.5 h-3.5" /> Meeting & Collaboration
               </div>
-              <h3 className="mt-1.5 text-xl font-black text-[#0A1F66] sm:text-2xl lg:text-3xl">
+              <h3 className="mt-1 text-lg font-black text-[#0A1F66] sm:text-2xl lg:text-3xl">
                 Conference & Boardroom Suites
               </h3>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full w-fit">
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full w-fit">
               <MapPin className="w-3.5 h-3.5 text-[#F4A900]" />
               <span>Welldone Tech Park, Gurugram</span>
             </div>
@@ -53,7 +53,7 @@ export default function WorkspaceShowcase() {
         </div>
 
         {/* Coworking & Open Seats Section */}
-        <div className="mb-20 sm:mb-24">
+        <div className="mb-10 sm:mb-24">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-slate-200/80">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#1E5BFF]">

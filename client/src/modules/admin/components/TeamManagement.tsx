@@ -26,6 +26,7 @@ import {
   updateVendorRole,
   deleteVendor,
 } from "@/modules/auth/auth.api";
+import { EMAIL_REGEX } from "@/modules/auth/auth.schema";
 
 import {
   Member,
@@ -613,15 +614,20 @@ export default function TeamManagement() {
 
   const handleGenerateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail) {
+    const cleanEmail = inviteEmail.trim().toLowerCase();
+    if (!cleanEmail) {
       toast.error("Please enter a valid work email address.");
+      return;
+    }
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      toast.error("Please enter a valid work email address (e.g. colleague@company.com).");
       return;
     }
 
     setSubmittingInvite(true);
     try {
       const res = await createInvitation({
-        email: inviteEmail,
+        email: cleanEmail,
         role: inviteRole,
       });
 

@@ -12,11 +12,15 @@ import {
   ArrowRight,
   Sparkles,
   Search,
-  CheckCircle2,
   PhoneCall,
   ShieldCheck,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import ListingEnquiryModal, {
+  EnquiryListingTarget,
+} from "@/components/marketplace/ListingEnquiryModal";
 
 interface SpaceCardItem {
   id: string;
@@ -34,131 +38,26 @@ interface SpaceCardItem {
   slug: string;
 }
 
-const FEATURED_SPACES: SpaceCardItem[] = [
-  {
-    id: "sp-1",
-    title: "i-VANTAGE Welldone Executive Suites",
-    category: "Private Cabin",
-    city: "gurugram",
-    area: "Sohna Road",
-    address: "Welldone Tech Park, Sector 48, Sohna Road, Gurugram",
-    price: 18500,
-    unit: "per-month",
-    capacity: 6,
-    image: "/images/workspace/conf3.webp",
-    amenities: ["High-Speed Leased Line", "24/7 Access", "Welldone Reception", "Meeting Credits", "Cafeteria"],
-    vendorName: "i-VANTAGE Flagship Hub",
-    slug: "i-vantage-welldone-executive-suites",
-  },
-  {
-    id: "sp-2",
-    title: "Cyber City Horizon Dedicated Desks",
-    category: "Dedicated Desk",
-    city: "gurugram",
-    area: "Cyber City",
-    address: "DLF Cyber City, Building 10, DLF Phase 2, Gurugram",
-    price: 9999,
-    unit: "per-month",
-    capacity: 1,
-    image: "/images/workspace/openseat1.webp",
-    amenities: ["Rapid Metro 200m", "High-Speed WiFi", "Power Backup", "Executive Lounge", "Pantry"],
-    vendorName: "Horizon Workspaces",
-    slug: "cyber-city-horizon-dedicated-desks",
-  },
-  {
-    id: "sp-3",
-    title: "Golf Course Rd Elite Boardroom & Day Pass",
-    category: "Meeting Room",
-    city: "gurugram",
-    area: "Golf Course Road",
-    address: "Sector 54, Golf Course Road, Gurugram",
-    price: 1200,
-    unit: "per-hour",
-    capacity: 14,
-    image: "/images/workspace/conf4.webp",
-    amenities: ["Video Conferencing", "Whiteboard", "High-Speed WiFi", "Valet Parking", "Hospitality Staff"],
-    vendorName: "Elite Workspace Partners",
-    slug: "golf-course-rd-elite-boardroom",
-  },
-  {
-    id: "sp-4",
-    title: "MG Road Flexible Coworking Desks",
-    category: "Coworking Seat",
-    city: "gurugram",
-    area: "MG Road",
-    address: "Near MG Road Metro Station, Heritage City, Gurugram",
-    price: 7499,
-    unit: "per-month",
-    capacity: 1,
-    image: "/images/workspace/openseat2.webp",
-    amenities: ["Yellow Line Metro", "High-Speed WiFi", "Unlimited Coffee", "Print & Scan"],
-    vendorName: "Metro Hubs",
-    slug: "mg-road-flexible-coworking-desks",
-  },
-  {
-    id: "sp-5",
-    title: "Udyog Vihar Managed Enterprise Cabin",
-    category: "Private Cabin",
-    city: "gurugram",
-    area: "Udyog Vihar",
-    address: "Phase IV, Udyog Vihar, Gurugram (Near CyberHub)",
-    price: 32000,
-    unit: "per-month",
-    capacity: 12,
-    image: "/images/workspace/conf1.webp",
-    amenities: ["Dedicated Fiber Line", "24/7 Security", "Enterprise Access", "Covered Parking"],
-    vendorName: "Enterprise Co-Works",
-    slug: "udyog-vihar-managed-enterprise-cabin",
-  },
-  {
-    id: "sp-6",
-    title: "Sohna Road Premium Open Workstation",
-    category: "Dedicated Desk",
-    city: "gurugram",
-    area: "Sohna Road",
-    address: "Spaze I-Tech Park, Sector 49, Sohna Road, Gurugram",
-    price: 6999,
-    unit: "per-month",
-    capacity: 1,
-    image: "/images/workspace/openseat3.webp",
-    amenities: ["Ergonomic Herman Miller", "High-Speed WiFi", "Reserved Parking", "Food Court"],
-    vendorName: "Spaze Hubs",
-    slug: "sohna-road-premium-open-workstation",
-  },
-];
-
-const LOCATIONS = [
-  { id: "all", label: "All Prime Hubs", count: "50+" },
-  { id: "Sohna Road", label: "Sohna Rd (Sec 48)", count: "Flagship" },
-  { id: "Cyber City", label: "DLF Cyber City", count: "12 Hubs" },
-  { id: "Golf Course Road", label: "Golf Course Rd", count: "8 Hubs" },
-  { id: "MG Road", label: "MG Road", count: "10 Hubs" },
-  { id: "Udyog Vihar", label: "Udyog Vihar", count: "14 Hubs" },
-];
-
-const CATEGORIES = [
-  "All Types",
-  "Private Cabin",
-  "Dedicated Desk",
-  "Meeting Room",
-  "Coworking Seat",
-];
+const PAGE_SIZE = 8;
 
 export default function CoworkingLocationsSection() {
   const router = useRouter();
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("All Types");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   // Search console state
   const [searchCity, setSearchCity] = useState("gurugram");
   const [searchCategory, setSearchCategory] = useState("");
   const [searchBudget, setSearchBudget] = useState("");
 
-  const [spaces, setSpaces] = useState<SpaceCardItem[]>(FEATURED_SPACES);
+  const [spaces, setSpaces] = useState<SpaceCardItem[]>([]);
+  const [enquiryModalTarget, setEnquiryModalTarget] = useState<EnquiryListingTarget | null>(null);
 
   const fetchLiveListings = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/listings?limit=12&_t=${Date.now()}`, {
+      const res = await fetch(`/api/v1/listings?limit=50&_t=${Date.now()}`, {
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
@@ -166,87 +65,40 @@ export default function CoworkingLocationsSection() {
       });
       const json = await res.json();
       const rawListings = Array.isArray(json?.data) ? json.data : (json?.data?.listings || []);
-      if (rawListings.length > 0) {
-        const apiSpaces: SpaceCardItem[] = rawListings.map((l: any) => ({
-          id: l._id,
-          title: l.title,
-          category: l.categoryId?.name || "Coworking Space",
-          city: l.location?.city || "gurugram",
-          area: l.location?.area || "Gurugram",
-          address: l.location?.address || `${l.location?.area}, Gurugram`,
-          price: l.pricing?.basePrice || 7999,
-          unit: l.pricing?.unit || "per-month",
-          capacity: l.capacity || 1,
-          image: l.media?.[0]?.mediaId?.secureUrl || "/images/workspace/conf3.webp",
-          amenities: l.amenityIds?.map((a: any) => a.name).slice(0, 5) || [
-            "High-Speed WiFi",
-            "24/7 Access",
-            "Cafeteria",
-          ],
-          vendorName: l.vendorId?.businessName || "Verified Partner",
-          slug: l._id,
-        }));
+      const apiSpaces: SpaceCardItem[] = rawListings.map((l: any) => ({
+        id: l._id,
+        title: l.title,
+        category: l.categoryId?.name || "Coworking Space",
+        city: l.location?.city || "gurugram",
+        area: l.location?.area || "Gurugram",
+        address: l.location?.address || `${l.location?.area}, Gurugram`,
+        price: l.pricing?.basePrice || 7999,
+        unit: l.pricing?.unit || "per-month",
+        capacity: l.capacity || 1,
+        image: l.media?.[0]?.mediaId?.secureUrl || "/images/workspace/conf3.webp",
+        amenities: l.amenityIds?.map((a: any) => a.name).slice(0, 5) || [
+          "High-Speed WiFi",
+          "24/7 Access",
+        ],
+        vendorName: l.vendorId?.businessName || "Verified Partner",
+        slug: l._id,
+      }));
 
-        if (apiSpaces.length > 0) {
-          setSpaces([...apiSpaces, ...FEATURED_SPACES.slice(apiSpaces.length)]);
-        } else {
-          setSpaces(FEATURED_SPACES);
-        }
-      }
+      setSpaces(apiSpaces);
+      setLoading(false);
     } catch {
-      // Graceful fallback to verified spaces
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    let ignore = false;
-    fetch(`/api/v1/listings?limit=12&_t=${Date.now()}`, {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-      },
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (ignore) return;
-        const rawListings = Array.isArray(json?.data) ? json.data : (json?.data?.listings || []);
-        if (rawListings.length > 0) {
-          const apiSpaces: SpaceCardItem[] = rawListings.map((l: any) => ({
-            id: l._id,
-            title: l.title,
-            category: l.categoryId?.name || "Coworking Space",
-            city: l.location?.city || "gurugram",
-            area: l.location?.area || "Gurugram",
-            address: l.location?.address || `${l.location?.area}, Gurugram`,
-            price: l.pricing?.basePrice || 7999,
-            unit: l.pricing?.unit || "per-month",
-            capacity: l.capacity || 1,
-            image: l.media?.[0]?.mediaId?.secureUrl || "/images/workspace/conf3.webp",
-            amenities: l.amenityIds?.map((a: any) => a.name).slice(0, 5) || [
-              "High-Speed WiFi",
-              "24/7 Access",
-              "Cafeteria",
-            ],
-            vendorName: l.vendorId?.businessName || "Verified Partner",
-            slug: l._id,
-          }));
+    fetchLiveListings();
 
-          if (apiSpaces.length > 0) {
-            setSpaces([...apiSpaces, ...FEATURED_SPACES.slice(apiSpaces.length)]);
-          } else {
-            setSpaces(FEATURED_SPACES);
-          }
-        }
-      })
-      .catch(() => {});
-
-    // Revalidate when user returns to this browser tab
     const handleFocus = () => {
       fetchLiveListings();
     };
     window.addEventListener("focus", handleFocus);
     return () => {
-      ignore = true;
       window.removeEventListener("focus", handleFocus);
     };
   }, [fetchLiveListings]);
@@ -260,6 +112,39 @@ export default function CoworkingLocationsSection() {
     }, 300);
   });
 
+  // Distinct locations computed directly from live listings
+  const availableLocations = React.useMemo(() => {
+    const areaMap = new Map<string, number>();
+    spaces.forEach((s) => {
+      const mainArea = s.area.split(",")[0].trim();
+      if (mainArea) {
+        areaMap.set(mainArea, (areaMap.get(mainArea) || 0) + 1);
+      }
+    });
+
+    const list = [{ id: "all", label: "All Prime Hubs", count: `${spaces.length}` }];
+    areaMap.forEach((count, area) => {
+      list.push({ id: area, label: area, count: `${count}` });
+    });
+    return list;
+  }, [spaces]);
+
+  // Distinct categories computed directly from live listings
+  const availableCategories = React.useMemo(() => {
+    const catMap = new Map<string, number>();
+    spaces.forEach((s) => {
+      if (s.category) {
+        catMap.set(s.category, (catMap.get(s.category) || 0) + 1);
+      }
+    });
+    const list = [{ id: "All Types", label: "All Types", count: `${spaces.length}` }];
+    catMap.forEach((count, cat) => {
+      list.push({ id: cat, label: cat, count: `${count}` });
+    });
+    return list;
+  }, [spaces]);
+
+  // Filter spaces by location and category
   const filteredSpaces = spaces.filter((item) => {
     const matchesLocation =
       selectedLocation === "all" ||
@@ -271,6 +156,18 @@ export default function CoworkingLocationsSection() {
 
     return matchesLocation && matchesCategory;
   });
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedLocation, selectedCategory]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSpaces.length / PAGE_SIZE));
+  const clampedPage = Math.min(Math.max(1, currentPage), totalPages);
+  const displayedSpaces = filteredSpaces.slice(
+    (clampedPage - 1) * PAGE_SIZE,
+    clampedPage * PAGE_SIZE
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,7 +203,7 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Executive Search Console */}
-        <div className="mb-12 max-w-4xl mx-auto bg-white/95 rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_12px_36px_rgba(10,31,102,0.07)] border border-slate-200/90 backdrop-blur-md">
+        <div className="mb-10 max-w-4xl mx-auto bg-white/95 rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_12px_36px_rgba(10,31,102,0.07)] border border-slate-200/90 backdrop-blur-md">
           <form
             onSubmit={handleSearch}
             className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center"
@@ -345,7 +242,7 @@ export default function CoworkingLocationsSection() {
                   <option value="private-cabin">Private Cabin</option>
                   <option value="dedicated-desk">Dedicated Desk</option>
                   <option value="meeting-room">Meeting Room</option>
-                  <option value="day-pass">Day Pass / Flexi</option>
+                  <option value="coworking-seat">Coworking Seat</option>
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -386,14 +283,14 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Location Segmented Controls */}
-        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
-          {LOCATIONS.map((loc) => {
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
+          {availableLocations.map((loc) => {
             const isActive = selectedLocation === loc.id;
             return (
               <button
                 key={loc.id}
                 onClick={() => setSelectedLocation(loc.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 flex items-center gap-2 border ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 flex items-center gap-2 border ${
                   isActive
                     ? "bg-[#0A1F66] text-white border-[#0A1F66] shadow-md shadow-[#0A1F66]/15 scale-[1.02]"
                     : "bg-white text-slate-600 border-slate-200/90 hover:border-slate-300 hover:text-slate-900 shadow-2xs"
@@ -420,134 +317,223 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-10 scrollbar-none">
-          {CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat;
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-8 scrollbar-none">
+          {availableCategories.map((cat) => {
+            const isActive = selectedCategory === cat.id;
             return (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 border ${
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 border flex items-center gap-1.5 ${
                   isActive
                     ? "bg-[#1E5BFF] text-white border-[#1E5BFF] shadow-xs"
                     : "bg-slate-100/90 text-slate-600 border-transparent hover:bg-slate-200/70"
                 }`}
               >
-                {cat}
+                <span>{cat.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-200/80 text-slate-500 font-medium"
+                  }`}
+                >
+                  {cat.count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Space Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-14">
-          {filteredSpaces.map((item) => (
+        {/* Space Cards Grid: Fixed 4 cards in a row on desktop (lg:grid-cols-4), compact sizing */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className="bg-white rounded-2xl h-80 animate-pulse border border-slate-200 p-4 space-y-4"
+              >
+                <div className="h-44 bg-slate-200 rounded-xl" />
+                <div className="h-4 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : filteredSpaces.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-8 space-y-3 mb-8">
+            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
+            <h3 className="text-base font-bold text-slate-700">No workspaces found</h3>
+            <p className="text-xs text-slate-400">
+              No verified listings match this location or category yet.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedLocation("all");
+                setSelectedCategory("All Types");
+              }}
+              className="text-xs font-bold text-[#1E5BFF] hover:underline pt-2 block mx-auto"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5 mb-8">
+          {displayedSpaces.map((item) => (
             <div
               key={item.id}
-              className="group bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-[0_4px_16px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_36px_rgba(10,31,102,0.09)] transition-all duration-300 hover:-translate-y-1 flex flex-col"
+              className="group bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
             >
-              {/* Card Image */}
-              <div className="relative h-60 w-full overflow-hidden bg-slate-100">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/15 to-black/30" />
+              <div>
+                {/* Compact Card Image - h-28 on mobile, h-44 on desktop */}
+                <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/30" />
 
-                {/* Top Badges */}
-                <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-xs flex items-center gap-1.5 border border-white/50">
-                    <Building2 className="w-3 h-3 text-[#1E5BFF]" />
-                    <span>{item.category}</span>
-                  </span>
+                  {/* Top Badges */}
+                  <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between">
+                    <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-2xs flex items-center gap-0.5 sm:gap-1 border border-white/60">
+                      <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1E5BFF]" />
+                      <span className="truncate max-w-[65px] sm:max-w-none">{item.category}</span>
+                    </span>
 
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-xs flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Verified</span>
-                  </span>
-                </div>
-
-                {/* Bottom Image Overlay Info */}
-                <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white">
-                  <div className="flex items-center gap-1.5 text-xs font-bold drop-shadow-sm">
-                    <MapPin className="w-3.5 h-3.5 text-[#F4A900]" />
-                    <span className="truncate max-w-[180px]">{item.area}</span>
+                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-0.5">
+                      <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      <span className="hidden sm:inline">Verified</span>
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-bold bg-black/45 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/10">
-                    <Users className="w-3 h-3 text-blue-300" />
-                    <span>Up to {item.capacity} {item.capacity === 1 ? "Desk" : "Seats"}</span>
+                  {/* Bottom Image Overlay Info */}
+                  <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between text-white">
+                    <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[11px] font-bold drop-shadow-sm">
+                      <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#F4A900] shrink-0" />
+                      <span className="truncate max-w-[70px] sm:max-w-[130px]">{item.area}</span>
+                    </div>
+
+                    <div className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded-md backdrop-blur-xs border border-white/10">
+                      <Users className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-blue-300" />
+                      <span>{item.capacity} {item.capacity === 1 ? "Desk" : "Seats"}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Card Body */}
-              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-[#1E5BFF]">
+                {/* Card Content - Clean & Compact */}
+                <div className="p-2.5 sm:p-4 space-y-0.5 sm:space-y-1.5">
+                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#1E5BFF] truncate">
                     {item.vendorName}
                   </p>
-                  <h3 className="text-base font-bold text-slate-900 line-clamp-1 group-hover:text-[#1E5BFF] transition-colors mt-0.5">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#1E5BFF] transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 line-clamp-1 leading-relaxed">
                     {item.address}
                   </p>
                 </div>
+              </div>
 
-                {/* Amenities Chips */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {item.amenities.slice(0, 3).map((amenity, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2.5 py-1 rounded-lg bg-slate-100/90 text-slate-600 text-[10px] font-semibold flex items-center gap-1"
-                    >
-                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                      {amenity}
+              {/* Card Pricing & Enquiry CTA */}
+              <div className="p-2.5 sm:p-4 pt-1.5 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2">
+                <div>
+                  <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
+                    Starting From
+                  </span>
+                  <p className="text-xs sm:text-sm font-black text-[#0A1F66]">
+                    ₹{item.price.toLocaleString("en-IN")}{" "}
+                    <span className="text-[9px] sm:text-[10px] font-normal text-slate-500">
+                      /{item.unit.replace("per-", "")}
                     </span>
-                  ))}
-                  {item.amenities.length > 3 && (
-                    <span className="px-2 py-1 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-bold">
-                      +{item.amenities.length - 3} more
-                    </span>
-                  )}
+                  </p>
                 </div>
 
-                {/* Card Pricing & CTA */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-                      Partner Rate
-                    </span>
-                    <p className="text-lg font-black text-[#0A1F66]">
-                      ₹{item.price.toLocaleString("en-IN")}{" "}
-                      <span className="text-xs font-normal text-slate-500">
-                        /{item.unit.replace("per-", "")}
-                      </span>
-                    </p>
-                  </div>
-
-                  <Link
-                    href={`/gurugram?area=${encodeURIComponent(item.area)}`}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 shadow-sm shadow-blue-900/15 transition-all duration-200 active:scale-95 group/btn"
-                  >
-                    <span>View Space</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
-                  </Link>
-                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEnquiryModalTarget({
+                      id: item.id,
+                      title: item.title,
+                      category: item.category,
+                      area: item.area,
+                      city: item.city,
+                      price: item.price,
+                      unit: item.unit,
+                      vendorName: item.vendorName,
+                    })
+                  }
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 shadow-xs shadow-blue-900/15 transition-all duration-200 active:scale-95 shrink-0"
+                >
+                  <span>Enquire</span>
+                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                </button>
               </div>
             </div>
           ))}
         </div>
+      )}
 
-        {/* View All Spaces CTA Button */}
-        <div className="text-center mb-16">
+        {/* Numbered Pagination (Super Admin Style) */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-2 border-t border-slate-200/80 mb-10">
+            <p className="text-xs font-semibold text-slate-500">
+              Showing{" "}
+              <span className="font-bold text-slate-800">
+                {(clampedPage - 1) * PAGE_SIZE + 1}
+              </span>
+              –
+              <span className="font-bold text-slate-800">
+                {Math.min(clampedPage * PAGE_SIZE, filteredSpaces.length)}
+              </span>{" "}
+              of <span className="font-bold text-slate-800">{filteredSpaces.length}</span> curated spaces
+            </p>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={clampedPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-2xs"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Prev</span>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`min-w-[34px] h-[34px] px-2 rounded-xl text-xs font-bold transition flex items-center justify-center ${
+                    clampedPage === pageNum
+                      ? "bg-[#0A1F66] text-white shadow-sm shadow-[#0A1F66]/20 font-black"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={clampedPage === totalPages}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:pointer-events-none transition flex items-center gap-1 shadow-2xs"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* View All Spaces Link */}
+        <div className="text-center mb-14">
           <Link
             href="/gurugram"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl bg-white border border-slate-200/90 text-[#0A1F66] text-xs sm:text-sm font-extrabold shadow-sm hover:border-[#1E5BFF] hover:text-[#1E5BFF] hover:shadow-md transition-all duration-200"
+            className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-white border border-slate-200/90 text-[#0A1F66] text-xs sm:text-sm font-extrabold shadow-2xs hover:border-[#1E5BFF] hover:text-[#1E5BFF] hover:shadow-sm transition-all duration-200"
           >
             <span>Explore All 50+ Verified Hubs in Gurugram</span>
             <ArrowRight className="w-4 h-4" />
@@ -555,16 +541,16 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Operator Onboarding Banner */}
-        <div className="rounded-3xl bg-gradient-to-br from-[#0A1F66] via-[#0D2678] to-[#1E5BFF] text-white p-7 sm:p-12 relative overflow-hidden shadow-2xl border border-blue-400/20">
+        <div className="rounded-3xl bg-gradient-to-br from-[#0A1F66] via-[#0D2678] to-[#1E5BFF] text-white p-7 sm:p-10 relative overflow-hidden shadow-2xl border border-blue-400/20">
           <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute left-1/3 bottom-0 w-72 h-72 bg-[#F4A900]/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
-            <div className="space-y-3 max-w-2xl">
+            <div className="space-y-2.5 max-w-2xl">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[#F4A900] text-[11px] font-bold uppercase tracking-wider backdrop-blur-sm">
                 <Building2 className="w-3.5 h-3.5" /> For Coworking Operators & Commercial Landlords
               </div>
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
                 List Your Coworking Center on i-VANTAGE Marketplace
               </h3>
               <p className="text-xs sm:text-sm text-blue-100 leading-relaxed max-w-xl">
@@ -574,10 +560,10 @@ export default function CoworkingLocationsSection() {
 
             <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full lg:w-auto">
               <Link
-                href="/vendor/signup"
+                href="/list-your-space"
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#F4A900] hover:bg-[#e09b00] text-[#0A1F66] text-xs font-black shadow-lg shadow-amber-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4" /> Register as Partner
+                <Sparkles className="w-4 h-4" /> List Your Space
               </Link>
               <Link
                 href="/contact"
@@ -589,6 +575,13 @@ export default function CoworkingLocationsSection() {
           </div>
         </div>
       </div>
+
+      {/* Instant Enquiry Modal */}
+      <ListingEnquiryModal
+        isOpen={!!enquiryModalTarget}
+        onClose={() => setEnquiryModalTarget(null)}
+        listing={enquiryModalTarget}
+      />
     </section>
   );
 }

@@ -19,12 +19,15 @@ import {
   UserPlus,
 } from "lucide-react";
 import Logo from "@/components/common/Logo";
+import { isValidEmail } from "@/lib/validation";
 
 export default function VendorLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notRegisteredEmail, setNotRegisteredEmail] = useState<string | null>(null);
@@ -36,8 +39,35 @@ export default function VendorLoginPage() {
     message?: string;
   } | null>(null);
 
+  const validateForm = () => {
+    let isValid = true;
+    setEmailError(null);
+    setPasswordError(null);
+
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setEmailError("Registered partner email is required.");
+      isValid = false;
+    } else if (!isValidEmail(cleanEmail)) {
+      setEmailError("Please enter a valid email address (e.g. partner@coworking.com).");
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError("Password is required.");
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setLoading(true);
     setError(null);
     setNotRegisteredEmail(null);
@@ -45,17 +75,23 @@ export default function VendorLoginPage() {
 
     try {
       const res = await marketplaceApi.login({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         requiredRole: "vendor",
       });
       const vendorUser = res?.user || res?.data || res;
+      const role = (vendorUser?.role || "").toLowerCase();
       if (typeof window !== "undefined" && vendorUser) {
         try {
           localStorage.setItem("iv_vendor_user", JSON.stringify(vendorUser));
         } catch {}
       }
-      router.push("/vendor");
+      if (role === "vendor") {
+        router.push("/vendor");
+      } else {
+        // Fallback — backend should not allow non-vendor roles
+        router.push("/vendor");
+      }
     } catch (err: any) {
       const errData = err.response?.data;
       if (errData?.code === "ROLE_MISMATCH") {
@@ -221,7 +257,7 @@ export default function VendorLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
+          <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning noValidate>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                 Registered Partner Email
@@ -237,13 +273,23 @@ export default function VendorLoginPage() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
                     if (error) setError(null);
                     if (notRegisteredEmail) setNotRegisteredEmail(null);
                     if (roleMismatch) setRoleMismatch(null);
                   }}
-                  className="w-full text-sm pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                  className={`w-full text-sm pl-10 pr-4 py-3 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    emailError
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
                 />
               </div>
+              {emailError && (
+                <p className="mt-1.5 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {emailError}
+                </p>
+              )}
             </div>
 
             <div>
@@ -269,9 +315,14 @@ export default function VendorLoginPage() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
+                    if (passwordError) setPasswordError(null);
                     if (error) setError(null);
                   }}
-                  className="w-full text-sm pl-10 pr-11 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 transition"
+                  className={`w-full text-sm pl-10 pr-11 py-3 bg-slate-50/80 border rounded-xl text-slate-900 placeholder:text-slate-400 outline-none transition ${
+                    passwordError
+                      ? "border-red-500 bg-red-50/30 focus:ring-2 focus:ring-red-100"
+                      : "border-slate-200 focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100"
+                  }`}
                 />
                 <button
                   type="button"
@@ -282,6 +333,11 @@ export default function VendorLoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {passwordError && (
+                <p className="mt-1.5 text-xs text-red-600 font-medium flex items-center gap-1">
+                  <span>•</span> {passwordError}
+                </p>
+              )}
             </div>
 
             <button

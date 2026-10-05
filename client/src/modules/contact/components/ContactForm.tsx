@@ -17,6 +17,12 @@ import {
 import Container from "@/components/common/Container";
 import Button from "@/components/ui/Button";
 import { createLead } from "@/modules/lead/lead.api";
+import {
+  isValidIndianPhone,
+  isValidEmail,
+  normalizeIndianPhone,
+  VALIDATION_MESSAGES,
+} from "@/lib/validation";
 import { contactConfig } from "../constants/contactConfig";
 
 interface FormState {
@@ -57,7 +63,11 @@ const initialValues: FormState = {
   message: "",
 };
 
-export default function ContactForm() {
+interface ContactFormProps {
+  isCardOnly?: boolean;
+}
+
+export default function ContactForm({ isCardOnly = false }: ContactFormProps) {
   const [formData, setFormData] = useState<FormState>(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,18 +85,17 @@ export default function ContactForm() {
     }
 
     // Phone Number (10 digits starting with 6-9)
-    const cleanPhone = formData.phone.replace(/\D/g, "");
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required.";
-    } else if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      newErrors.phone = "Enter a valid 10-digit mobile number (e.g. 9876543210).";
+      newErrors.phone = VALIDATION_MESSAGES.PHONE_REQUIRED;
+    } else if (!isValidIndianPhone(formData.phone)) {
+      newErrors.phone = VALIDATION_MESSAGES.PHONE_INVALID;
     }
 
     // Email
     if (!formData.email.trim()) {
-      newErrors.email = "Email address is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Enter a valid email address.";
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_REQUIRED;
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_INVALID;
     }
 
     // Service Requirement
@@ -122,7 +131,7 @@ export default function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      const cleanPhone = formData.phone.replace(/\D/g, "");
+      const cleanPhone = normalizeIndianPhone(formData.phone);
       const fullMessage = [
         `Requirement: ${formData.serviceRequirement}`,
         `Preferred Contact Method: ${formData.contactMethod}`,
@@ -171,30 +180,7 @@ export default function ContactForm() {
     setErrors({});
   };
 
-  return (
-    <section
-      id="enquiry-form"
-      className="scroll-mt-24 bg-slate-50/70 py-16 sm:py-20 lg:py-24"
-    >
-      <Container>
-        <div className="mx-auto max-w-2xl">
-          {/* Header */}
-          <div className="text-center">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#1E5BFF]">
-              Get in Touch
-            </span>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0A1F66] sm:text-3xl lg:text-4xl">
-              How Can We Help?
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Tell us what you are looking for and our team will help you find
-              the right solution.
-            </p>
-          </div>
-
-          {/* Form Card */}
-          <div className="mt-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl sm:p-10">
-            {isSuccess ? (
+  const formContent = isSuccess ? (
               /* Success State */
               <div className="py-8 text-center sm:py-12">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs">
@@ -270,9 +256,9 @@ export default function ContactForm() {
                   <div className="sm:col-span-2">
                     <label
                       htmlFor="fullName"
-                      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700"
                     >
-                      <UserRound size={15} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                      <UserRound size={14} strokeWidth={2} className="text-[#1E5BFF]" />
                       <span>Full Name</span> <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -286,16 +272,16 @@ export default function ContactForm() {
                       aria-describedby={
                         errors.fullName ? "fullName-error" : undefined
                       }
-                      className={`mt-2 block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 ${
+                      className={`mt-1.5 block w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         errors.fullName
-                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 bg-[#FDFEFF] focus:border-[#1E5BFF] focus:ring-blue-100"
+                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-100"
+                          : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:border-[#1E5BFF] focus:ring-blue-100/60 shadow-2xs"
                       }`}
                     />
                     {errors.fullName && (
                       <p
                         id="fullName-error"
-                        className="mt-1.5 text-xs font-semibold text-red-600"
+                        className="mt-1 text-xs font-semibold text-red-600"
                       >
                         {errors.fullName}
                       </p>
@@ -306,9 +292,9 @@ export default function ContactForm() {
                   <div>
                     <label
                       htmlFor="phone"
-                      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700"
                     >
-                      <Phone size={14} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                      <Phone size={14} strokeWidth={2} className="text-[#1E5BFF]" />
                       <span>Phone Number</span> <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -320,16 +306,16 @@ export default function ContactForm() {
                       placeholder="e.g. 9876543210"
                       aria-invalid={!!errors.phone}
                       aria-describedby={errors.phone ? "phone-error" : undefined}
-                      className={`mt-2 block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 ${
+                      className={`mt-1.5 block w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         errors.phone
-                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 bg-[#FDFEFF] focus:border-[#1E5BFF] focus:ring-blue-100"
+                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-100"
+                          : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:border-[#1E5BFF] focus:ring-blue-100/60 shadow-2xs"
                       }`}
                     />
                     {errors.phone && (
                       <p
                         id="phone-error"
-                        className="mt-1.5 text-xs font-semibold text-red-600"
+                        className="mt-1 text-xs font-semibold text-red-600"
                       >
                         {errors.phone}
                       </p>
@@ -340,9 +326,9 @@ export default function ContactForm() {
                   <div>
                     <label
                       htmlFor="email"
-                      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700"
                     >
-                      <Mail size={14} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                      <Mail size={14} strokeWidth={2} className="text-[#1E5BFF]" />
                       <span>Email Address</span> <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -354,16 +340,16 @@ export default function ContactForm() {
                       placeholder="e.g. rahul@company.com"
                       aria-invalid={!!errors.email}
                       aria-describedby={errors.email ? "email-error" : undefined}
-                      className={`mt-2 block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 ${
+                      className={`mt-1.5 block w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         errors.email
-                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 bg-[#FDFEFF] focus:border-[#1E5BFF] focus:ring-blue-100"
+                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-100"
+                          : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:border-[#1E5BFF] focus:ring-blue-100/60 shadow-2xs"
                       }`}
                     />
                     {errors.email && (
                       <p
                         id="email-error"
-                        className="mt-1.5 text-xs font-semibold text-red-600"
+                        className="mt-1 text-xs font-semibold text-red-600"
                       >
                         {errors.email}
                       </p>
@@ -374,39 +360,41 @@ export default function ContactForm() {
                   <div className="sm:col-span-2">
                     <label
                       htmlFor="serviceRequirement"
-                      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700"
                     >
-                      <BriefcaseBusiness size={14} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                      <BriefcaseBusiness size={14} strokeWidth={2} className="text-[#1E5BFF]" />
                       <span>I&apos;m Interested In</span> <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      id="serviceRequirement"
-                      name="serviceRequirement"
-                      value={formData.serviceRequirement}
-                      onChange={handleChange}
-                      aria-invalid={!!errors.serviceRequirement}
-                      aria-describedby={
-                        errors.serviceRequirement
-                          ? "serviceRequirement-error"
-                          : undefined
-                      }
-                      className={`mt-2 block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 transition focus:outline-none focus:ring-2 ${
-                        errors.serviceRequirement
-                          ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 bg-[#FDFEFF] focus:border-[#1E5BFF] focus:ring-blue-100"
-                      }`}
-                    >
-                      <option value="">Select a service or requirement...</option>
-                      {serviceOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative mt-1.5">
+                      <select
+                        id="serviceRequirement"
+                        name="serviceRequirement"
+                        value={formData.serviceRequirement}
+                        onChange={handleChange}
+                        aria-invalid={!!errors.serviceRequirement}
+                        aria-describedby={
+                          errors.serviceRequirement
+                            ? "serviceRequirement-error"
+                            : undefined
+                        }
+                        className={`block w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 transition-all duration-200 focus:outline-none focus:ring-4 cursor-pointer ${
+                          errors.serviceRequirement
+                            ? "border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-100"
+                            : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:border-[#1E5BFF] focus:ring-blue-100/60 shadow-2xs"
+                        }`}
+                      >
+                        <option value="">Select a service or requirement...</option>
+                        {serviceOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     {errors.serviceRequirement && (
                       <p
                         id="serviceRequirement-error"
-                        className="mt-1.5 text-xs font-semibold text-red-600"
+                        className="mt-1 text-xs font-semibold text-red-600"
                       >
                         {errors.serviceRequirement}
                       </p>
@@ -415,10 +403,10 @@ export default function ContactForm() {
 
                   {/* Preferred Contact Method */}
                   <div className="sm:col-span-2">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm">
+                    <span className="block text-xs font-bold text-slate-700">
                       Preferred Contact Method
                     </span>
-                    <div className="mt-2.5 flex flex-wrap gap-3 sm:gap-4">
+                    <div className="mt-2 flex flex-wrap gap-2.5 sm:gap-3">
                       {[
                         { method: "Phone" as const, icon: Phone },
                         { method: "WhatsApp" as const, icon: MessageCircle },
@@ -426,10 +414,10 @@ export default function ContactForm() {
                       ].map(({ method, icon: MethodIcon }) => (
                         <label
                           key={method}
-                          className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm ${
+                          className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all duration-200 ${
                             formData.contactMethod === method
-                              ? "border-[#1E5BFF] bg-blue-50/80 text-[#0A1F66] shadow-2xs"
-                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                              ? "border-[#1E5BFF] bg-blue-50/90 text-[#0A1F66] shadow-2xs ring-1 ring-[#1E5BFF]/30"
+                              : "border-slate-200/90 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50/60"
                           }`}
                         >
                           <input
@@ -443,9 +431,18 @@ export default function ContactForm() {
                                 contactMethod: method,
                               }))
                             }
-                            className="h-4 w-4 text-[#1E5BFF] focus:ring-[#1E5BFF]"
+                            className="sr-only"
                           />
-                          <MethodIcon size={14} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                            formData.contactMethod === method
+                              ? "border-[#1E5BFF] bg-[#1E5BFF]"
+                              : "border-slate-300 bg-white"
+                          }`}>
+                            {formData.contactMethod === method && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                            )}
+                          </span>
+                          <MethodIcon size={13} strokeWidth={2} className={formData.contactMethod === method ? "text-[#1E5BFF]" : "text-slate-400"} />
                           <span>{method}</span>
                         </label>
                       ))}
@@ -456,54 +453,80 @@ export default function ContactForm() {
                   <div className="sm:col-span-2">
                     <label
                       htmlFor="message"
-                      className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 sm:text-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700"
                     >
-                      <MessageSquare size={14} strokeWidth={1.85} className="text-[#1E5BFF]" />
+                      <MessageSquare size={14} strokeWidth={2} className="text-[#1E5BFF]" />
                       <span>Message / Special Requirements (Optional)</span>
                     </label>
                     <textarea
                       id="message"
                       name="message"
-                      rows={4}
+                      rows={3}
                       value={formData.message}
                       onChange={handleChange}
                       placeholder="Share any specific requirements, team size, preferred move-in date, or questions..."
-                      className="mt-2 block w-full rounded-xl border border-slate-200 bg-[#FDFEFF] px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-[#1E5BFF] focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      className="mt-1.5 block w-full rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 focus:bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:border-[#1E5BFF] focus:outline-none focus:ring-4 focus:ring-blue-100/60 shadow-2xs resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Submit Button */}
                 <div className="pt-2">
-                  <Button
+                  <button
                     type="submit"
-                    size="lg"
                     disabled={isSubmitting}
-                    className="group w-full justify-center text-sm sm:text-base"
+                    className="group relative w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0A1F66] via-[#12319A] to-[#1E5BFF] hover:brightness-110 px-6 py-3.5 sm:py-4 text-sm sm:text-base font-black text-white shadow-[0_12px_28px_rgba(30,91,255,0.32)] transition-all duration-200 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 size={17} className="animate-spin" />
-                        <span>Sending Enquiry...</span>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Sending Request...</span>
                       </>
                     ) : (
                       <>
+                        <span>Send Request</span>
                         <Send
                           size={15}
-                          strokeWidth={1.85}
-                          className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          strokeWidth={2.2}
+                          className="transition-transform duration-200 group-hover:translate-x-1 group-hover:-translate-y-0.5"
                         />
-                        <span>Send Enquiry</span>
                       </>
                     )}
-                  </Button>
-                  <p className="mt-3 text-center text-xs text-slate-500">
+                  </button>
+                  <p className="mt-2.5 text-center text-[11px] text-slate-400">
                     We respect your privacy. Your information is strictly used
                     to respond to your enquiry.
                   </p>
                 </div>
               </form>
-            )}
+  );
+
+  if (isCardOnly) {
+    return formContent;
+  }
+
+  return (
+    <section
+      id="enquiry-form"
+      className="scroll-mt-24 bg-slate-50/70 py-16 sm:py-20 lg:py-24"
+    >
+      <Container>
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#1E5BFF]">
+              Get in Touch
+            </span>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0A1F66] sm:text-3xl lg:text-4xl">
+              How Can We Help?
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+              Tell us what you are looking for and our team will help you find
+              the right solution.
+            </p>
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl sm:p-10">
+            {formContent}
           </div>
         </div>
       </Container>

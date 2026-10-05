@@ -11,19 +11,19 @@ import Button from "@/components/ui/Button";
 
 export default function ServicesLocation() {
   return (
-    <section className="bg-slate-50/60 py-16 sm:py-20 lg:py-24">
+    <section className="bg-slate-50/60 py-10 sm:py-20 lg:py-24">
       <Container>
         {/* Heading */}
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#1E5BFF] sm:text-xs">
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-[#1E5BFF]">
             Visit Our Hub
           </p>
 
-          <h2 className="mt-2.5 text-2xl font-bold tracking-tight text-[#0A1F66] sm:mt-3 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-2 text-xl font-bold tracking-tight text-[#0A1F66] sm:mt-3 sm:text-3xl lg:text-4xl">
             Prime Gurgaon Location on Sohna Road
           </h2>
 
-          <p className="mt-3.5 text-sm leading-relaxed text-slate-600 sm:text-base">
+          <p className="mt-2 text-xs sm:text-base leading-relaxed text-slate-600">
             Centrally situated at Welldone Tech Park, Sector 48 with direct
             access to Subhash Chowk, Golf Course Extension Road, NH-48, and
             rapid metro hubs.
@@ -31,26 +31,26 @@ export default function ServicesLocation() {
         </div>
 
         {/* 2-Column: Info Cards & Interactive Map */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:items-stretch lg:gap-10">
+        <div className="mt-8 sm:mt-12 grid gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-10">
           {/* Left Column: Address, Hours, & Contact Cards */}
-          <div className="flex flex-col justify-between space-y-4 lg:col-span-5">
+          <div className="flex flex-col justify-between space-y-3 sm:space-y-4 lg:col-span-5">
             {/* Address Card */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-7">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF]">
-                  <MapPin size={22} />
+            <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:p-7">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-blue-50 text-[#1E5BFF]">
+                  <MapPin className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#0A1F66]">
+                  <h3 className="text-sm sm:text-base font-bold text-[#0A1F66]">
                     Welldone Tech Park
                   </h3>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                  <p className="mt-0.5 text-xs sm:text-sm font-semibold text-slate-800">
                     Unit No. 213–14, 2nd Floor
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600 sm:text-sm">
                     Sector 48, Sohna Road, Gurgaon, Haryana – 122001, India
                   </p>
-                  <div className="mt-3 inline-block rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                  <div className="mt-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-slate-600">
                     ASW (Asset Sense Workspaces)
                   </div>
                 </div>
@@ -58,28 +58,28 @@ export default function ServicesLocation() {
             </div>
 
             {/* Operating Hours Card */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-7">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF]">
-                  <Clock size={22} />
+            <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:p-7">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-blue-50 text-[#1E5BFF]">
+                  <Clock className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-[#0A1F66]">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h3 className="text-sm sm:text-base font-bold text-[#0A1F66]">
                     Operating Hours
                   </h3>
                   <div>
-                    <span className="text-xs font-semibold text-[#1E5BFF]">
+                    <span className="text-[11px] sm:text-xs font-semibold text-[#1E5BFF]">
                       Member Access:
                     </span>
-                    <p className="text-sm font-bold text-slate-800">
+                    <p className="text-xs sm:text-sm font-bold text-slate-800">
                       24/7 Access (Round-the-Clock)
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-[11px] sm:text-xs font-semibold text-slate-500">
                       Reception &amp; Support:
                     </span>
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-xs sm:text-sm font-medium text-slate-700">
                       Monday–Saturday, 10:00 AM – 6:00 PM
                     </p>
                   </div>
@@ -88,35 +88,35 @@ export default function ServicesLocation() {
             </div>
 
             {/* Direct Contact & Tour Booking */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-7">
-              <h3 className="text-sm font-bold text-[#0A1F66]">
+            <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:p-7">
+              <h3 className="text-xs sm:text-sm font-bold text-[#0A1F66]">
                 Direct Enquiries &amp; Site Visits
               </h3>
-              <div className="mt-3 space-y-2">
+              <div className="mt-2.5 space-y-1.5 sm:space-y-2">
                 <a
                   href="tel:+919907800600"
-                  className="flex items-center gap-3 text-xs font-medium text-slate-700 transition hover:text-[#1E5BFF] sm:text-sm"
+                  className="flex items-center gap-2.5 text-xs font-medium text-slate-700 transition hover:text-[#1E5BFF] sm:text-sm"
                 >
-                  <Phone size={16} className="text-[#1E5BFF]" />
+                  <Phone size={14} className="text-[#1E5BFF]" />
                   <span>+91 9907800600</span>
                 </a>
                 <a
                   href="mailto:info@assetsense.in"
-                  className="flex items-center gap-3 text-xs font-medium text-slate-700 transition hover:text-[#1E5BFF] sm:text-sm"
+                  className="flex items-center gap-2.5 text-xs font-medium text-slate-700 transition hover:text-[#1E5BFF] sm:text-sm"
                 >
-                  <Mail size={16} className="text-[#1E5BFF]" />
+                  <Mail size={14} className="text-[#1E5BFF]" />
                   <span>info@assetsense.in</span>
                 </a>
               </div>
 
-              <div className="mt-5 border-t border-slate-100 pt-4">
+              <div className="mt-3.5 border-t border-slate-100 pt-3">
                 <Link href="/contact" className="block">
                   <Button
                     variant="primary"
                     size="sm"
-                    className="w-full justify-center"
+                    className="w-full justify-center text-xs h-9"
                   >
-                    <CalendarCheck size={16} />
+                    <CalendarCheck size={14} />
                     Schedule a Site Tour
                   </Button>
                 </Link>
@@ -125,8 +125,8 @@ export default function ServicesLocation() {
           </div>
 
           {/* Right Column: Google Maps Embed */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-md lg:col-span-7">
-            <div className="relative h-80 w-full sm:h-96 lg:h-full min-h-[360px]">
+          <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-md lg:col-span-7">
+            <div className="relative h-60 w-full sm:h-96 lg:h-full min-h-[240px] sm:min-h-[360px]">
               <iframe
                 title="i-VANTAGE Business Hub Welldone Tech Park Sohna Road Location Map"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14035.292126011822!2d77.02529949086778!3d28.424596283426347!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d23ac952fe5ed%3A0x2d354a104d995c73!2sWelldone%20Techpark!5e0!3m2!1sen!2sin!4v1787210456538!5m2!1sen!2sin"

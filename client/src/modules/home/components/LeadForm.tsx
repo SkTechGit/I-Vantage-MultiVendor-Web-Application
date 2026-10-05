@@ -21,6 +21,8 @@ import {
   LeadFormData,
 } from "@/modules/lead/lead.schema";
 
+import { normalizeIndianPhone } from "@/lib/validation";
+
 import { createLead } from "@/modules/lead/lead.api";
 
 import { Service } from "@/modules/service/service.types";
@@ -61,10 +63,12 @@ export default function LeadForm({
     const onSubmit = (values: LeadFormData) => {
     startTransition(async () => {
       try {
-    const { termsAccepted, ...leadValues } = values;
+      const { termsAccepted, ...leadValues } = values;
 
       const payload = {
         ...leadValues,
+        email: values.email.trim().toLowerCase(),
+        mobile: normalizeIndianPhone(values.mobile),
         services: services.map((service) => service._id),
       };
 

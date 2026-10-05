@@ -6,6 +6,8 @@ export { default as ConfirmDialog } from "./ConfirmDialog";
 export { default as Modal } from "./Modal";
 export { default as Search } from "./Search";
 export { default as Textarea } from "./Textarea";
+export { default as PasswordStrengthMeter } from "./PasswordStrengthMeter";
 
 export * from "./StatusBadge";
 export * from "./ConfirmDialog";
+

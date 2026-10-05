@@ -1,17 +1,23 @@
 import { z } from "zod";
+import { isValidIndianPhone, isValidEmail, VALIDATION_MESSAGES } from "@/lib/validation";
 
 export const leadSchema = z.object({
   fullName: z
     .string()
-    .min(2, "Full name is required."),
+    .trim()
+    .min(2, "Full name is required (minimum 2 characters)."),
 
   email: z
-    .string()
-    .email("Invalid email."),
+    .string({ required_error: VALIDATION_MESSAGES.EMAIL_REQUIRED })
+    .trim()
+    .min(1, VALIDATION_MESSAGES.EMAIL_REQUIRED)
+    .refine(isValidEmail, { message: VALIDATION_MESSAGES.EMAIL_INVALID }),
 
   mobile: z
-    .string()
-    .min(10, "Invalid mobile number."),
+    .string({ required_error: VALIDATION_MESSAGES.PHONE_REQUIRED })
+    .trim()
+    .min(1, VALIDATION_MESSAGES.PHONE_REQUIRED)
+    .refine(isValidIndianPhone, { message: VALIDATION_MESSAGES.PHONE_INVALID }),
 
   companyName: z
     .string()

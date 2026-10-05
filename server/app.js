@@ -4,10 +4,18 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import routes from "./src/routes/index.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
-
+import { securityHeaders, noSqlSanitizer } from "./src/middlewares/security.middleware.js";
+import { apiRateLimiter } from "./src/middlewares/rateLimit.middleware.js";
 
 const app = express();
 dotenv.config();
+
+// Disable x-powered-by to prevent technology fingerprinting
+app.disable("x-powered-by");
+
+// Apply baseline security headers
+app.use(securityHeaders);
+
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "https://i-vantage.in",
@@ -78,9 +86,15 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// Limit payload size to 10mb to protect against memory exhaustion attacks
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "10mb" }));
 
+// Anti-NoSQL injection and prototype pollution sanitizer
+app.use(noSqlSanitizer);
+
+// General volumetric rate limiter (300 requests / min per IP)
+app.use(apiRateLimiter(300, 60 * 1000));
 
 app.use("/api/v1", routes);
 app.use(errorHandler);
