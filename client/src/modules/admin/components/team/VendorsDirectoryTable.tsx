@@ -400,7 +400,7 @@ export default function VendorsDirectoryTable({
 
                 const currentRoleVal =
                   vendor.role === "superadmin" || vendor.role === "super_admin"
-                    ? "superadmin"
+                    ? "super_admin"
                     : vendor.role === "vendor"
                     ? "vendor"
                     : "user";
@@ -472,7 +472,7 @@ export default function VendorsDirectoryTable({
                             className={`appearance-none cursor-pointer pl-5 pr-5 py-1 text-[11px] font-semibold rounded-full border transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
                               currentRoleVal === "vendor"
                                 ? "bg-blue-50 text-[#1E5BFF] border-blue-200 hover:bg-blue-100 focus:ring-blue-400"
-                                : currentRoleVal === "superadmin"
+                                : currentRoleVal === "super_admin"
                                 ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 focus:ring-indigo-400"
                                 : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 focus:ring-slate-400"
                             }`}
@@ -480,7 +480,7 @@ export default function VendorsDirectoryTable({
                           >
                             <option value="vendor">Vendor</option>
                             <option value="user">User</option>
-                            <option value="superadmin">SuperAdmin</option>
+                            <option value="super_admin">SuperAdmin</option>
                           </select>
 
                           <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2">
@@ -488,7 +488,7 @@ export default function VendorsDirectoryTable({
                               <Loader2 size={10} className="animate-spin text-slate-500" />
                             ) : currentRoleVal === "vendor" ? (
                               <Briefcase size={10} className="text-[#1E5BFF]" />
-                            ) : currentRoleVal === "superadmin" ? (
+                            ) : currentRoleVal === "super_admin" ? (
                               <Shield size={10} className="text-indigo-600" />
                             ) : (
                               <UserIcon size={10} className="text-slate-600" />

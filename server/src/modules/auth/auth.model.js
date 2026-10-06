@@ -37,8 +37,8 @@ const authSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["super_admin", "vendor", "user", "pending"],
-      default: "pending",
+      enum: ["super_admin", "vendor", "user"],
+      default: "user",
     },
 
     status: {

@@ -154,9 +154,9 @@ export const updateVendorStatus = async (vendorId, status, adminUser) => {
 };
 
 export const updateVendorRole = async (vendorId, newRole, adminUser) => {
-  const normalizedRole = newRole === "super_admin" ? "superadmin" : newRole;
-  if (!["vendor", "superadmin", "user"].includes(normalizedRole)) {
-    throw new Error("Invalid role specified. Must be 'vendor', 'superadmin', or 'user'.");
+  const normalizedRole = newRole === "superadmin" ? "super_admin" : newRole;
+  if (!["vendor", "super_admin", "user"].includes(normalizedRole)) {
+    throw new Error("Invalid role specified. Must be 'vendor', 'super_admin', or 'user'.");
   }
 
   let vendor = await User.findById(vendorId);
@@ -202,7 +202,7 @@ export const updateVendorRole = async (vendorId, newRole, adminUser) => {
   const vEmail = vendor.email.toLowerCase().trim();
   let authDoc = await Auth.findOne({ email: vEmail }).select("+password");
 
-  if (normalizedRole === "superadmin") {
+  if (normalizedRole === "super_admin") {
     if (authDoc) {
       authDoc.role = "super_admin";
       authDoc.status = "active";

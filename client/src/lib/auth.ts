@@ -25,7 +25,7 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string;
-  role: "superadmin" | "super_admin" | "vendor" | "user";
+  role: "super_admin" | "vendor" | "user";
   status?: string;
   businessName?: string;
   phone?: string;

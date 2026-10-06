@@ -103,7 +103,7 @@ export default function LoginForm() {
         const res = await marketplaceApi.login({
           email: values.email.trim().toLowerCase(),
           password: values.password,
-          requiredRole: "superadmin",
+          requiredRole: "super_admin",
         });
 
         const userData = res?.user || res?.data || res;

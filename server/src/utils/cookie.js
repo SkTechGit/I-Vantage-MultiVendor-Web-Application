@@ -20,7 +20,7 @@ export const SCOPED_COOKIES = {
 
 export const setAuthCookie = (res, token, role = null, portal = null) => {
   const options = getBaseCookieOptions();
-  const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin" || role === "admin";
+  const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin";
   const isVendor = portal === "vendor" || role === "vendor";
 
   if (isSuperAdmin) {
@@ -44,7 +44,7 @@ export const setAuthCookie = (res, token, role = null, portal = null) => {
 
 export const setRefreshTokenCookie = (res, token, role = null, portal = null) => {
   const options = getBaseCookieOptions();
-  const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin" || role === "admin";
+  const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin";
   const isVendor = portal === "vendor" || role === "vendor";
 
   if (isSuperAdmin) {

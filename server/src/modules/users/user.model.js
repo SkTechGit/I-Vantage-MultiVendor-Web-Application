@@ -8,7 +8,7 @@ const userSchema = new Schema(
     passwordHash: { type: String, select: false },
     role: {
       type: String,
-      enum: ["superadmin", "vendor", "user"],
+      enum: ["super_admin", "vendor", "user"],
       default: "vendor",
       required: true,
     },
@@ -45,6 +45,12 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+userSchema.pre("validate", function () {
+  if (this.role === "superadmin") {
+    this.role = "super_admin";
+  }
+});
 
 userSchema.pre("save", function () {
   if (this.isModified("passwordHash") && !this.isNew) {

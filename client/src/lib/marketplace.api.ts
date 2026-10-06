@@ -8,7 +8,7 @@ export const marketplaceApi = {
   login: async (payload: {
     email: string;
     password: string;
-    requiredRole?: "vendor" | "superadmin" | "user";
+    requiredRole?: "vendor" | "super_admin" | "user";
   }) => {
     const { data } = await api.post("/auth/login", payload);
     return data.data;

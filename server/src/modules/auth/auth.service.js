@@ -957,7 +957,7 @@ export const getTeamMembers = async () => {
   // 1. Fetch authorized admins from Auth collection
   const authAdmins = await Auth.find({
     status: { $ne: "pending" },
-    role: { $in: ["super_admin", "superadmin", "admin"] },
+    role: { $in: ["super_admin", "superadmin"] },
   })
     .select("fullName email role status isActive lastLogin createdAt")
     .sort({ createdAt: -1 })
@@ -1011,8 +1011,9 @@ export const getTeamMembers = async () => {
 };
 
 export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
+  const normalizedNewRole = newRole === "superadmin" ? "super_admin" : newRole;
   const allowedRoles = ["super_admin", "vendor", "user"];
-  if (!allowedRoles.includes(newRole)) {
+  if (!allowedRoles.includes(normalizedNewRole)) {
     throw new ApiError(
       400,
       `Invalid role specified. Must be one of: ${allowedRoles.join(", ")}`
@@ -1054,19 +1055,14 @@ export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
   }
 
   const previousRole = user.role;
-  user.role = newRole;
+  user.role = normalizedNewRole;
   // Atomically increment tokenVersion to invalidate all existing sessions
   user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
 
   // Dual-collection synchronization with marketplace_users
   const normalizedEmail = user.email.toLowerCase().trim();
-  const marketplaceRole =
-    newRole === "super_admin"
-      ? "superadmin"
-      : newRole === "vendor"
-      ? "vendor"
-      : "user";
+  const marketplaceRole = normalizedNewRole;
 
   try {
     let mUser = await User.findOne({ email: normalizedEmail });

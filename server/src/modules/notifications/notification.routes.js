@@ -3,7 +3,7 @@ import { authenticate, authorize } from "../auth/auth.middleware.js";
 import * as notificationController from "./notification.controller.js";
 
 const router = Router();
-const adminAuth = [authenticate, authorize(["super_admin", "admin"])];
+const adminAuth = [authenticate, authorize(["super_admin"])];
 
 router.get("/", adminAuth, notificationController.getNotifications);
 router.patch("/:id/read", adminAuth, notificationController.markAsRead);
