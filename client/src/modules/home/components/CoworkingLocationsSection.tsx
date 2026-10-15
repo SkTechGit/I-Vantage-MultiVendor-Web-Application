@@ -26,6 +26,7 @@ interface SpaceCardItem {
   id: string;
   title: string;
   category: string;
+  categorySlug?: string;
   city: string;
   area: string;
   address: string;
@@ -69,6 +70,7 @@ export default function CoworkingLocationsSection() {
         id: l._id,
         title: l.title,
         category: l.categoryId?.name || "Coworking Space",
+        categorySlug: l.categoryId?.slug || "spaces",
         city: l.location?.city || "gurugram",
         area: l.location?.area || "Gurugram",
         address: l.location?.address || `${l.location?.area}, Gurugram`,
@@ -81,7 +83,7 @@ export default function CoworkingLocationsSection() {
           "24/7 Access",
         ],
         vendorName: l.vendorId?.businessName || "Verified Partner",
-        slug: l._id,
+        slug: l.slug || l._id,
       }));
 
       setSpaces(apiSpaces);
@@ -378,101 +380,113 @@ export default function CoworkingLocationsSection() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5 mb-8">
-          {displayedSpaces.map((item) => (
-            <div
-              key={item.id}
-              className="group bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
-            >
-              <div>
-                {/* Compact Card Image - h-28 on mobile, h-44 on desktop */}
-                <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-100">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/30" />
+            {displayedSpaces.map((item) => {
+              const detailUrl = `/spaces/${encodeURIComponent(item.slug || item.id)}`;
 
-                  {/* Top Badges */}
-                  <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between">
-                    <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-2xs flex items-center gap-0.5 sm:gap-1 border border-white/60">
-                      <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1E5BFF]" />
-                      <span className="truncate max-w-[65px] sm:max-w-none">{item.category}</span>
-                    </span>
-
-                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-0.5">
-                      <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      <span className="hidden sm:inline">Verified</span>
-                    </span>
-                  </div>
-
-                  {/* Bottom Image Overlay Info */}
-                  <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between text-white">
-                    <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[11px] font-bold drop-shadow-sm">
-                      <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#F4A900] shrink-0" />
-                      <span className="truncate max-w-[70px] sm:max-w-[130px]">{item.area}</span>
-                    </div>
-
-                    <div className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded-md backdrop-blur-xs border border-white/10">
-                      <Users className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-blue-300" />
-                      <span>{item.capacity} {item.capacity === 1 ? "Desk" : "Seats"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Content - Clean & Compact */}
-                <div className="p-2.5 sm:p-4 space-y-0.5 sm:space-y-1.5">
-                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#1E5BFF] truncate">
-                    {item.vendorName}
-                  </p>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#1E5BFF] transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-[10px] sm:text-[11px] text-slate-500 line-clamp-1 leading-relaxed">
-                    {item.address}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card Pricing & Enquiry CTA */}
-              <div className="p-2.5 sm:p-4 pt-1.5 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2">
-                <div>
-                  <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
-                    Starting From
-                  </span>
-                  <p className="text-xs sm:text-sm font-black text-[#0A1F66]">
-                    ₹{item.price.toLocaleString("en-IN")}{" "}
-                    <span className="text-[9px] sm:text-[10px] font-normal text-slate-500">
-                      /{item.unit.replace("per-", "")}
-                    </span>
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEnquiryModalTarget({
-                      id: item.id,
-                      title: item.title,
-                      category: item.category,
-                      area: item.area,
-                      city: item.city,
-                      price: item.price,
-                      unit: item.unit,
-                      vendorName: item.vendorName,
-                    })
-                  }
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 shadow-xs shadow-blue-900/15 transition-all duration-200 active:scale-95 shrink-0"
+              return (
+                <article
+                  key={item.id}
+                  className="relative group bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] hover:border-slate-300 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between cursor-pointer"
                 >
-                  <span>Enquire</span>
-                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                  {/* Full-Card Accessible Navigation Target */}
+                  <Link
+                    href={detailUrl}
+                    className="absolute inset-0 z-10 rounded-xl sm:rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5BFF] focus-visible:ring-offset-2"
+                    aria-label={`View details for ${item.title}, ${item.category} in ${item.area}`}
+                  />
+
+                  <div>
+                    {/* Compact Card Image - h-28 on mobile, h-44 on desktop */}
+                    <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-100">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/30" />
+
+                      {/* Top Badges */}
+                      <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between">
+                        <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-2xs flex items-center gap-0.5 sm:gap-1 border border-white/60">
+                          <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1E5BFF]" />
+                          <span className="truncate max-w-[65px] sm:max-w-none">{item.category}</span>
+                        </span>
+
+                        <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-0.5">
+                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Verified</span>
+                        </span>
+                      </div>
+
+                      {/* Bottom Image Overlay Info */}
+                      <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between text-white">
+                        <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[11px] font-bold drop-shadow-sm">
+                          <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#F4A900] shrink-0" />
+                          <span className="truncate max-w-[70px] sm:max-w-[130px]">{item.area}</span>
+                        </div>
+
+                        <div className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded-md backdrop-blur-xs border border-white/10">
+                          <Users className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-blue-300" />
+                          <span>{item.capacity} {item.capacity === 1 ? "Desk" : "Seats"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Content - Clean & Compact */}
+                    <div className="p-2.5 sm:p-4 space-y-0.5 sm:space-y-1.5">
+                      <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#1E5BFF] truncate">
+                        {item.vendorName}
+                      </p>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#1E5BFF] transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-[10px] sm:text-[11px] text-slate-500 line-clamp-1 leading-relaxed">
+                        {item.address}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card Pricing & Enquiry CTA */}
+                  <div className="p-2.5 sm:p-4 pt-1.5 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2">
+                    <div>
+                      <span className="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Starting From
+                      </span>
+                      <p className="text-xs sm:text-sm font-black text-[#0A1F66]">
+                        ₹{item.price.toLocaleString("en-IN")}{" "}
+                        <span className="text-[9px] sm:text-[10px] font-normal text-slate-500">
+                          /{item.unit.replace("per-", "")}
+                        </span>
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEnquiryModalTarget({
+                          id: item.id,
+                          title: item.title,
+                          category: item.category,
+                          area: item.area,
+                          city: item.city,
+                          price: item.price,
+                          unit: item.unit,
+                          vendorName: item.vendorName,
+                        });
+                      }}
+                      className="relative z-20 w-full sm:w-auto inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 shadow-xs shadow-blue-900/15 transition-all duration-200 active:scale-95 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E5BFF] focus-visible:ring-offset-2 cursor-pointer"
+                    >
+                      <span>Enquire</span>
+                      <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
       )}
 
         {/* Numbered Pagination (Super Admin Style) */}

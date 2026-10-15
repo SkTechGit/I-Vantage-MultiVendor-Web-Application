@@ -171,10 +171,16 @@ export const getPublicListings = async (query = {}) => {
  * Public Single Aggregated Listing Detail (1 single request)
  */
 export const getPublicListingBySlug = async (slug) => {
-  const listing = await Listing.findOne({
-    slug: slug.toLowerCase().trim(),
+  const clean = String(slug).toLowerCase().trim();
+  const query = {
+    $or: [
+      { slug: clean },
+      ...(mongoose.Types.ObjectId.isValid(slug) ? [{ _id: slug }] : []),
+    ],
     isLive: true,
-  })
+  };
+
+  const listing = await Listing.findOne(query)
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
     .populate("serviceIds", "name size price description isGlobal")

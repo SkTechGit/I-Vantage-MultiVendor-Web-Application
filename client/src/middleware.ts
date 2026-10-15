@@ -99,6 +99,10 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(adminLogin);
     }
 
+    if (pathname.startsWith("/vendor/leads")) {
+      return NextResponse.redirect(new URL("/vendor", request.url));
+    }
+
     if (isVendorRoute && !isVendor) {
       // Non-vendor (including SuperAdmin or regular user) trying to access vendor portal
       const vendorLogin = new URL("/vendor/login", request.url);

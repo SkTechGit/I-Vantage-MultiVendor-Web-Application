@@ -72,7 +72,6 @@ export default function VendorDashboardOverview() {
   }, [fetchAnalytics]);
 
   useRealtimeEvent("listings", silentRefresh);
-  useRealtimeEvent("leads", silentRefresh);
 
   return (
     <div className="space-y-8 pb-12">

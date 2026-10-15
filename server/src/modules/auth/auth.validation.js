@@ -24,9 +24,10 @@ export const loginSchema = z.object({
     .min(6, "Password must be at least 6 characters."),
 
   requiredRole: z
-    .enum(["vendor", "super_admin", "user", "superadmin"])
-    .optional()
-    .transform((r) => (r === "superadmin" ? "super_admin" : r)),
+    .enum(["super_admin", "vendor", "user"], {
+      errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
+    })
+    .optional(),
 });
 
 export const signupSchema = z
@@ -110,9 +111,10 @@ export const registerSchema = z.object({
     .regex(STRONG_PASSWORD_REGEX, STRONG_PASSWORD_MESSAGE),
 
   role: z
-    .enum(["vendor", "user", "super_admin", "superadmin"])
-    .default("vendor")
-    .transform((r) => (r === "superadmin" ? "super_admin" : r)),
+    .enum(["super_admin", "vendor", "user"], {
+      errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
+    })
+    .default("vendor"),
 });
 
 export const createInviteSchema = z.object({
@@ -125,30 +127,27 @@ export const createInviteSchema = z.object({
     .toLowerCase(),
 
   role: z
-    .enum(["super_admin", "vendor", "user", "superadmin"], {
+    .enum(["super_admin", "vendor", "user"], {
       errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
     })
-    .default("vendor")
-    .transform((r) => (r === "superadmin" ? "super_admin" : r)),
+    .default("vendor"),
 });
 
 export const approveRequestSchema = z.object({
   role: z
-    .enum(["super_admin", "vendor", "user", "superadmin"], {
+    .enum(["super_admin", "vendor", "user"], {
       errorMap: () => ({ message: "Role must be 'super_admin', 'vendor', or 'user'." }),
     })
-    .default("vendor")
-    .transform((r) => (r === "superadmin" ? "super_admin" : r)),
+    .default("vendor"),
 });
 
 export const updateRoleSchema = z.object({
   role: z
-    .enum(["super_admin", "vendor", "user", "superadmin"], {
+    .enum(["super_admin", "vendor", "user"], {
       errorMap: () => ({
         message: "Role must be 'super_admin', 'vendor', or 'user'.",
       }),
-    })
-    .transform((r) => (r === "superadmin" ? "super_admin" : r)),
+    }),
 });
 
 export const toggleStatusSchema = z.object({

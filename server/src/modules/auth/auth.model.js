@@ -79,6 +79,12 @@ const authSchema = new mongoose.Schema(
   }
 );
 
+authSchema.pre("validate", function () {
+  if (this.role === "superadmin") {
+    this.role = "super_admin";
+  }
+});
+
 authSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 

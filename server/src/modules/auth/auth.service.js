@@ -98,7 +98,7 @@ export const login = async ({
     );
   }
 
-  if (requiredRole === "superadmin" && !isSuperAdmin) {
+  if ((requiredRole === "super_admin" || requiredRole === "superadmin") && !isSuperAdmin) {
     if (isVendor) {
       throw new ApiError(
         403,
@@ -106,7 +106,7 @@ export const login = async ({
         "ROLE_MISMATCH",
         {
           currentRole: "vendor",
-          requiredRole: "superadmin",
+          requiredRole: "super_admin",
           correctPortalUrl: "/vendor/login",
           signupUrl: "/vendor/signup",
           error: "Access restricted to Super Administrators. Your account is registered as a Vendor Partner. Please log in through the Vendor Partner Portal.",
@@ -120,7 +120,7 @@ export const login = async ({
       "ROLE_MISMATCH",
       {
         currentRole: "user",
-        requiredRole: "superadmin",
+        requiredRole: "super_admin",
         correctPortalUrl: "/login",
         error: "Super Administrator privileges required. Access denied.",
       }
@@ -392,7 +392,7 @@ export const register = async ({
     passwordHash,
     phone: normalizedPhone || phone?.trim(),
     businessName: businessName?.trim(),
-    role: role === "superadmin" ? "vendor" : role, // Never allow self-registering as superadmin
+    role: (role === "super_admin" || role === "superadmin") ? "vendor" : role, // Never allow self-registering as super_admin
     status: "active",
     lastLogin: new Date(),
     lastLoginIp: ipAddress,
@@ -872,7 +872,7 @@ export const getAccessRequests = async () => {
     .lean();
 };
 
-export const approveAccessRequest = async (userId, role = "admin", adminId) => {
+export const approveAccessRequest = async (userId, role = "super_admin", adminId) => {
   const user = await Auth.findById(userId);
 
   if (!user) {
@@ -883,9 +883,11 @@ export const approveAccessRequest = async (userId, role = "admin", adminId) => {
     throw new ApiError(400, "User is already active.");
   }
 
+  const normalizedRole = role === "superadmin" || role === "admin" ? "super_admin" : role;
+
   user.status = "active";
   user.isActive = true;
-  user.role = role;
+  user.role = normalizedRole;
   user.approvedBy = adminId;
   user.approvedAt = new Date();
 

@@ -60,7 +60,6 @@ export default function VendorAnalyticsPage() {
   }, [fetchStats]);
 
   useRealtimeEvent("listings", silentRefresh);
-  useRealtimeEvent("leads", silentRefresh);
 
   return (
     <div className="space-y-6 pb-12">

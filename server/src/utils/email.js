@@ -223,80 +223,10 @@ export async function sendLeadNotifications(payload) {
     }
   }
 
-  // 2. Vendor Partner Alert Email
-  const vendorTargetEmail = payload.vendorEmail;
-  if (vendorTargetEmail) {
-    const vendorSubject = `⚡ New Space Tour Enquiry: ${dynamicSpaceTitle} — i-VANTAGE`;
-    const vendorHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06);">
-        ${getEmailHeaderHtml({ badgeText: "Partner Portal • Lead Alert" })}
-        <div style="padding: 28px 24px; color: #1e293b;">
-          <div style="display: inline-block; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; margin-bottom: 16px;">
-            ⚡ New Space Tour Enquiry
-          </div>
-          <h2 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #0f172a;">New Enquiry for ${escapeHtml(dynamicSpaceTitle)}</h2>
-          <p style="margin: 0 0 20px; font-size: 14px; color: #475569; line-height: 1.5;">
-            A verified prospective client has submitted an enquiry for your space listing on <strong>i-VANTAGE Hub</strong>.
-          </p>
+  // 2. Vendor Partner Alert Email - STRICTLY DISABLED
+  // Commercial policy: Client leads from workspace listings are strictly confidential to SuperAdmin.
+  // Vendors never receive client contact details (phone, email, message) via email.
 
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-              <tr>
-                <td style="padding: 7px 0; color: #64748b; width: 32%;">Client Name:</td>
-                <td style="padding: 7px 0; font-weight: 700; color: #0f172a;">${escapeHtml(payload.clientName)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 7px 0; color: #64748b;">Phone:</td>
-                <td style="padding: 7px 0; font-weight: 700; color: #1E5BFF;">
-                  <a href="tel:${escapeHtml(payload.clientPhone)}" style="color: #1E5BFF; text-decoration: none;">${escapeHtml(payload.clientPhone)}</a>
-                </td>
-              </tr>
-              ${
-                payload.clientEmail
-                  ? `<tr>
-                <td style="padding: 7px 0; color: #64748b;">Email:</td>
-                <td style="padding: 7px 0; font-weight: 600; color: #0f172a;">
-                  <a href="mailto:${escapeHtml(payload.clientEmail)}" style="color: #0f172a; text-decoration: none;">${escapeHtml(payload.clientEmail)}</a>
-                </td>
-              </tr>`
-                  : ""
-              }
-              ${
-                payload.clientMessage
-                  ? `<tr>
-                <td style="padding: 7px 0; color: #64748b; vertical-align: top;">Requirement:</td>
-                <td style="padding: 7px 0; color: #334155; font-style: italic;">"${escapeHtml(payload.clientMessage)}"</td>
-              </tr>`
-                  : ""
-              }
-            </table>
-          </div>
-
-          <div style="text-align: center; margin-top: 24px;">
-            <a href="https://i-vantage.in/vendor/leads" style="display: inline-block; background: #1E5BFF; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 8px;">
-              Open Partner Leads Dashboard →
-            </a>
-          </div>
-        </div>
-        ${getEmailFooterHtml()}
-      </div>
-    `;
-
-    if (mailService) {
-      try {
-        await mailService.transporter.sendMail({
-          from: mailService.from,
-          to: vendorTargetEmail,
-          subject: vendorSubject,
-          html: vendorHtml,
-          attachments: logoAttachments,
-        });
-        results.vendorSent = true;
-      } catch (err) {
-        console.error("Failed to send vendor alert email:", err.message);
-      }
-    }
-  }
 
   // 3. SuperAdmin Lead Notification
   if (adminEmail) {
@@ -571,3 +501,118 @@ export async function sendGeneralEnquiryNotification({
 
   return results;
 }
+
+/**
+ * 4. Newsletter Subscriber Welcome Confirmation Email
+ */
+export async function sendNewsletterWelcomeEmail({ email }) {
+  const mailService = getTransporter();
+  if (!mailService || !email) return { sent: false };
+
+  const logoAttachments = getLogoAttachment();
+  const subject = `Welcome to i-VANTAGE Priority Dispatch & Center Drops`;
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06);">
+      ${getEmailHeaderHtml({ badgeText: "Priority Dispatch • Member Perks", title: "i-VANTAGE Hub" })}
+      <div style="padding: 32px 24px; color: #1e293b;">
+        <div style="display: inline-block; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; margin-bottom: 18px;">
+          ✓ Subscription Confirmed
+        </div>
+        <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #0f172a;">You're On The Priority List</h2>
+        <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+          Thank you for subscribing with <strong>${escapeHtml(email)}</strong>. You now have priority access to commercial workspace releases and member-only pricing across India's top business hubs.
+        </p>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">What You'll Receive</h3>
+          <ul style="margin: 0; padding: 0 0 0 18px; color: #334155; font-size: 13.5px; line-height: 1.8;">
+            <li><strong>Exclusive Grade A Drops:</strong> Curated newly listed private suites, managed floors, and coworking spaces in DLF Cyber City, Golf Course Road, and Sohna Road.</li>
+            <li><strong>Zero Brokerage Direct Rates:</strong> Direct-from-operator lease terms with exclusive community savings.</li>
+            <li><strong>Regulatory Updates:</strong> Timely corporate briefs on MCA, ROC, and GST compliance changes for startups & enterprises.</li>
+          </ul>
+        </div>
+
+        <div style="background: #eff6ff; border-left: 4px solid #1E5BFF; padding: 16px; border-radius: 6px; margin-bottom: 24px;">
+          <p style="margin: 0; font-size: 13px; color: #1e3a8a; line-height: 1.6;">
+            <strong>Looking for workspace immediately?</strong> Connect with our enterprise concierge team directly at <a href="tel:${OFFICIAL_CONTACT.phoneClean}" style="color: #1E5BFF; font-weight: 700; text-decoration: none;">${OFFICIAL_CONTACT.phone}</a> or explore all verified hubs at <a href="https://i-vantage.in/gurugram" style="color: #1E5BFF; font-weight: 700; text-decoration: none;">i-vantage.in</a>.
+          </p>
+        </div>
+
+        <p style="margin: 20px 0 0; font-size: 11px; color: #94a3b8; text-align: center;">
+          You can unsubscribe anytime by replying to this email with "Unsubscribe".
+        </p>
+      </div>
+      ${getEmailFooterHtml()}
+    </div>
+  `;
+
+  try {
+    const info = await mailService.transporter.sendMail({
+      from: mailService.from,
+      to: email,
+      subject,
+      html,
+      attachments: logoAttachments,
+    });
+    console.log(`[Email] Newsletter welcome sent successfully to ${email} (msgId: ${info.messageId})`);
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    console.error("Failed to send newsletter welcome email:", err.message);
+    return { sent: false, error: err.message };
+  }
+}
+
+/**
+ * 5. Newsletter Admin Lead Alert
+ */
+export async function sendNewsletterAdminAlert({ email, source = "footer" }) {
+  const mailService = getTransporter();
+  const adminEmail = process.env.LEAD_NOTIFICATION_EMAIL || OFFICIAL_CONTACT.email;
+  if (!mailService || !adminEmail) return { sent: false };
+
+  const logoAttachments = getLogoAttachment();
+  const subject = `[New Subscriber] ${email} joined Priority Dispatch`;
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06);">
+      ${getEmailHeaderHtml({ badgeText: "Admin Desk • Subscriber Captured" })}
+      <div style="padding: 28px 24px; color: #1e293b;">
+        <h2 style="margin: 0 0 16px; color: #0A1F66; font-size: 18px; font-weight: 700;">New Newsletter Subscriber Captured</h2>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr>
+              <td style="padding: 7px 0; color: #64748b; width: 30%;">Subscriber Email:</td>
+              <td style="padding: 7px 0; font-weight: 700; color: #1E5BFF;">${escapeHtml(email)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px 0; color: #64748b;">Source:</td>
+              <td style="padding: 7px 0; font-weight: 600; color: #334155;">Website ${escapeHtml(source)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px 0; color: #64748b;">Timestamp:</td>
+              <td style="padding: 7px 0; font-weight: 500; color: #64748b;">${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</td>
+            </tr>
+          </table>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #64748b;">
+          An automated welcome confirmation email has been dispatched to the subscriber.
+        </p>
+      </div>
+      ${getEmailFooterHtml()}
+    </div>
+  `;
+
+  try {
+    await mailService.transporter.sendMail({
+      from: mailService.from,
+      to: adminEmail,
+      subject,
+      html,
+      attachments: logoAttachments,
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error("Failed to send newsletter admin alert email:", err.message);
+    return { sent: false, error: err.message };
+  }
+}
+

@@ -48,7 +48,7 @@ export const login = async (req, res, next) => {
 
     const portal =
       req.headers["x-portal"] ||
-      (validatedData.requiredRole === "superadmin" ? "admin" : validatedData.requiredRole === "vendor" ? "vendor" : null) ||
+      (validatedData.requiredRole === "super_admin" || validatedData.requiredRole === "superadmin" ? "admin" : validatedData.requiredRole === "vendor" ? "vendor" : null) ||
       (user?.role === "super_admin" || user?.role === "superadmin" || user?.role === "admin" ? "admin" : user?.role === "vendor" ? "vendor" : "all");
 
     setAuthCookies(res, accessToken || token, refreshToken, user?.role, portal);

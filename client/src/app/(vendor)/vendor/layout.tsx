@@ -67,11 +67,6 @@ export default function VendorLayout({
       icon: ListFilter,
     },
     {
-      label: "Customer Leads",
-      href: "/vendor/leads",
-      icon: Users,
-    },
-    {
       label: "Custom Services",
       href: "/vendor/services",
       icon: Layers,

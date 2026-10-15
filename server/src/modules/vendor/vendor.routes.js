@@ -24,10 +24,11 @@ router.patch("/services/:id", vendorAuth, serviceController.updateVendorService)
 router.delete("/services/:id", vendorAuth, serviceController.deleteVendorService);
 
 /* -------------------------------------------------------------------------- */
-/*                                Vendor Leads                                */
+/*                 Vendor Leads (Restricted Exclusively to Admin)             */
 /* -------------------------------------------------------------------------- */
-router.get("/leads", vendorAuth, leadController.getVendorLeads);
-router.patch("/leads/:id", vendorAuth, leadController.updateVendorLead);
+const superAdminAuth = [authenticate, authorize(["super_admin"])];
+router.get("/leads", superAdminAuth, leadController.getVendorLeads);
+router.patch("/leads/:id", superAdminAuth, leadController.updateVendorLead);
 
 /* -------------------------------------------------------------------------- */
 /*                              Vendor Analytics                              */

@@ -106,20 +106,9 @@ export const createLead = async (req, res, next) => {
       notes: [],
     });
 
-    // Realtime notification for live sync across desktop and phone
+    // Realtime notification: STRICTLY for SuperAdmin only (zero leaks to vendors or public channels)
     try {
-      if (vendorId) {
-        realtimeHub.broadcastToUser(vendorId.toString(), "leads", "NEW_LEAD", {
-          leadId: lead._id.toString(),
-          name: name.trim(),
-          phone: cleanPhone,
-          listingTitle,
-          spaceTitle: listingTitle,
-          spaceLocation,
-          timestamp: Date.now(),
-        });
-      }
-      realtimeHub.broadcast("leads", "NEW_LEAD", {
+      realtimeHub.broadcastToRoles(["super_admin"], "leads", "NEW_LEAD", {
         leadId: lead._id.toString(),
         name: name.trim(),
         phone: cleanPhone,
@@ -129,7 +118,7 @@ export const createLead = async (req, res, next) => {
         vendorId: vendorId?.toString(),
         timestamp: Date.now(),
       });
-      realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
+      realtimeHub.broadcastToRoles(["super_admin"], "dashboard", "METRIC_UPDATE", {
         type: "lead",
         action: "created",
         timestamp: Date.now(),
@@ -153,6 +142,7 @@ export const createLead = async (req, res, next) => {
     } catch {}
 
     // Send email notifications asynchronously (non-blocking)
+    // NOTE: vendorEmail is strictly null to prevent sharing client lead details with vendors
     sendLeadNotifications({
       clientName: name,
       clientPhone: phone,
@@ -160,7 +150,7 @@ export const createLead = async (req, res, next) => {
       clientMessage: message,
       spaceTitle: listingTitle,
       spaceLocation: spaceLocation,
-      vendorEmail,
+      vendorEmail: null,
       vendorBusinessName,
       leadId: lead._id.toString(),
     }).catch((err) => console.error("Lead email notification error:", err));
@@ -177,90 +167,25 @@ export const createLead = async (req, res, next) => {
 
 /**
  * Vendor: GET /api/v1/marketplace-leads/vendor
+ * Access strictly restricted: Leads are exclusively managed by SuperAdmin
  */
-export const getVendorLeads = async (req, res, next) => {
-  try {
-    const { status, page = 1, limit = 20 } = req.query;
-    const filter = { vendorId: req.user._id };
-
-    if (status) filter.status = status;
-
-    const skip = (Math.max(1, Number(page)) - 1) * Math.max(1, Number(limit));
-    const numericLimit = Math.min(50, Math.max(1, Number(limit)));
-
-    const [leads, total] = await Promise.all([
-      MarketplaceLead.find(filter)
-        .populate("listingId", "title slug location")
-        .sort("-createdAt")
-        .skip(skip)
-        .limit(numericLimit),
-      MarketplaceLead.countDocuments(filter),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: leads,
-      pagination: {
-        total,
-        page: Number(page),
-        pages: Math.ceil(total / numericLimit),
-        limit: numericLimit,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
+export const getVendorLeads = async (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: "Access restricted. Customer leads are managed exclusively by i-VANTAGE Super Administrators.",
+    data: [],
+  });
 };
 
 /**
  * Vendor: PATCH /api/v1/marketplace-leads/vendor/:id
- * Update status & add note
+ * Access strictly restricted: Leads are exclusively managed by SuperAdmin
  */
-export const updateVendorLead = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { status, note } = req.body;
-
-    const lead = await MarketplaceLead.findOne({ _id: id, vendorId: req.user._id });
-    if (!lead) {
-      return res.status(404).json({ success: false, message: "Lead not found or unauthorized." });
-    }
-
-    if (status) lead.status = status;
-    if (note && note.trim()) {
-      lead.notes.push({
-        authorId: req.user._id,
-        authorName: req.user.name || req.user.fullName || "Vendor",
-        text: note.trim(),
-        createdAt: new Date(),
-      });
-    }
-
-    await lead.save();
-
-    // Broadcast realtime event for live sync on desktop & phone
-    try {
-      realtimeHub.broadcast("leads", "LEAD_UPDATED", {
-        leadId: lead._id.toString(),
-        status: lead.status,
-        notesCount: lead.notes?.length || 0,
-        timestamp: Date.now(),
-      });
-      realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
-        type: "lead",
-        action: "updated",
-        timestamp: Date.now(),
-      });
-    } catch {}
-
-    res.status(200).json({
-      success: true,
-      message: "Lead updated successfully.",
-      data: lead,
-    });
-  } catch (error) {
-    next(error);
-  }
+export const updateVendorLead = async (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: "Access restricted. Customer leads are managed exclusively by i-VANTAGE Super Administrators.",
+  });
 };
 
 /**
@@ -331,23 +256,15 @@ export const updateAdminLead = async (req, res, next) => {
       { path: "vendorId", select: "name fullName email businessName" },
     ]);
 
-    // Broadcast realtime event for live sync on desktop & phone
+    // Broadcast realtime event strictly to SuperAdmin
     try {
-      realtimeHub.broadcast("leads", "LEAD_UPDATED", {
+      realtimeHub.broadcastToRoles(["super_admin"], "leads", "LEAD_UPDATED", {
         leadId: lead._id.toString(),
         status: lead.status,
         notesCount: lead.notes?.length || 0,
         timestamp: Date.now(),
       });
-      if (lead.vendorId) {
-        const vId = lead.vendorId._id ? lead.vendorId._id.toString() : lead.vendorId.toString();
-        realtimeHub.broadcastToUser(vId, "leads", "LEAD_UPDATED", {
-          leadId: lead._id.toString(),
-          status: lead.status,
-          timestamp: Date.now(),
-        });
-      }
-      realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
+      realtimeHub.broadcastToRoles(["super_admin"], "dashboard", "METRIC_UPDATE", {
         type: "lead",
         action: "updated",
         timestamp: Date.now(),
@@ -375,13 +292,13 @@ export const deleteAdminLead = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Lead not found." });
     }
 
-    // Broadcast realtime event for live sync on desktop & phone
+    // Broadcast realtime event strictly to SuperAdmin
     try {
-      realtimeHub.broadcast("leads", "LEAD_DELETED", {
+      realtimeHub.broadcastToRoles(["super_admin"], "leads", "LEAD_DELETED", {
         leadId: id.toString(),
         timestamp: Date.now(),
       });
-      realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
+      realtimeHub.broadcastToRoles(["super_admin"], "dashboard", "METRIC_UPDATE", {
         type: "lead",
         action: "deleted",
         timestamp: Date.now(),

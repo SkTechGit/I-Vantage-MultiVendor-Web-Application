@@ -132,14 +132,12 @@ export const marketplaceApi = {
     return data;
   },
 
-  // Vendor Leads & Analytics
+  // Vendor Analytics (Leads are managed exclusively by SuperAdmin)
   getVendorLeads: async () => {
-    const { data } = await api.get("/vendor/leads");
-    return data.data;
+    return [];
   },
-  updateVendorLead: async (id: string, payload: { status?: string; noteText?: string }) => {
-    const { data } = await api.patch(`/vendor/leads/${id}`, payload);
-    return data.data;
+  updateVendorLead: async () => {
+    return null;
   },
   getVendorAnalytics: async () => {
     const { data } = await api.get("/vendor/analytics");

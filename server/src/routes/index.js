@@ -15,6 +15,7 @@ import marketplaceServiceRoutes from "../modules/marketplace-services/service.ro
 import mediaRoutes from "../modules/media/media.routes.js";
 import marketplaceLeadRoutes from "../modules/marketplace-leads/lead.routes.js";
 import vendorRoutes from "../modules/vendor/vendor.routes.js";
+import newsletterRoutes from "../modules/newsletter/subscriber.routes.js";
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use("/blogs", blogRoutes);
 router.use("/realtime", realtimeRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/admin/notifications", notificationRoutes);
+router.use("/newsletter", newsletterRoutes);
 
 /* Marketplace routes */
 router.use("/vendor", vendorRoutes);
