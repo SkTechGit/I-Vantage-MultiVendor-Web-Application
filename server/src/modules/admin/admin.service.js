@@ -6,6 +6,9 @@ import MarketplaceLead from "../marketplace-leads/lead.model.js";
 import User from "../users/user.model.js";
 import Auth from "../auth/auth.model.js";
 import AuditLog from "../auth/audit-log.model.js";
+import ProfessionalProfile from "../professionals/professionals.model.js";
+import ProfessionalCategory from "../professionals/professionals.category.model.js";
+import { generateUniqueSlug } from "../professionals/professionals.service.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
 import bcrypt from "bcryptjs";
 
@@ -155,8 +158,8 @@ export const updateVendorStatus = async (vendorId, status, adminUser) => {
 
 export const updateVendorRole = async (vendorId, newRole, adminUser) => {
   const normalizedRole = newRole === "superadmin" ? "super_admin" : newRole;
-  if (!["vendor", "super_admin", "user"].includes(normalizedRole)) {
-    throw new Error("Invalid role specified. Must be 'vendor', 'super_admin', or 'user'.");
+  if (!["vendor", "super_admin", "user", "professional"].includes(normalizedRole)) {
+    throw new Error("Invalid role specified. Must be 'vendor', 'super_admin', 'user', or 'professional'.");
   }
 
   let vendor = await User.findById(vendorId);
@@ -177,11 +180,11 @@ export const updateVendorRole = async (vendorId, newRole, adminUser) => {
         vendor = await User.create({
           name: authRecord.fullName,
           email: aEmail,
-          phone: "",
+          phone: authRecord.phone || "",
           passwordHash: authRecord.password,
           role: normalizedRole,
           status: authRecord.isActive ? "active" : "suspended",
-          businessName: authRecord.fullName + " Workspaces",
+          businessName: authRecord.fullName + (normalizedRole === "professional" ? " Practice" : " Workspaces"),
           tokenVersion: 1,
           lastLogin: authRecord.lastLogin || null,
         });
@@ -222,6 +225,65 @@ export const updateVendorRole = async (vendorId, newRole, adminUser) => {
         isActive: true,
         lastLogin: vendor.lastLogin || null,
         tokenVersion: 1,
+      });
+    }
+  } else if (normalizedRole === "professional") {
+    if (authDoc) {
+      authDoc.role = "professional";
+      authDoc.status = "active";
+      authDoc.isActive = true;
+      if (vendor.passwordHash) {
+        authDoc.password = vendor.passwordHash;
+      }
+      authDoc.tokenVersion = (authDoc.tokenVersion || 0) + 1;
+      await authDoc.save();
+    } else {
+      authDoc = await Auth.create({
+        fullName: vendor.name,
+        email: vEmail,
+        password: vendor.passwordHash || (await bcrypt.hash("Password@123", 10)),
+        role: "professional",
+        status: "active",
+        isActive: true,
+        lastLogin: vendor.lastLogin || null,
+        tokenVersion: 1,
+      });
+    }
+
+    // Provision ProfessionalProfile if it doesn't exist
+    let prof = await ProfessionalProfile.findOne({
+      $or: [{ userId: authDoc._id }, { contactEmail: vEmail }],
+    });
+    if (!prof) {
+      let category = await ProfessionalCategory.findOne({ isActive: true }).sort({ sortOrder: 1 });
+      if (!category) {
+        category = await ProfessionalCategory.findOne({});
+      }
+      if (!category) {
+        category = await ProfessionalCategory.create({
+          slug: "consulting-advisory",
+          name: "Consulting & Advisory",
+          label: "Consulting & Advisory",
+          description: "General consulting and business advisory services",
+          isActive: true,
+        });
+      }
+      const slug = await generateUniqueSlug(vendor.name || "professional");
+      const categoryLabel = category?.name || category?.label || "Professional Advisor";
+      await ProfessionalProfile.create({
+        userId: authDoc._id,
+        categoryId: category._id,
+        slug,
+        fullName: vendor.name || "Verified Professional",
+        headline: `${categoryLabel} & Business Advisor`,
+        summary: `${vendor.name || "Empaneled professional"} is an empaneled advisor on the i-VANTAGE platform.`,
+        city: "Gurugram",
+        contactEmail: vEmail,
+        contactPhone: vendor.phone || null,
+        status: "PUBLISHED",
+        verificationStatus: "VERIFIED",
+        verifiedAt: new Date(),
+        completeness: 80,
       });
     }
   } else {
@@ -343,16 +405,25 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
 
   const userMap = new Map();
 
-  // 1. Process User collection (coworking marketplace vendors and users)
+  // 1. Process User collection (coworking marketplace vendors, users, and professionals)
   for (const u of vendorUsers) {
     let normalizedRole = "user";
     if (u.role === "superadmin" || u.role === "super_admin") {
       normalizedRole = "super_admin";
     } else if (u.role === "vendor") {
       normalizedRole = "vendor";
+    } else if (u.role === "professional") {
+      normalizedRole = "professional";
     } else {
       normalizedRole = "user";
     }
+
+    const portal =
+      normalizedRole === "super_admin"
+        ? "Admin Console"
+        : normalizedRole === "professional"
+        ? "Professional Portal"
+        : "Vendor Partner Portal";
 
     userMap.set(u.email.toLowerCase(), {
       _id: u._id.toString(),
@@ -360,9 +431,9 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
       fullName: u.name,
       email: u.email,
       phone: u.phone || "",
-      businessName: u.businessName || (u.name + " Workspaces"),
+      businessName: u.businessName || (u.name + (normalizedRole === "professional" ? " Practice" : " Workspaces")),
       role: normalizedRole,
-      portal: normalizedRole === "super_admin" ? "Admin Console" : "Vendor Partner Portal",
+      portal,
       status: u.status || "active",
       isActive: u.status === "active",
       lastLogin: u.lastLogin,
@@ -373,7 +444,7 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
     });
   }
 
-  // 2. Merge Auth collection (administrative accounts & team members)
+  // 2. Merge Auth collection (administrative accounts, team members, and authenticated professionals)
   for (const u of adminUsers) {
     const key = u.email.toLowerCase();
     let normalizedRole = "user";
@@ -381,9 +452,18 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
       normalizedRole = "super_admin";
     } else if (u.role === "vendor") {
       normalizedRole = "vendor";
+    } else if (u.role === "professional") {
+      normalizedRole = "professional";
     } else {
       normalizedRole = "user";
     }
+
+    const portal =
+      normalizedRole === "super_admin"
+        ? "Admin Console"
+        : normalizedRole === "professional"
+        ? "Professional Portal"
+        : "Vendor Partner Portal";
 
     if (userMap.has(key)) {
       const existing = userMap.get(key);
@@ -391,10 +471,27 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
       const dateAuth = u.lastLogin ? new Date(u.lastLogin).getTime() : 0;
       const latestLastLogin = dateAuth > dateExisting ? u.lastLogin : existing.lastLogin;
 
+      // Authoritative role resolution:
+      // If either Auth or User is super_admin, role is super_admin.
+      // If either Auth or User is professional (and not super_admin), role is professional.
+      let finalRole = existing.role || normalizedRole;
+      if (normalizedRole === "super_admin" || existing.role === "super_admin") {
+        finalRole = "super_admin";
+      } else if (normalizedRole === "professional" || existing.role === "professional") {
+        finalRole = "professional";
+      } else if (normalizedRole === "vendor" || existing.role === "vendor") {
+        finalRole = "vendor";
+      }
+
       userMap.set(key, {
         ...existing,
-        // If Auth role is super_admin, authoritative role is super_admin; if demoted to vendor, reflect vendor
-        role: normalizedRole === "super_admin" ? "super_admin" : (existing.role || normalizedRole),
+        role: finalRole,
+        portal:
+          finalRole === "super_admin"
+            ? "Admin Console"
+            : finalRole === "professional"
+            ? "Professional Portal"
+            : "Vendor Partner Portal",
         status: u.status || existing.status,
         isActive: u.isActive !== false && existing.isActive !== false,
         lastLogin: latestLastLogin,
@@ -408,10 +505,10 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
         name: u.fullName,
         fullName: u.fullName,
         email: u.email,
-        phone: "",
-        businessName: u.fullName + " Workspaces",
+        phone: u.phone || "",
+        businessName: u.fullName + (normalizedRole === "professional" ? " Practice" : " Workspaces"),
         role: normalizedRole,
-        portal: normalizedRole === "super_admin" ? "Admin Console" : "Vendor Partner Portal",
+        portal,
         status: u.status || "active",
         isActive: u.isActive !== false && u.status === "active",
         lastLogin: u.lastLogin,
@@ -424,8 +521,11 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
   let combined = Array.from(userMap.values());
 
   if (role === "vendor") {
-    // Marketplace directory: return all marketplace participants (vendors & users), excluding active super_admins who belong in Admin Team
+    // Coworking directory: return vendors & users (excluding professionals and super_admins)
     combined = combined.filter((u) => u.role === "vendor" || u.role === "user");
+  } else if (role === "professional") {
+    // Verified professionals directory
+    combined = combined.filter((u) => u.role === "professional");
   } else if (role === "admin" || role === "super_admin") {
     combined = combined.filter((u) => u.role === "super_admin");
   } else if (role && role !== "all") {
@@ -438,11 +538,14 @@ export const getAllPlatformUsers = async ({ role = "all", search = "" } = {}) =>
     return timeB - timeA;
   });
 
+  const allPlatformList = Array.from(userMap.values());
+
   return {
     totalUsers: combined.length,
     users: combined,
-    adminCount: Array.from(userMap.values()).filter((u) => u.role === "super_admin").length,
-    vendorCount: Array.from(userMap.values()).filter((u) => u.role === "vendor").length,
+    adminCount: allPlatformList.filter((u) => u.role === "super_admin").length,
+    vendorCount: allPlatformList.filter((u) => u.role === "vendor" || u.role === "user").length,
+    professionalCount: allPlatformList.filter((u) => u.role === "professional").length,
   };
 };
 

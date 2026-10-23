@@ -13,7 +13,11 @@ import BlogCTA from "@/modules/blog/components/BlogCTA";
 import { Blog } from "@/modules/blog/blog.types";
 import { getAdminBlogById } from "@/modules/blog/blog.api";
 
-export default function AdminBlogPreview() {
+interface Props {
+  basePath?: string;
+}
+
+export default function AdminBlogPreview({ basePath = "/admin/blogs" }: Props = {}) {
   const params = useParams();
   const id = params?.id as string;
 
@@ -62,13 +66,13 @@ export default function AdminBlogPreview() {
         <div className="flex items-center gap-2 font-semibold">
           <ShieldCheck size={16} className="text-[#C8942C]" />
           <span>
-            Admin Preview Mode • Current Status:{" "}
+            Preview Mode • Current Status:{" "}
             <strong className="uppercase">{blog.status}</strong> (Not public unless published)
           </span>
         </div>
 
         <Link
-          href={`/admin/blogs/${blog._id}/edit`}
+          href={`${basePath}/${blog._id}/edit`}
           className="inline-flex items-center gap-1.5 rounded-lg bg-[#0A1F66] px-3 py-1.5 font-bold text-white shadow-xs hover:bg-[#1E5BFF]"
         >
           <ArrowLeft size={13} />

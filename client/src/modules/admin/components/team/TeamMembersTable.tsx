@@ -2,6 +2,7 @@ import React from "react";
 import {
   Shield,
   Briefcase,
+  Award,
   User as UserIcon,
   ChevronDown,
   Loader2,
@@ -112,6 +113,8 @@ export default function TeamMembersTable({
                           const currentVal =
                             member.role === "super_admin" || member.role === "superadmin"
                               ? "super_admin"
+                              : member.role === "professional"
+                              ? "professional"
                               : member.role === "vendor"
                               ? "vendor"
                               : "user";
@@ -131,6 +134,8 @@ export default function TeamMembersTable({
                                 className={`appearance-none cursor-pointer pl-7 pr-8 py-1.5 text-xs font-semibold rounded-full border transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
                                   currentVal === "super_admin"
                                     ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 focus:ring-indigo-400"
+                                    : currentVal === "professional"
+                                    ? "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 focus:ring-purple-400"
                                     : currentVal === "vendor"
                                     ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 focus:ring-amber-400"
                                     : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 focus:ring-slate-400"
@@ -138,6 +143,7 @@ export default function TeamMembersTable({
                                 title="Change member role (Super Admin only)"
                               >
                                 <option value="super_admin">Super Admin</option>
+                                <option value="professional">Professional (Partner)</option>
                                 <option value="vendor">Vendor (Partner)</option>
                                 <option value="user">User</option>
                               </select>
@@ -152,6 +158,11 @@ export default function TeamMembersTable({
                                   <Shield
                                     size={12}
                                     className="text-indigo-600"
+                                  />
+                                ) : currentVal === "professional" ? (
+                                  <Award
+                                    size={12}
+                                    className="text-purple-600"
                                   />
                                 ) : currentVal === "vendor" ? (
                                   <Briefcase
@@ -195,6 +206,8 @@ export default function TeamMembersTable({
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                               member.role === "super_admin" || member.role === "superadmin"
                                 ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                : member.role === "professional"
+                                ? "bg-purple-50 text-purple-700 border border-purple-200"
                                 : member.role === "vendor"
                                 ? "bg-amber-50 text-amber-700 border border-amber-200"
                                 : "bg-slate-100 text-slate-700 border border-slate-200"
@@ -203,6 +216,8 @@ export default function TeamMembersTable({
                           >
                             {member.role === "super_admin" || member.role === "superadmin" ? (
                               <Shield size={12} />
+                            ) : member.role === "professional" ? (
+                              <Award size={12} />
                             ) : member.role === "vendor" ? (
                               <Briefcase size={12} />
                             ) : (
@@ -210,6 +225,8 @@ export default function TeamMembersTable({
                             )}
                             {member.role === "super_admin" || member.role === "superadmin"
                               ? "Super Admin"
+                              : member.role === "professional"
+                              ? "Professional"
                               : member.role === "vendor"
                               ? "Vendor (Partner)"
                               : "User"}

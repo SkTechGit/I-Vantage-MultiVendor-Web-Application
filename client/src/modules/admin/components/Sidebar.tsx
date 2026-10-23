@@ -23,6 +23,8 @@ import {
   Building2,
   CheckCircle2,
   Sparkles,
+  UserCheck,
+  Mail,
   X,
 } from "lucide-react";
 
@@ -107,6 +109,26 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "PROFESSIONALS NETWORK",
+    items: [
+      {
+        title: "All Professionals",
+        href: "/admin/professionals",
+        icon: UserCheck,
+      },
+      {
+        title: "Review Queue & Diffs",
+        href: "/admin/professionals/revisions",
+        icon: ShieldCheck,
+      },
+      {
+        title: "Client Enquiries",
+        href: "/admin/professionals/enquiries",
+        icon: Mail,
+      },
+    ],
+  },
+  {
     label: "ADMINISTRATION",
     items: [
       {
@@ -117,6 +139,10 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+const ALL_NAV_HREFS = NAV_GROUPS.flatMap((group) =>
+  group.items.map((item) => item.href)
+);
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -156,6 +182,23 @@ export default function Sidebar({
     (user?.email ? user.email.split("@")[0] : "Administrator");
 
   const userInitial = (userDisplayName || "A").trim().charAt(0).toUpperCase();
+
+  const isItemActive = (href: string) => {
+    if (pathname === href) return true;
+    if (href === "/admin/dashboard") return false;
+
+    if (!pathname.startsWith(`${href}/`)) return false;
+
+    // Check if another nav item is a more specific (longer) match for this pathname
+    const hasMoreSpecificMatch = ALL_NAV_HREFS.some(
+      (otherHref) =>
+        otherHref !== href &&
+        otherHref.length > href.length &&
+        (pathname === otherHref || pathname.startsWith(`${otherHref}/`))
+    );
+
+    return !hasMoreSpecificMatch;
+  };
 
   return (
     <aside
@@ -273,10 +316,7 @@ export default function Sidebar({
 
             {group.items.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/admin/dashboard" &&
-                  pathname.startsWith(`${item.href}/`));
+              const isActive = isItemActive(item.href);
 
               return (
                 <Link

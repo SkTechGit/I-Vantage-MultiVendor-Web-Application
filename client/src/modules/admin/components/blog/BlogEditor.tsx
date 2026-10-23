@@ -48,9 +48,14 @@ import {
 interface Props {
   initialBlog?: Blog;
   categories: BlogCategory[];
+  basePath?: string;
 }
 
-export default function BlogEditor({ initialBlog, categories: initialCategories }: Props) {
+export default function BlogEditor({
+  initialBlog,
+  categories: initialCategories,
+  basePath = "/admin/blogs",
+}: Props) {
   const [categories, setCategories] = useState<BlogCategory[]>(initialCategories);
 
   // Form State
@@ -310,7 +315,7 @@ export default function BlogEditor({ initialBlog, categories: initialCategories 
         setSaveStatus("saved");
         toast.success("Blog article created successfully!");
         // Update URL to edit mode without full reload
-        window.history.replaceState(null, "", `/admin/blogs/${created._id}/edit`);
+        window.history.replaceState(null, "", `${basePath}/${created._id}/edit`);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to save blog";
@@ -343,9 +348,9 @@ export default function BlogEditor({ initialBlog, categories: initialCategories 
       <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white/95 px-5 py-3.5 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Link
-            href="/admin/blogs"
+            href={basePath}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
-            title="Back to Blog Articles"
+            title="Back to Articles"
           >
             <ArrowLeft size={16} />
           </Link>
@@ -385,7 +390,7 @@ export default function BlogEditor({ initialBlog, categories: initialCategories 
         <div className="flex items-center gap-2">
           {blogId && (
             <Link
-              href={`/admin/blogs/${blogId}/preview`}
+              href={`${basePath}/${blogId}/preview`}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50"
             >
               <Eye size={14} />

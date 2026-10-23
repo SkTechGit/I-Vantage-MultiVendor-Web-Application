@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Clock, Calendar, User } from "lucide-react";
+import { ChevronRight, Clock, Calendar, User, BadgeCheck } from "lucide-react";
 import { Blog } from "../blog.types";
 
 interface Props {
@@ -57,23 +57,52 @@ export default function ArticleHeader({ blog }: Props) {
 
       {/* Author & Publication Metadata Row */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-y border-slate-100 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A1F66] text-white font-bold text-sm shadow-xs">
-            {blog.author?.fullName ? (
-              blog.author.fullName.charAt(0).toUpperCase()
-            ) : (
-              <User size={18} />
-            )}
+        {blog.professionalProfile ? (
+          <Link
+            href={`/professionals/${blog.professionalProfile.slug}`}
+            className="group flex items-center gap-3 transition"
+          >
+            <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-blue-200 bg-blue-50 text-[#1E5BFF] font-bold text-sm shadow-xs group-hover:border-[#1E5BFF]">
+              {blog.professionalProfile.profilePhoto?.url ? (
+                <Image
+                  src={blog.professionalProfile.profilePhoto.url}
+                  alt={blog.professionalProfile.fullName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <span>{blog.professionalProfile.fullName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 text-sm font-bold text-[#0A1F66] group-hover:text-[#1E5BFF]">
+                <span>{blog.professionalProfile.fullName}</span>
+                <BadgeCheck size={15} className="text-[#1E5BFF]" />
+              </div>
+              <p className="text-xs text-slate-500 group-hover:text-slate-700">
+                {blog.professionalProfile.designation || "Verified Professional Advisor"} • View Profile & Consult →
+              </p>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A1F66] text-white font-bold text-sm shadow-xs">
+              {blog.author?.fullName ? (
+                blog.author.fullName.charAt(0).toUpperCase()
+              ) : (
+                <User size={18} />
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#0A1F66]">
+                {blog.author?.fullName || "i-VANTAGE Editorial Team"}
+              </p>
+              <p className="text-xs text-slate-500">
+                Corporate Intelligence & Workspace Strategy
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-bold text-[#0A1F66]">
-              {blog.author?.fullName || "i-VANTAGE Editorial Team"}
-            </p>
-            <p className="text-xs text-slate-500">
-              Corporate Intelligence & Workspace Strategy
-            </p>
-          </div>
-        </div>
+        )}
 
         <div className="flex items-center gap-4 text-xs font-medium text-slate-500 sm:text-sm">
           {formattedDate && (

@@ -124,27 +124,55 @@ const resolveUserFromPayload = async (payload) => {
 /**
  * Helper to attempt auto-regeneration of accessToken using refreshToken
  */
-const tryAutoRefresh = async (req, res, next) => {
-  const portal =
+const tryAutoRefresh = async (req, res, next, targetPortal = null) => {
+  let portal =
+    targetPortal ||
     req.headers["x-portal"] ||
     req.query?.portal ||
-    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor")
+      ? "vendor"
+      : req.baseUrl?.includes("professionals") || req.originalUrl?.includes("/professionals")
+      ? "professional"
+      : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin")
+      ? "admin"
+      : "all");
 
   let refreshToken = null;
+  let effectivePortal = portal;
+
   if (portal === "admin") {
     refreshToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] || req.headers["x-refresh-token"];
+    // Fallback: Check if professional or vendor session is present on shared routes
+    if (!refreshToken && req.cookies[SCOPED_COOKIES.PRO_REFRESH]) {
+      refreshToken = req.cookies[SCOPED_COOKIES.PRO_REFRESH];
+      effectivePortal = "professional";
+    } else if (!refreshToken && req.cookies[SCOPED_COOKIES.VENDOR_REFRESH]) {
+      refreshToken = req.cookies[SCOPED_COOKIES.VENDOR_REFRESH];
+      effectivePortal = "vendor";
+    }
   } else if (portal === "vendor") {
     refreshToken = req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] || req.headers["x-refresh-token"];
+    if (!refreshToken && req.cookies[SCOPED_COOKIES.ADMIN_REFRESH]) {
+      refreshToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH];
+      effectivePortal = "admin";
+    }
+  } else if (portal === "professional") {
+    refreshToken = req.cookies[SCOPED_COOKIES.PRO_REFRESH] || req.headers["x-refresh-token"];
+    if (!refreshToken && req.cookies[SCOPED_COOKIES.ADMIN_REFRESH]) {
+      refreshToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH];
+      effectivePortal = "admin";
+    }
   } else {
     refreshToken =
       req.cookies[AUTH_COOKIE.REFRESH_NAME] ||
       req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] ||
       req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] ||
+      req.cookies[SCOPED_COOKIES.PRO_REFRESH] ||
       req.headers["x-refresh-token"];
   }
 
   if (!refreshToken) {
-    clearAuthCookies(res, portal);
+    clearAuthCookies(res, effectivePortal);
     return res.status(401).json({
       success: false,
       message: AUTH_MESSAGES.INVALID_TOKEN,
@@ -162,7 +190,7 @@ const tryAutoRefresh = async (req, res, next) => {
       refreshPayload.tokenVersion !== undefined &&
       user.tokenVersion !== refreshPayload.tokenVersion
     ) {
-      clearAuthCookies(res, portal);
+      clearAuthCookies(res, effectivePortal);
       return res.status(401).json({
         success: false,
         code: "TOKEN_VERSION_MISMATCH",
@@ -177,12 +205,12 @@ const tryAutoRefresh = async (req, res, next) => {
       tokenVersion: user.tokenVersion || 0,
     });
 
-    setAuthCookie(res, newAccessToken, user.role, portal);
+    setAuthCookie(res, newAccessToken, user.role, effectivePortal);
 
     req.user = user;
     return next();
   } catch {
-    clearAuthCookies(res, portal);
+    clearAuthCookies(res, effectivePortal);
     return res.status(401).json({
       success: false,
       message: "Session expired. Please log in again.",
@@ -195,18 +223,45 @@ export const authenticate = async (req, res, next) => {
     const portal =
       req.headers["x-portal"] ||
       req.query?.portal ||
-      (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+      (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor")
+        ? "vendor"
+        : req.baseUrl?.includes("professionals") || req.originalUrl?.includes("/professionals")
+        ? "professional"
+        : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin")
+        ? "admin"
+        : "all");
 
     let token = null;
+    let effectivePortal = portal;
+
     if (portal === "admin") {
       token = req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS];
+      // Fallback: Check if professional or vendor session is present on shared routes
+      if (!token && req.cookies?.[SCOPED_COOKIES.PRO_ACCESS]) {
+        token = req.cookies[SCOPED_COOKIES.PRO_ACCESS];
+        effectivePortal = "professional";
+      } else if (!token && req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS]) {
+        token = req.cookies[SCOPED_COOKIES.VENDOR_ACCESS];
+        effectivePortal = "vendor";
+      }
     } else if (portal === "vendor") {
       token = req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS];
+      if (!token && req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS]) {
+        token = req.cookies[SCOPED_COOKIES.ADMIN_ACCESS];
+        effectivePortal = "admin";
+      }
+    } else if (portal === "professional") {
+      token = req.cookies?.[SCOPED_COOKIES.PRO_ACCESS];
+      if (!token && req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS]) {
+        token = req.cookies[SCOPED_COOKIES.ADMIN_ACCESS];
+        effectivePortal = "admin";
+      }
     } else {
       token =
         req.cookies?.[AUTH_COOKIE.ACCESS_NAME] ||
         req.cookies?.[SCOPED_COOKIES.ADMIN_ACCESS] ||
-        req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS];
+        req.cookies?.[SCOPED_COOKIES.VENDOR_ACCESS] ||
+        req.cookies?.[SCOPED_COOKIES.PRO_ACCESS];
     }
 
     if (!token && req.headers.authorization?.startsWith("Bearer ")) {
@@ -214,7 +269,7 @@ export const authenticate = async (req, res, next) => {
     }
 
     if (!token) {
-      return await tryAutoRefresh(req, res, next);
+      return await tryAutoRefresh(req, res, next, effectivePortal);
     }
 
     try {
@@ -228,7 +283,7 @@ export const authenticate = async (req, res, next) => {
         payload.tokenVersion !== undefined &&
         user.tokenVersion !== payload.tokenVersion
       ) {
-        clearAuthCookies(res, portal);
+        clearAuthCookies(res, effectivePortal);
         return res.status(401).json({
           success: false,
           code: "TOKEN_VERSION_MISMATCH",
@@ -239,7 +294,7 @@ export const authenticate = async (req, res, next) => {
       req.user = user;
       return next();
     } catch {
-      return await tryAutoRefresh(req, res, next);
+      return await tryAutoRefresh(req, res, next, effectivePortal);
     }
   } catch (error) {
     return res.status(401).json({

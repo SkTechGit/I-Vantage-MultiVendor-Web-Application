@@ -18,6 +18,18 @@ export interface BlogAuthor {
   _id: string;
   fullName: string;
   email: string;
+  role?: string;
+}
+
+export interface BlogProfessionalProfile {
+  _id: string;
+  slug: string;
+  fullName: string;
+  designation?: string;
+  verificationStatus?: string;
+  profilePhoto?: {
+    url?: string;
+  };
 }
 
 export interface BlogCoverImage {
@@ -37,6 +49,8 @@ export interface Blog {
   status: BlogStatus;
   featured: boolean;
   author: BlogAuthor;
+  authorRole?: "super_admin" | "professional" | "admin";
+  professionalProfile?: BlogProfessionalProfile | null;
   category: BlogCategory;
   tags: string[];
   readingTimeMinutes: number;

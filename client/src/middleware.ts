@@ -27,7 +27,10 @@ export function middleware(request: NextRequest) {
     pathname === "/admin/signup" ||
     pathname === "/signup" ||
     pathname === "/vendor/login" ||
-    pathname === "/vendor/signup";
+    pathname === "/vendor/signup" ||
+    pathname === "/professional/login" ||
+    pathname === "/professional/signup" ||
+    pathname === "/professional/register";
 
   const isAdminRoute =
     pathname === "/admin" ||
@@ -41,8 +44,12 @@ export function middleware(request: NextRequest) {
       pathname !== "/vendor/login" &&
       pathname !== "/vendor/signup");
 
+  const isProfessionalRoute =
+    pathname === "/dashboard/professional" ||
+    pathname.startsWith("/dashboard/professional/");
+
   // Multi-portal cookie resolution:
-  // On admin routes, check iv_admin_token first; on vendor routes, check iv_vendor_token first; then fallback to accessToken.
+  // On admin routes, check iv_admin_token first; on vendor routes, check iv_vendor_token; on professional routes, check iv_pro_token.
   let accessToken: string | undefined;
   let refreshToken: string | undefined;
 
@@ -52,13 +59,18 @@ export function middleware(request: NextRequest) {
   } else if (isVendorRoute) {
     accessToken = request.cookies.get("iv_vendor_token")?.value || request.cookies.get("accessToken")?.value;
     refreshToken = request.cookies.get("iv_vendor_refresh")?.value || request.cookies.get("refreshToken")?.value;
+  } else if (isProfessionalRoute) {
+    accessToken = request.cookies.get("iv_pro_token")?.value || request.cookies.get("accessToken")?.value;
+    refreshToken = request.cookies.get("iv_pro_refresh")?.value || request.cookies.get("refreshToken")?.value;
   } else {
     accessToken =
       request.cookies.get("accessToken")?.value ||
+      request.cookies.get("iv_pro_token")?.value ||
       request.cookies.get("iv_admin_token")?.value ||
       request.cookies.get("iv_vendor_token")?.value;
     refreshToken =
       request.cookies.get("refreshToken")?.value ||
+      request.cookies.get("iv_pro_refresh")?.value ||
       request.cookies.get("iv_admin_refresh")?.value ||
       request.cookies.get("iv_vendor_refresh")?.value;
   }
@@ -71,6 +83,7 @@ export function middleware(request: NextRequest) {
     rawRole === "superadmin" ||
     rawRole === "super_admin";
   const isVendor = rawRole === "vendor";
+  const isProfessional = rawRole === "professional" || isSuperAdmin;
 
   // 1. Unauthenticated checks
   if (!hasToken) {
@@ -81,6 +94,11 @@ export function middleware(request: NextRequest) {
     }
     if (isVendorRoute) {
       const loginUrl = new URL("/vendor/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (isProfessionalRoute) {
+      const loginUrl = new URL("/professional/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -109,6 +127,12 @@ export function middleware(request: NextRequest) {
       vendorLogin.searchParams.set("from", pathname);
       return NextResponse.redirect(vendorLogin);
     }
+
+    if (isProfessionalRoute && !isProfessional) {
+      const loginUrl = new URL("/professional/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return NextResponse.next();
@@ -118,9 +142,14 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/vendor/:path*",
+    "/dashboard/professional/:path*",
     "/login",
     "/signup",
     "/vendor/login",
     "/vendor/signup",
+    "/professional/login",
+    "/professional/signup",
+    "/professional/register",
+    "/professional/:path*",
   ],
 };

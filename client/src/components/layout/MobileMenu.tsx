@@ -65,13 +65,20 @@ const navItems = [
   },
   {
     num: "06",
+    label: "Professionals",
+    href: "/professionals",
+    icon: ShieldCheck,
+    description: "Verified CAs, GST & legal experts",
+  },
+  {
+    num: "07",
     label: "Blogs",
     href: "/blogs",
     icon: BookOpen,
     description: "Insights, guides & updates",
   },
   {
-    num: "07",
+    num: "08",
     label: "Contact",
     href: "/contact",
     icon: PhoneCall,
@@ -356,15 +363,15 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
               <Link
                 href="/contact"
                 onClick={onClose}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0A1F66] px-3.5 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E5BFF] active:scale-[0.98]"
+                className="luxury-btn flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0A1F66] px-3.5 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E5BFF] active:scale-[0.98] cursor-pointer"
               >
                 <span>Book a Visit</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/list-your-space"
                 onClick={onClose}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#1E5BFF]/30 bg-white px-3.5 py-2.5 text-xs font-bold text-[#1E5BFF] shadow-xs transition-all hover:bg-blue-50 active:scale-[0.98]"
+                className="luxury-btn inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#1E5BFF]/30 bg-white px-3.5 py-2.5 text-xs font-bold text-[#1E5BFF] shadow-xs transition-all hover:bg-blue-50 active:scale-[0.98] cursor-pointer"
               >
                 <Sparkles size={13} className="text-[#F4A900]" />
                 <span>List Space</span>

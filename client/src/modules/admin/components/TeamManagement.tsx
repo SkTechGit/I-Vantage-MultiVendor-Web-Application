@@ -58,11 +58,12 @@ export default function TeamManagement() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [vendors, setVendors] = useState<PlatformUser[]>([]);
+  const [professionals, setProfessionals] = useState<PlatformUser[]>([]);
   const [auditLogs, setAuditLogs] = useState<SecurityAuditItem[]>([]);
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"vendor" | "super_admin" | "user">("vendor");
+  const [inviteRole, setInviteRole] = useState<"vendor" | "super_admin" | "user" | "professional">("vendor");
   const [submittingInvite, setSubmittingInvite] = useState(false);
   const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -104,6 +105,8 @@ export default function TeamManagement() {
       const roleLabel =
         newRole === "super_admin" || newRole === "superadmin"
           ? "Super Admin"
+          : newRole === "professional"
+          ? "Verified Professional"
           : newRole === "vendor"
           ? "Vendor (Partner)"
           : "User";
@@ -111,6 +114,10 @@ export default function TeamManagement() {
       if (newRole === "vendor" || newRole === "user") {
         toast.success(
           `Role updated to "${roleLabel}" for ${memberName}. Moved to Coworking Vendors directory.`
+        );
+      } else if (newRole === "professional") {
+        toast.success(
+          `Role updated to "${roleLabel}" for ${memberName}. Moved to Verified Professionals directory.`
         );
       } else {
         toast.success(`Role updated to "${roleLabel}" for ${memberName}.`);
@@ -237,16 +244,27 @@ export default function TeamManagement() {
           : v
       )
     );
+    setProfessionals((prev) =>
+      prev.map((v) =>
+        v._id === vendor._id
+          ? {
+              ...v,
+              status: nextStatus,
+              isActive: nextStatus === "active",
+            }
+          : v
+      )
+    );
 
     try {
       await updateVendorStatus(vendor._id, nextStatus);
       if (nextStatus === "active") {
         toast.success(
-          `Partner ${vendor.businessName || vendor.name} is now Active.`
+          `Account for ${vendor.businessName || vendor.name} is now Active.`
         );
       } else {
         toast.warning(
-          `Partner ${vendor.businessName || vendor.name} is now Suspended & Blocked.`
+          `Account for ${vendor.businessName || vendor.name} is now Suspended & Blocked.`
         );
       }
     } catch (err: unknown) {
@@ -258,7 +276,14 @@ export default function TeamManagement() {
             : v
         )
       );
-      toast.error(getErrorMessage(err, "Failed to update vendor status."));
+      setProfessionals((prev) =>
+        prev.map((v) =>
+          v._id === vendor._id
+            ? { ...v, status: vendor.status, isActive: vendor.isActive }
+            : v
+        )
+      );
+      toast.error(getErrorMessage(err, "Failed to update status."));
       loadVendorsAndAudit();
     } finally {
       setUpdatingVendorStatusId(null);
@@ -274,23 +299,31 @@ export default function TeamManagement() {
     try {
       await updateVendorRole(vendorId, newRole);
       const roleLabel =
-        newRole === "vendor"
-          ? "Vendor (Partner)"
-          : newRole === "superadmin" || newRole === "super_admin"
+        newRole === "superadmin" || newRole === "super_admin"
           ? "Super Admin"
+          : newRole === "professional"
+          ? "Verified Professional"
+          : newRole === "vendor"
+          ? "Vendor (Partner)"
           : "Marketplace User";
 
       if (newRole === "superadmin" || newRole === "super_admin") {
         toast.success(
-          `Role updated to "${roleLabel}" for ${vendorName}. User promoted and moved to Authorized Administrators.`
+          `Role updated to "${roleLabel}" for ${vendorName}. User promoted and moved to Active Administrators.`
+        );
+      } else if (newRole === "professional") {
+        toast.success(
+          `Role updated to "${roleLabel}" for ${vendorName}. User moved to Verified Professionals directory.`
         );
       } else {
-        toast.success(`Role updated to "${roleLabel}" for ${vendorName}.`);
+        toast.success(
+          `Role updated to "${roleLabel}" for ${vendorName}. User moved to Coworking Vendors directory.`
+        );
       }
 
       await loadData(true);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to update vendor role."));
+      toast.error(getErrorMessage(err, "Failed to update role."));
       loadData();
     } finally {
       setUpdatingVendorRoleId(null);
@@ -308,13 +341,14 @@ export default function TeamManagement() {
     try {
       await deleteVendor(vendorToDelete._id);
       setVendors((prev) => prev.filter((v) => v._id !== vendorToDelete._id));
+      setProfessionals((prev) => prev.filter((v) => v._id !== vendorToDelete._id));
       toast.success(
-        `Partner ${vendorToDelete.businessName || vendorToDelete.name} (${vendorToDelete.email}) permanently removed.`
+        `Account for ${vendorToDelete.businessName || vendorToDelete.name} (${vendorToDelete.email}) permanently removed.`
       );
       setDeleteVendorModalOpen(false);
       setVendorToDelete(null);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to delete vendor."));
+      toast.error(getErrorMessage(err, "Failed to delete user."));
       loadVendorsAndAudit();
     } finally {
       setIsDeletingVendor(false);
@@ -327,11 +361,13 @@ export default function TeamManagement() {
   const loadVendorsAndAudit = async () => {
     try {
       const [usersResult, logsResult] = await Promise.allSettled([
-        getAllPlatformUsers({ role: "vendor" }),
+        getAllPlatformUsers({ role: "all" }),
         getAuditLogs({ limit: 50 }),
       ]);
       if (usersResult.status === "fulfilled" && usersResult.value?.users) {
-        setVendors(usersResult.value.users);
+        const allUsers: PlatformUser[] = usersResult.value.users;
+        setVendors(allUsers.filter((u) => u.role === "vendor" || u.role === "user"));
+        setProfessionals(allUsers.filter((u) => u.role === "professional"));
       }
       if (logsResult.status === "fulfilled") {
         setAuditLogs(logsResult.value || []);
@@ -385,10 +421,10 @@ export default function TeamManagement() {
       getTeamMembers(),
       getInvitations(),
       getAccessRequests(),
-      getAllPlatformUsers({ role: "vendor" }),
+      getAllPlatformUsers({ role: "all" }),
       getAuditLogs({ limit: 50 }),
     ])
-      .then(([membersResult, invitesResult, requestsResult, vendorsResult, logsResult]) => {
+      .then(([membersResult, invitesResult, requestsResult, usersResult, logsResult]) => {
         if (!isMounted) return;
         if (membersResult.status === "fulfilled") {
           setMembers(membersResult.value || []);
@@ -399,8 +435,10 @@ export default function TeamManagement() {
         if (requestsResult.status === "fulfilled") {
           setRequests(requestsResult.value || []);
         }
-        if (vendorsResult.status === "fulfilled" && vendorsResult.value?.users) {
-          setVendors(vendorsResult.value.users);
+        if (usersResult.status === "fulfilled" && usersResult.value?.users) {
+          const allUsers: PlatformUser[] = usersResult.value.users;
+          setVendors(allUsers.filter((u) => u.role === "vendor" || u.role === "user"));
+          setProfessionals(allUsers.filter((u) => u.role === "professional"));
         }
         if (logsResult.status === "fulfilled") {
           setAuditLogs(logsResult.value || []);
@@ -500,7 +538,7 @@ export default function TeamManagement() {
     getTeamMembers().then((data) => setMembers(data || [])).catch(() => {});
   });
 
-  // Granular Real-time Vendor Event Handlers
+  // Granular Real-time Vendor & Professional Event Handlers
   useRealtimeEvent("users", "VENDOR_STATUS_CHANGED", (payload) => {
     setVendors((prev) =>
       prev.map((v) =>
@@ -509,31 +547,35 @@ export default function TeamManagement() {
           : v
       )
     );
+    setProfessionals((prev) =>
+      prev.map((v) =>
+        v._id === payload.vendorId
+          ? { ...v, status: payload.status, isActive: payload.isActive }
+          : v
+      )
+    );
     if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
       toast.info(
-        `Live Update: Partner ${payload.name}'s status changed to ${payload.isActive ? "Active" : "Suspended"}`
+        `Live Update: Account ${payload.name}'s status changed to ${payload.isActive ? "Active" : "Suspended"}`
       );
     }
   });
 
   useRealtimeEvent("users", "VENDOR_ROLE_CHANGED", (payload) => {
-    setVendors((prev) =>
-      prev.map((v) =>
-        v._id === payload.vendorId ? { ...v, role: payload.newRole } : v
-      )
-    );
+    loadData(true);
     if (payload.updatedBy && payload.updatedBy !== currentUser?.email) {
       toast.info(
-        `Live Update: Partner ${payload.name}'s role updated to ${payload.newRole}`
+        `Live Update: Account ${payload.name}'s role updated to ${payload.newRole}`
       );
     }
   });
 
   useRealtimeEvent("users", "VENDOR_DELETED", (payload) => {
     setVendors((prev) => prev.filter((v) => v._id !== payload.vendorId));
+    setProfessionals((prev) => prev.filter((v) => v._id !== payload.vendorId));
     if (payload.deletedBy && payload.deletedBy !== currentUser?.email) {
       toast.info(
-        `Live Update: Partner ${payload.name || payload.email} was deleted by ${payload.deletedBy}`
+        `Live Update: Account ${payload.name || payload.email} was deleted by ${payload.deletedBy}`
       );
     }
   });
@@ -543,6 +585,24 @@ export default function TeamManagement() {
     if (!payload?.email && !payload?.userId) return;
 
     setVendors((prev) =>
+      prev.map((v) => {
+        const isMatch =
+          v._id === payload.userId ||
+          (payload.email && v.email?.toLowerCase() === payload.email.toLowerCase());
+
+        if (isMatch) {
+          return {
+            ...v,
+            lastLogin: payload.lastLogin || new Date().toISOString(),
+            lastLoginIp: payload.lastLoginIp || payload.ipAddress || v.lastLoginIp || "127.0.0.1",
+            loginCount: typeof payload.loginCount === "number" ? payload.loginCount : (v.loginCount || 0) + 1,
+          };
+        }
+        return v;
+      })
+    );
+
+    setProfessionals((prev) =>
       prev.map((v) => {
         const isMatch =
           v._id === payload.userId ||
@@ -808,6 +868,18 @@ export default function TeamManagement() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("professionals")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
+            activeTab === "professionals"
+              ? "border-[#1E5BFF] text-[#1E5BFF]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          Verified Professionals ({professionals.length})
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("audit")}
           className={`border-b-2 px-5 py-3 text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
             activeTab === "audit"
@@ -886,6 +958,31 @@ export default function TeamManagement() {
           onToggleStatus={handleToggleVendorStatus}
           onRoleChange={handleVendorRoleChange}
           onOpenDeleteModal={handleOpenDeleteVendorModal}
+          title="Registered Marketplace Coworking Vendors"
+          subtitle="Coworking operators & space owners managing listings on the i-VANTAGE platform."
+          badgeLabel="Total Partners"
+          entityLabel="partners"
+          iconType="vendor"
+        />
+      )}
+
+      {/* TAB: PROFESSIONALS (Full CRUD identical to Vendors directory) */}
+      {activeTab === "professionals" && (
+        <VendorsDirectoryTable
+          vendors={professionals}
+          loading={loading}
+          isSuperAdmin={isSuperAdmin}
+          updatingRoleId={updatingVendorRoleId}
+          updatingStatusId={updatingVendorStatusId}
+          onRefresh={loadVendorsAndAudit}
+          onToggleStatus={handleToggleVendorStatus}
+          onRoleChange={handleVendorRoleChange}
+          onOpenDeleteModal={handleOpenDeleteVendorModal}
+          title="Registered Verified Professionals & Advisors"
+          subtitle="Empaneled legal, financial, tax, and architectural advisors on the i-VANTAGE platform."
+          badgeLabel="Total Professionals"
+          entityLabel="professionals"
+          iconType="professional"
         />
       )}
 
@@ -976,13 +1073,21 @@ export default function TeamManagement() {
         />
       )}
 
-      {/* Delete Vendor Confirmation Accessible Modal */}
+      {/* Delete Vendor / Professional Confirmation Accessible Modal */}
       {vendorToDelete && (
         <ConfirmDialog
           open={deleteVendorModalOpen}
-          title="Delete Marketplace Vendor"
+          title={
+            vendorToDelete.role === "professional"
+              ? "Delete Verified Professional"
+              : "Delete Marketplace Vendor"
+          }
           variant="danger"
-          confirmLabel="Yes, Delete Vendor"
+          confirmLabel={
+            vendorToDelete.role === "professional"
+              ? "Yes, Delete Professional"
+              : "Yes, Delete Vendor"
+          }
           cancelLabel="Cancel"
           loading={isDeletingVendor}
           onConfirm={handleConfirmDeleteVendor}
@@ -993,22 +1098,25 @@ export default function TeamManagement() {
           description={
             <div className="space-y-3">
               <p className="text-xs text-slate-500">
-                Permanent partner deletion &amp; marketplace revocation
+                {vendorToDelete.role === "professional"
+                  ? "Permanent professional deletion & portal access revocation"
+                  : "Permanent partner deletion & marketplace revocation"}
               </p>
               <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3.5 text-xs text-rose-800 space-y-1.5">
                 <p className="font-semibold text-rose-900">
                   Warning: This action cannot be undone.
                 </p>
                 <p>
-                  You are about to permanently remove partner{" "}
+                  You are about to permanently remove{" "}
                   <strong className="font-bold underline">
                     {vendorToDelete.businessName || vendorToDelete.name}
                   </strong>{" "}
                   ({vendorToDelete.email}).
                 </p>
                 <p className="text-rose-700/80">
-                  This partner will be permanently deleted from the database and immediately
-                  blocked from accessing the partner portal, managing listings, and accessing APIs.
+                  {vendorToDelete.role === "professional"
+                    ? "This professional will be permanently removed from the directory and blocked from accessing the professional portal and APIs."
+                    : "This partner will be permanently deleted from the database and immediately blocked from accessing the partner portal, managing listings, and accessing APIs."}
                 </p>
               </div>
             </div>

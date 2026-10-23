@@ -60,25 +60,25 @@ export const getBlogTags = async (): Promise<string[]> => {
 };
 
 /* -------------------------------------------------------------------------- */
-/*                                 Admin APIs                                 */
+/*                                  CMS APIs                                  */
 /* -------------------------------------------------------------------------- */
 
 export const getAdminBlogs = async (
   params?: AdminBlogQueryParams
 ): Promise<BlogListResponse> => {
-  const { data } = await axiosInstance.get("/blogs/admin/list", { params });
+  const { data } = await axiosInstance.get("/blogs/cms/list", { params });
   return data.data;
 };
 
 export const getAdminBlogById = async (id: string): Promise<Blog> => {
-  const { data } = await axiosInstance.get(`/blogs/admin/detail/${id}`);
+  const { data } = await axiosInstance.get(`/blogs/cms/detail/${id}`);
   return data.data;
 };
 
 export const createBlog = async (
   payload: CreateBlogPayload
 ): Promise<Blog> => {
-  const { data } = await axiosInstance.post("/blogs/admin/create", payload);
+  const { data } = await axiosInstance.post("/blogs/cms/create", payload);
   return data.data;
 };
 
@@ -86,7 +86,7 @@ export const updateBlog = async (
   id: string,
   payload: UpdateBlogPayload
 ): Promise<Blog> => {
-  const { data } = await axiosInstance.put(`/blogs/admin/update/${id}`, payload);
+  const { data } = await axiosInstance.put(`/blogs/cms/update/${id}`, payload);
   return data.data;
 };
 
@@ -95,7 +95,7 @@ export const updateBlogStatus = async (
   status: BlogStatus,
   scheduledAt?: string | null
 ): Promise<Blog> => {
-  const { data } = await axiosInstance.patch(`/blogs/admin/status/${id}`, {
+  const { data } = await axiosInstance.patch(`/blogs/cms/status/${id}`, {
     status,
     scheduledAt,
   });
@@ -106,14 +106,14 @@ export const deleteBlog = async (
   id: string,
   permanent = false
 ): Promise<{ message: string }> => {
-  const { data } = await axiosInstance.delete(`/blogs/admin/delete/${id}`, {
+  const { data } = await axiosInstance.delete(`/blogs/cms/delete/${id}`, {
     params: { permanent },
   });
   return data;
 };
 
 export const getBlogDashboardStats = async (): Promise<BlogStats> => {
-  const { data } = await axiosInstance.get("/blogs/admin/stats");
+  const { data } = await axiosInstance.get("/blogs/cms/stats");
   return data.data;
 };
 
@@ -124,14 +124,14 @@ export const createBlogCategory = async (payload: {
   seoDescription?: string;
   sortOrder?: number;
 }): Promise<BlogCategory> => {
-  const { data } = await axiosInstance.post("/blogs/admin/categories", payload);
+  const { data } = await axiosInstance.post("/blogs/cms/categories", payload);
   return data.data;
 };
 
 export const deleteBlogCategory = async (
   id: string
 ): Promise<{ message: string }> => {
-  const { data } = await axiosInstance.delete(`/blogs/admin/categories/${id}`);
+  const { data } = await axiosInstance.delete(`/blogs/cms/categories/${id}`);
   return data;
 };
 
@@ -148,7 +148,7 @@ export const uploadBlogMedia = async (
   const formData = new FormData();
   formData.append("image", file);
 
-  const { data } = await axiosInstance.post("/blogs/admin/media/upload", formData, {
+  const { data } = await axiosInstance.post("/blogs/cms/media/upload", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -165,6 +165,6 @@ export const trackBlogView = async (
 };
 
 export const resetBlogViews = async (id: string): Promise<Blog> => {
-  const { data } = await axiosInstance.post(`/blogs/admin/reset-views/${id}`);
+  const { data } = await axiosInstance.post(`/blogs/cms/reset-views/${id}`);
   return data.data;
 };

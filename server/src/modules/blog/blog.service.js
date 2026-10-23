@@ -6,6 +6,31 @@ import BlogAuditLog from "./blog-audit-log.model.js";
 import ApiError from "../../utils/ApiError.js";
 import { uploadImage, deleteImage } from "../../utils/cloudinary.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
+import ProfessionalProfile from "../professionals/professionals.model.js";
+
+// Helper to resolve user role and attached professional profile
+export const resolveActorScope = async (user) => {
+  if (!user) return { isProfessional: false, professionalProfileId: null, userId: null };
+  const userId = user._id || user.id;
+  const isProfessional = user.role === "professional";
+  let professionalProfileId = null;
+
+  if (isProfessional) {
+    const profile = await ProfessionalProfile.findOne({
+      userId,
+      deletedAt: null,
+    }).select("_id slug fullName");
+    if (profile) {
+      professionalProfileId = profile._id;
+    }
+  }
+
+  return {
+    isProfessional,
+    professionalProfileId,
+    userId,
+  };
+};
 
 // Helper to generate a unique slug
 export const generateUniqueSlug = async (baseText, excludeBlogId = null) => {
@@ -140,7 +165,8 @@ export const getPublicBlogs = async ({
   const [blogs, total] = await Promise.all([
     Blog.find(query)
       .select("-content -seoKeywords -isDeleted -deletedAt")
-      .populate("author", "fullName email")
+      .populate("author", "fullName email role")
+      .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
       .populate("category", "name slug")
       .sort(sortOption)
       .skip(skip)
@@ -168,7 +194,8 @@ export const getFeaturedBlog = async () => {
 
   let featured = await Blog.findOne({ ...baseQuery, featured: true })
     .select("-content -isDeleted -deletedAt")
-    .populate("author", "fullName email")
+    .populate("author", "fullName email role")
+    .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
     .populate("category", "name slug")
     .sort({ publishedAt: -1 })
     .lean();
@@ -177,7 +204,8 @@ export const getFeaturedBlog = async () => {
   if (!featured) {
     featured = await Blog.findOne(baseQuery)
       .select("-content -isDeleted -deletedAt")
-      .populate("author", "fullName email")
+      .populate("author", "fullName email role")
+      .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
       .populate("category", "name slug")
       .sort({ publishedAt: -1 })
       .lean();
@@ -198,7 +226,8 @@ export const getPublicBlogBySlug = async (slug) => {
     status: "published",
     publishedAt: { $lte: now },
   })
-    .populate("author", "fullName email")
+    .populate("author", "fullName email role")
+    .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
     .populate("category", "name slug description")
     .lean();
 
@@ -215,7 +244,8 @@ export const getPublicBlogBySlug = async (slug) => {
       status: "published",
       publishedAt: { $lte: now },
     })
-      .populate("author", "fullName email")
+      .populate("author", "fullName email role")
+      .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
       .populate("category", "name slug")
       .lean();
 
@@ -308,15 +338,19 @@ export const getBlogTags = async () => {
   return tags.filter(Boolean);
 };
 
-// Admin: Get all blogs with pagination, status, and category filters
-export const getAdminBlogs = async ({
-  page = 1,
-  limit = 10,
-  status = "all",
-  category = null,
-  search = null,
-}) => {
+// Admin/Professional CMS: Get all blogs with pagination, status, and category filters (Strict Multi-Tenant Isolation)
+export const getAdminBlogs = async (
+  { page = 1, limit = 10, status = "all", category = null, search = null },
+  user
+) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
+
   const query = { isDeleted: false };
+
+  // 🔒 STRICT ISOLATION: Professionals can ONLY see their own articles
+  if (isProfessional) {
+    query.author = userId;
+  }
 
   if (status && status !== "all") {
     query.status = status;
@@ -335,7 +369,8 @@ export const getAdminBlogs = async ({
 
   const [blogs, total] = await Promise.all([
     Blog.find(query)
-      .populate("author", "fullName email")
+      .populate("author", "fullName email role")
+      .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
       .populate("category", "name slug")
       .sort({ updatedAt: -1 })
       .skip(skip)
@@ -352,24 +387,38 @@ export const getAdminBlogs = async ({
   };
 };
 
-// Admin: Get blog by ID for editing/preview
-export const getAdminBlogById = async (id) => {
-  const blog = await Blog.findOne({ _id: id, isDeleted: false })
-    .populate("author", "fullName email")
+// Admin/Professional CMS: Get blog by ID for editing/preview (Strict Multi-Tenant Isolation)
+export const getAdminBlogById = async (id, user) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
+
+  const query = { _id: id, isDeleted: false };
+  if (isProfessional) {
+    query.author = userId; // 🔒 Guard: Cannot inspect other authors' articles
+  }
+
+  const blog = await Blog.findOne(query)
+    .populate("author", "fullName email role")
+    .populate("professionalProfile", "slug fullName verificationStatus designation profilePhoto")
     .populate("category", "name slug")
     .lean();
 
   if (!blog) {
-    throw new ApiError(404, "Blog not found");
+    throw new ApiError(404, "Blog article not found or you do not have permission to access it.");
   }
 
   return blog;
 };
 
-// Admin: Create Blog
-export const createBlog = async (payload, userId) => {
+// Admin/Professional CMS: Create Blog (Strict Identity Pinning)
+export const createBlog = async (payload, user) => {
+  const { isProfessional, professionalProfileId, userId } = await resolveActorScope(user);
+
   const slug = await generateUniqueSlug(payload.slug || payload.title);
-  const author = payload.author || userId;
+
+  // 🔒 STRICT ASSIGNMENT: Author is pinned to the authenticated session
+  const author = userId;
+  const authorRole = isProfessional ? "professional" : (user?.role === "super_admin" ? "super_admin" : "admin");
+  const professionalProfile = isProfessional ? professionalProfileId : null;
 
   let publishedAt = null;
   if (payload.status === "published") {
@@ -380,6 +429,8 @@ export const createBlog = async (payload, userId) => {
     ...payload,
     slug,
     author,
+    authorRole,
+    professionalProfile,
     publishedAt,
   });
 
@@ -387,7 +438,7 @@ export const createBlog = async (payload, userId) => {
     blogId: blog._id,
     userId,
     action: "created",
-    metadata: { title: blog.title, status: blog.status },
+    metadata: { title: blog.title, status: blog.status, authorRole },
   });
 
   try {
@@ -396,6 +447,7 @@ export const createBlog = async (payload, userId) => {
       title: blog.title,
       slug: blog.slug,
       status: blog.status,
+      authorId: userId.toString(),
       timestamp: Date.now(),
     });
   } catch (rtErr) {
@@ -405,21 +457,27 @@ export const createBlog = async (payload, userId) => {
   return blog;
 };
 
-// Admin: Update Blog (handles slug changes & redirects)
-export const updateBlog = async (id, payload, userId) => {
-  const blog = await Blog.findOne({ _id: id, isDeleted: false });
+// Admin/Professional CMS: Update Blog (Ownership Verification)
+export const updateBlog = async (id, payload, user) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
+
+  const query = { _id: id, isDeleted: false };
+  if (isProfessional) {
+    query.author = userId; // 🔒 Guard: Can only modify own articles
+  }
+
+  const blog = await Blog.findOne(query);
   if (!blog) {
-    throw new ApiError(404, "Blog not found");
+    throw new ApiError(404, "Blog article not found or you do not have permission to edit it.");
   }
 
   const previousSlug = blog.slug;
   let newSlug = blog.slug;
 
-  // Check if title or custom slug is updated to something different
+  // Check if title or custom slug is updated
   if (payload.slug && payload.slug !== blog.slug) {
     newSlug = await generateUniqueSlug(payload.slug, blog._id);
   } else if (!payload.slug && payload.title && payload.title !== blog.title && blog.status === "draft") {
-    // Only auto-update slug from title if blog is still a draft
     newSlug = await generateUniqueSlug(payload.title, blog._id);
   }
 
@@ -436,6 +494,11 @@ export const updateBlog = async (id, payload, userId) => {
   if (payload.status === "published" && !blog.publishedAt) {
     payload.publishedAt = new Date();
   }
+
+  // 🔒 Prevent tampering with tenant/author keys
+  delete payload.author;
+  delete payload.authorRole;
+  delete payload.professionalProfile;
 
   Object.assign(blog, payload);
   blog.slug = newSlug;
@@ -463,11 +526,18 @@ export const updateBlog = async (id, payload, userId) => {
   return blog;
 };
 
-// Admin: Quick Status Change
-export const updateBlogStatus = async (id, status, scheduledAt = null, userId) => {
-  const blog = await Blog.findOne({ _id: id, isDeleted: false });
+// Admin/Professional CMS: Quick Status Change
+export const updateBlogStatus = async (id, status, scheduledAt = null, user) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
+
+  const query = { _id: id, isDeleted: false };
+  if (isProfessional) {
+    query.author = userId; // 🔒 Guard: Can only toggle status of own articles
+  }
+
+  const blog = await Blog.findOne(query);
   if (!blog) {
-    throw new ApiError(404, "Blog not found");
+    throw new ApiError(404, "Blog article not found or you do not have permission to update its status.");
   }
 
   const previousStatus = blog.status;
@@ -504,15 +574,22 @@ export const updateBlogStatus = async (id, status, scheduledAt = null, userId) =
   return blog;
 };
 
-// Admin: Delete Blog (Soft delete by default)
-export const deleteBlog = async (id, userId, permanent = false) => {
-  const blog = await Blog.findById(id);
-  if (!blog) {
-    throw new ApiError(404, "Blog not found");
+// Admin/Professional CMS: Delete Blog (Soft delete by default, hard delete restricted to Superadmin)
+export const deleteBlog = async (id, user, permanent = false) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
+
+  const query = { _id: id };
+  if (isProfessional) {
+    query.author = userId;
+    permanent = false; // 🔒 Professionals cannot hard-delete
   }
 
-  if (permanent) {
-    // Clean up cover image in Cloudinary if present
+  const blog = await Blog.findOne(query);
+  if (!blog) {
+    throw new ApiError(404, "Blog article not found or you do not have permission to delete it.");
+  }
+
+  if (permanent && !isProfessional) {
     if (blog.coverImage?.publicId) {
       deleteImage(blog.coverImage.publicId).catch((err) =>
         console.error("Error deleting image from Cloudinary:", err)
@@ -546,18 +623,24 @@ export const deleteBlog = async (id, userId, permanent = false) => {
   return { message: "Blog deleted successfully" };
 };
 
+// Admin/Professional CMS: Dashboard Overview Stats (Scoped to Author for Professionals)
+export const getBlogDashboardStats = async (user) => {
+  const { isProfessional, userId } = await resolveActorScope(user);
 
-// Admin: Dashboard Overview Stats
-export const getBlogDashboardStats = async () => {
+  const baseQuery = { isDeleted: false };
+  if (isProfessional) {
+    baseQuery.author = userId; // 🔒 Strict metric isolation for practitioner dashboard
+  }
+
   const [total, published, drafts, scheduled, archived, totalViewsResult, categoriesCount] =
     await Promise.all([
-      Blog.countDocuments({ isDeleted: false }),
-      Blog.countDocuments({ isDeleted: false, status: "published" }),
-      Blog.countDocuments({ isDeleted: false, status: "draft" }),
-      Blog.countDocuments({ isDeleted: false, status: "scheduled" }),
-      Blog.countDocuments({ isDeleted: false, status: "archived" }),
+      Blog.countDocuments(baseQuery),
+      Blog.countDocuments({ ...baseQuery, status: "published" }),
+      Blog.countDocuments({ ...baseQuery, status: "draft" }),
+      Blog.countDocuments({ ...baseQuery, status: "scheduled" }),
+      Blog.countDocuments({ ...baseQuery, status: "archived" }),
       Blog.aggregate([
-        { $match: { isDeleted: false } },
+        { $match: baseQuery },
         { $group: { _id: null, totalViews: { $sum: "$viewsCount" } } },
       ]),
       BlogCategory.countDocuments({ isActive: true }),
@@ -661,11 +744,30 @@ export const trackBlogView = async (slug, clientIp, viewedCookies = {}) => {
     { new: true }
   ).select("viewsCount");
 
+  const newViews = updated ? updated.viewsCount : blog.viewsCount + 1;
+
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_VIEW_INCREMENTED", {
+      blogId: blog._id.toString(),
+      slug: cleanSlug,
+      viewsCount: newViews,
+      timestamp: Date.now(),
+    });
+    realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
+      type: "BLOG_VIEWS",
+      blogId: blog._id.toString(),
+      viewsCount: newViews,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog broadcast error:", rtErr);
+  }
+
   return {
     success: true,
     blogId: blog._id.toString(),
     cookieKey,
-    viewsCount: updated ? updated.viewsCount : blog.viewsCount + 1,
+    viewsCount: newViews,
     incremented: true,
   };
 };
@@ -680,6 +782,22 @@ export const resetBlogViews = async (blogId) => {
 
   if (!updated) {
     throw new ApiError(404, "Blog article not found");
+  }
+
+  try {
+    realtimeHub.broadcast("blogs", "BLOG_VIEWS_RESET", {
+      blogId: blogId.toString(),
+      viewsCount: 0,
+      timestamp: Date.now(),
+    });
+    realtimeHub.broadcast("dashboard", "METRIC_UPDATE", {
+      type: "BLOG_VIEWS_RESET",
+      blogId: blogId.toString(),
+      viewsCount: 0,
+      timestamp: Date.now(),
+    });
+  } catch (rtErr) {
+    console.error("Realtime blog reset broadcast error:", rtErr);
   }
 
   return updated;

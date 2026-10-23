@@ -36,19 +36,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/professionals`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.95,
+    },
   ];
 
-  // Dynamic published blogs
+  // Dynamic published blogs and professionals
   try {
-    const data = await getPublicBlogs({ limit: 500 });
-    const blogRoutes: MetadataRoute.Sitemap = (data.blogs || []).map((blog) => ({
+    const [blogData, proData] = await Promise.all([
+      getPublicBlogs({ limit: 500 }).catch(() => ({ blogs: [] })),
+      fetch(`${baseUrl}/api/v1/professionals?limit=500`).then((r) => r.json()).catch(() => ({ data: [] })),
+    ]);
+
+    const blogRoutes: MetadataRoute.Sitemap = (blogData.blogs || []).map((blog) => ({
       url: `${baseUrl}/blogs/${blog.slug}`,
       lastModified: blog.updatedAt ? new Date(blog.updatedAt) : new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
 
-    return [...staticRoutes, ...blogRoutes];
+    const proRoutes: MetadataRoute.Sitemap = ((proData?.data as any[]) || []).map((pro) => ({
+      url: `${baseUrl}/professionals/${pro.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
+    return [...staticRoutes, ...blogRoutes, ...proRoutes];
   } catch {
     return staticRoutes;
   }

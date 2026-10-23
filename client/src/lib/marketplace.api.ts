@@ -8,7 +8,7 @@ export const marketplaceApi = {
   login: async (payload: {
     email: string;
     password: string;
-    requiredRole?: "vendor" | "super_admin" | "user";
+    requiredRole?: "vendor" | "super_admin" | "professional" | "user";
   }) => {
     const { data } = await api.post("/auth/login", payload);
     return data.data;
@@ -22,6 +22,7 @@ export const marketplaceApi = {
     if (!resolvedPortal && typeof window !== "undefined") {
       if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
       else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+      else if (window.location.pathname.startsWith("/dashboard/professional") || window.location.pathname.startsWith("/professional")) resolvedPortal = "professional";
     }
     const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
     const { data } = await api.get(`/auth/me${query}`, {

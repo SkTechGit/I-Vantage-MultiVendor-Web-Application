@@ -616,3 +616,31 @@ export async function sendNewsletterAdminAlert({ email, source = "footer" }) {
   }
 }
 
+/**
+ * Generic Mail Sender
+ */
+export async function sendEmail({ to, subject, html, text }) {
+  const mailService = getTransporter();
+  if (!mailService || !to) {
+    console.warn("[Email] Mail service unconfigured or missing recipient:", to);
+    return { sent: false };
+  }
+
+  const logoAttachments = getLogoAttachment();
+  try {
+    const info = await mailService.transporter.sendMail({
+      from: mailService.from,
+      to,
+      subject,
+      html,
+      text: text || undefined,
+      attachments: logoAttachments,
+    });
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Email] Failed to send email to ${to}:`, err.message);
+    return { sent: false, error: err.message };
+  }
+}
+
+

@@ -1,0 +1,112 @@
+import { Metadata } from "next";
+import Container from "@/components/common/Container";
+import DirectoryExplorer from "@/components/professionals/listing/DirectoryExplorer";
+import { professionalsApi } from "@/lib/professionals.api";
+import { ShieldCheck, Award, Building2 } from "lucide-react";
+
+export const revalidate = 60; // ISR revalidate every 60 seconds
+
+export const metadata: Metadata = {
+  title: "Verified Chartered Accountants, Tax & Legal Experts | i-VANTAGE Network",
+  description:
+    "Find and consult ICAI & Bar Council verified Chartered Accountants, GST & Tax consultants, and corporate lawyers in India. Transparent fees, direct engagement, and premium boardroom facilities.",
+  alternates: {
+    canonical: "https://i-vantage.in/professionals",
+  },
+  openGraph: {
+    title: "Verified Chartered Accountants, Tax & Legal Experts | i-VANTAGE Network",
+    description:
+      "Find and consult ICAI & Bar Council verified Chartered Accountants, GST & Tax consultants, and corporate lawyers in India.",
+    url: "https://i-vantage.in/professionals",
+    siteName: "i-VANTAGE Business Hub",
+    locale: "en_IN",
+    type: "website",
+  },
+};
+
+export default async function ProfessionalsPage() {
+  // Fetch initial directory data on server
+  let initialProfessionals = [];
+  let initialTotal = 0;
+  let categories = [];
+  let facets = { cities: ["Gurugram", "Delhi", "Noida", "Bengaluru", "Mumbai"] };
+
+  try {
+    const [listRes, catRes, facetRes] = await Promise.all([
+      professionalsApi.list({ limit: 12 }),
+      professionalsApi.getCategories(),
+      professionalsApi.getFacets().catch(() => null),
+    ]);
+
+    if (listRes && listRes.data) {
+      initialProfessionals = listRes.data;
+      initialTotal = listRes.total || listRes.data.length;
+    }
+    if (catRes) {
+      categories = catRes;
+    }
+    if (facetRes) {
+      facets = facetRes;
+    }
+  } catch (err) {
+    console.error("Error fetching professionals server-side:", err);
+  }
+
+  return (
+    <div className="bg-[#F8FAFC] min-h-screen pb-24">
+      {/* Editorial Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-[#F8FAFC] border-b border-slate-200/70 pt-12 pb-14 sm:pt-16 sm:pb-18">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-gradient-to-r from-blue-400/10 via-[#1E5BFF]/10 to-indigo-400/10 blur-3xl rounded-full"
+        />
+
+        <Container className="relative">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            {/* Pill Tag */}
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/80 bg-blue-50/80 px-3.5 py-1 text-xs font-bold text-[#1E5BFF] shadow-2xs">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>I-VANTAGE VERIFIED PROFESSIONALS NETWORK</span>
+            </div>
+
+            {/* Main Headline */}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A1F66] leading-[1.15]">
+              India&apos;s Verified Network of Chartered Accountants &amp; Legal Minds
+            </h1>
+
+            {/* Subheading */}
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
+              Connect directly with vetted corporate advisors, statutory auditors, GST practitioners, and corporate advocates. ICAI &amp; Bar Council verified with zero brokerage.
+            </p>
+
+            {/* Trust Highlights Strip */}
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-semibold text-slate-700">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                <span>100% Verified Registration</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Award className="h-4 w-4 text-[#C8942C]" />
+                <span>Transparent Advisory Pricing</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-[#1E5BFF]" />
+                <span>Boardroom &amp; Virtual Consultations</span>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Main Content Area */}
+      <Container className="mt-8">
+        <DirectoryExplorer
+          initialProfessionals={initialProfessionals}
+          initialTotal={initialTotal}
+          categories={categories}
+          facets={facets}
+        />
+      </Container>
+    </div>
+  );
+}

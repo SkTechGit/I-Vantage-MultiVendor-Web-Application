@@ -64,6 +64,7 @@ export interface SecurityAuditItem {
 export type TeamTab =
   | "members"
   | "vendors"
+  | "professionals"
   | "audit"
   | "invite"
   | "requests"

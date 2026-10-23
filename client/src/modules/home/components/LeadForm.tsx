@@ -104,14 +104,14 @@ export default function LeadForm({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/65 p-0 backdrop-blur-md sm:items-center sm:p-4 transition-opacity duration-300"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
     >
-      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl">
+      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl animate-modal-in">
 
         {/* =====================================================
             HEADER
@@ -138,10 +138,10 @@ export default function LeadForm({
           <button
             type="button"
             onClick={onClose}
-            className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
+            className="group ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 cursor-pointer active:scale-95"
             aria-label="Close"
           >
-            <X size={17} />
+            <X size={17} className="transition-transform duration-200 group-hover:rotate-90" />
           </button>
         </div>
 

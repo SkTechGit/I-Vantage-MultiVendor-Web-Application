@@ -156,7 +156,7 @@ export default function ListingEnquiryModal({
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-[0_25px_70px_rgba(10,31,102,0.25)] border border-slate-200 overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-[0_25px_70px_rgba(10,31,102,0.25)] border border-slate-200 overflow-hidden z-10 animate-modal-in">
         {/* Header Ribbon */}
         <div className="relative bg-gradient-to-r from-[#0A1F66] via-[#12319A] to-[#1E5BFF] p-5 text-white">
           <button
@@ -339,7 +339,7 @@ export default function ListingEnquiryModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] text-white text-xs font-bold hover:brightness-110 shadow-md shadow-blue-900/15 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer active:scale-98"
+                className="luxury-btn w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] text-white text-xs font-bold hover:brightness-110 shadow-md shadow-blue-900/15 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer active:scale-95"
               >
                 {submitting ? (
                   <>

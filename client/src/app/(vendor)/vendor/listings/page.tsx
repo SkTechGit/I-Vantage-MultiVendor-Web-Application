@@ -19,6 +19,7 @@ import {
   Sparkles,
   Loader2,
   ExternalLink,
+  Camera,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -250,12 +251,18 @@ export default function VendorListingsPage() {
                       )}
                     </div>
 
-                    {/* Category */}
-                    {item.categoryId?.name && (
-                      <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                        {item.categoryId.name}
+                    {/* Category & Photo Count */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                      {item.categoryId?.name ? (
+                        <div className="bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          {item.categoryId.name}
+                        </div>
+                      ) : <div />}
+                      <div className="bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <Camera className="w-3 h-3 text-white" />
+                        <span>{item.media?.length || 0} {item.media?.length === 1 ? "Photo" : "Photos"}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Body Content */}

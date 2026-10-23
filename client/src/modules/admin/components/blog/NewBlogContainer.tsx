@@ -6,7 +6,11 @@ import { BlogCategory } from "@/modules/blog/blog.types";
 import { getBlogCategories } from "@/modules/blog/blog.api";
 import BlogEditor from "./BlogEditor";
 
-export default function NewBlogContainer() {
+interface Props {
+  basePath?: string;
+}
+
+export default function NewBlogContainer({ basePath = "/admin/blogs" }: Props = {}) {
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,5 +48,5 @@ export default function NewBlogContainer() {
     );
   }
 
-  return <BlogEditor categories={categories} />;
+  return <BlogEditor categories={categories} basePath={basePath} />;
 }

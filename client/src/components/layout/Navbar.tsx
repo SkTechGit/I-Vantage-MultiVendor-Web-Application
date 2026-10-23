@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Building2,
   Lock,
+  ShieldCheck,
   ChevronDown,
   Sparkles,
   ArrowUpRight,
@@ -138,7 +139,7 @@ export default function Navbar() {
             {/* List Your Space — Partner CTA */}
             <Link
               href="/list-your-space"
-              className="inline-flex h-10 items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-[#1E5BFF] bg-[#F0F5FF] border border-[#1E5BFF]/20 hover:bg-[#1E5BFF] hover:text-white transition-all shadow-xs shrink-0"
+              className="luxury-btn inline-flex h-10 items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-[#1E5BFF] bg-[#F0F5FF] border border-[#1E5BFF]/20 hover:bg-[#1E5BFF] hover:text-white transition-all shadow-xs shrink-0 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#F4A900] shrink-0" />
               <span className="hidden xl:inline whitespace-nowrap">List Your Space</span>
@@ -150,7 +151,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setPortalOpen(!portalOpen)}
-                className={`flex h-10 items-center gap-1.5 px-3 rounded-xl border text-xs font-bold transition-all duration-300 shadow-xs active:scale-95 ${
+                className={`flex h-10 items-center gap-1.5 px-3 rounded-xl border text-xs font-bold transition-all duration-300 shadow-xs active:scale-95 cursor-pointer ${
                   portalOpen
                     ? "border-[#1E5BFF] bg-[#F0F5FF] text-[#1E5BFF]"
                     : "border-slate-200 bg-white text-slate-700 hover:border-[#1E5BFF]/30 hover:bg-[#F0F5FF] hover:text-[#1E5BFF]"
@@ -162,13 +163,13 @@ export default function Navbar() {
                 <span>Login</span>
                 <ChevronDown
                   size={13}
-                  className={`transition-transform duration-200 ${portalOpen ? "rotate-180 text-[#1E5BFF]" : "text-slate-400"}`}
+                  className={`transition-transform duration-300 ${portalOpen ? "rotate-180 text-[#1E5BFF]" : "text-slate-400"}`}
                 />
               </button>
 
-              {/* Desktop Login Portal Dropdown */}
+              {/* Desktop Login Portal Dropdown with Velvet Animation */}
               {portalOpen && (
-                <div className="absolute right-0 top-full mt-2.5 w-80 rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl ring-1 ring-black/10 animate-in fade-in zoom-in-95 duration-150 z-50">
+                <div className="absolute right-0 top-full mt-2.5 w-80 rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl ring-1 ring-black/10 animate-modal-in z-50">
                   <div className="px-2 py-1 mb-2.5 border-b border-slate-100 flex items-center justify-between">
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                       Select Login Portal
@@ -176,7 +177,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setPortalOpen(false)}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition active:scale-95"
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition active:scale-95 cursor-pointer"
                       aria-label="Close login menu"
                     >
                       <X size={15} />
@@ -187,20 +188,42 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => handleNavigate("/vendor/login")}
-                    className="w-full flex items-start gap-3.5 rounded-xl p-3 transition active:bg-blue-50 hover:bg-blue-50/70 group text-left cursor-pointer border border-transparent hover:border-blue-100"
+                    className="w-full flex items-start gap-3.5 rounded-xl p-3 transition-all duration-200 active:bg-blue-50 hover:bg-blue-50/70 group text-left cursor-pointer border border-transparent hover:border-blue-100"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0A1F66] to-[#1E5BFF] flex items-center justify-center text-white shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0A1F66] to-[#1E5BFF] flex items-center justify-center text-white shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-110">
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-[#0A1F66] group-hover:text-[#1E5BFF]">
+                        <p className="text-xs font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors">
                           Coworking Partner
                         </p>
-                        <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E5BFF]" />
+                        <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E5BFF] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </div>
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                         Manage listings, inventory & leads
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Verified Professional Option */}
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/professional/login")}
+                    className="w-full flex items-start gap-3.5 rounded-xl p-3 transition-all duration-200 active:bg-blue-50 hover:bg-blue-50/70 group mt-1.5 text-left cursor-pointer border border-transparent hover:border-blue-100"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0A1F66] via-[#1E5BFF] to-[#C8942C] flex items-center justify-center text-white shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-110">
+                      <ShieldCheck className="w-5 h-5 text-amber-200" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors">
+                          Verified Professional
+                        </p>
+                        <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E5BFF] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </div>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                        CA &amp; Legal practice, leads &amp; fees
                       </p>
                     </div>
                   </button>
@@ -209,17 +232,17 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => handleNavigate("/admin/login")}
-                    className="w-full flex items-start gap-3.5 rounded-xl p-3 transition active:bg-slate-100 hover:bg-slate-50 group mt-1.5 text-left cursor-pointer border border-transparent hover:border-slate-200"
+                    className="w-full flex items-start gap-3.5 rounded-xl p-3 transition-all duration-200 active:bg-slate-100 hover:bg-slate-50 group mt-1.5 text-left cursor-pointer border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#0A1F66] shrink-0 group-hover:bg-[#0A1F66] group-hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#0A1F66] shrink-0 group-hover:bg-[#0A1F66] group-hover:text-white transition-all duration-300 group-hover:scale-110">
                       <Lock className="w-4.5 h-4.5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-slate-800 group-hover:text-[#0A1F66]">
+                        <p className="text-xs font-bold text-slate-800 group-hover:text-[#0A1F66] transition-colors">
                           Enterprise Admin
                         </p>
-                        <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#0A1F66]" />
+                        <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#0A1F66] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </div>
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                         Approvals, catalog & platform CMS
@@ -227,17 +250,30 @@ export default function Navbar() {
                     </div>
                   </button>
 
-                  {/* Register / List Space shortcut */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 px-2 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Have a workspace?</span>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate("/vendor/signup")}
-                      className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
-                      <span>List Your Space &rarr;</span>
-                    </button>
+                  {/* Register / List Space & Join Network shortcuts */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 px-2 space-y-1.5 text-[11px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Have a workspace?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate("/vendor/signup")}
+                        className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+                        <span>List Your Space &rarr;</span>
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Are you a CA/Lawyer?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate("/contact?intent=join_professionals_network")}
+                        className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Apply to Join &rarr;</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -340,7 +376,7 @@ export default function Navbar() {
             {/* Floating Selection Card */}
             <div
               ref={mobilePopoverRef}
-              className="fixed left-3.5 right-3.5 top-18 z-50 mx-auto max-w-sm rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl ring-1 ring-black/10 animate-in fade-in zoom-in-95 duration-150"
+              className="fixed left-3.5 right-3.5 top-18 z-50 mx-auto max-w-sm rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl ring-1 ring-black/10 animate-modal-in"
             >
               <div className="px-2 py-1 mb-2.5 border-b border-slate-100 flex items-center justify-between">
                 <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -378,6 +414,27 @@ export default function Navbar() {
                 </div>
               </button>
 
+              {/* Verified Professional Option */}
+              <button
+                type="button"
+                onClick={() => handleNavigate("/professional/login")}
+                className="w-full flex items-start gap-3.5 rounded-xl p-3 transition active:bg-blue-50 hover:bg-blue-50/70 group mt-1.5 text-left cursor-pointer border border-transparent hover:border-blue-100"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0A1F66] via-[#1E5BFF] to-[#C8942C] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <ShieldCheck className="w-5 h-5 text-amber-200" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-[#0A1F66] group-hover:text-[#1E5BFF]">
+                      Verified Professional
+                    </p>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E5BFF]" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                    CA &amp; Legal practice, leads &amp; fees
+                  </p>
+                </div>
+              </button>
 
               {/* Enterprise Admin Option */}
               <button
@@ -401,17 +458,30 @@ export default function Navbar() {
                 </div>
               </button>
 
-              {/* Register / List Space shortcut */}
-              <div className="mt-3 pt-2.5 border-t border-slate-100 px-2 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">Have a workspace?</span>
-                <button
-                  type="button"
-                  onClick={() => handleNavigate("/vendor/signup")}
-                  className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
-                  <span>List Your Space &rarr;</span>
-                </button>
+              {/* Register / List Space & Join Network shortcuts */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100 px-2 space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Have a workspace?</span>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/vendor/signup")}
+                    className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#F4A900]" />
+                    <span>List Your Space &rarr;</span>
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Are you a CA/Lawyer?</span>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate("/contact?intent=join_professionals_network")}
+                    className="font-bold text-[#1E5BFF] hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Apply to Join &rarr;</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

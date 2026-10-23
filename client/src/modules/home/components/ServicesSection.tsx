@@ -109,8 +109,8 @@ export default function ServicesSection({}: Props) {
       className="relative py-20 sm:py-28 bg-gradient-to-b from-slate-50/50 via-white to-slate-50/50 overflow-hidden"
     >
       {/* Subtle Background Glows */}
-      <div className="absolute left-1/4 top-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute right-1/4 bottom-0 w-96 h-96 bg-[#F4A900]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute left-1/4 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+      <div className="absolute right-1/4 bottom-0 w-96 h-96 bg-[#F4A900]/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow [animation-delay:3s]" />
 
       <Container>
         {/* Header */}
@@ -122,7 +122,7 @@ export default function ServicesSection({}: Props) {
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
             Flexible Workspaces Built For{" "}
-            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent animate-gradient-flow">
               Every Stage of Growth
             </span>
           </h2>
@@ -140,13 +140,13 @@ export default function ServicesSection({}: Props) {
               <Link
                 key={item.id}
                 href={item.href}
-                className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-3.5 sm:p-7 text-left shadow-[0_2px_12px_rgba(10,31,102,0.03)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#1E5BFF]/50 hover:shadow-[0_20px_40px_rgba(30,91,255,0.09)]"
+                className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-3.5 sm:p-7 text-left shadow-[0_2px_12px_rgba(10,31,102,0.03)] transition-all duration-300 hover:-translate-y-2 hover:border-[#1E5BFF]/50 hover:shadow-[0_20px_40px_rgba(30,91,255,0.12)] cursor-pointer"
               >
                 <div>
                   {/* Top Bar: Icon + Badge */}
                   <div className="flex items-center justify-between gap-2 mb-2.5 sm:mb-5">
-                    <div className="flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-[#1E5BFF] border border-blue-100/70 transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.2} />
+                    <div className="flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-[#1E5BFF] border border-blue-100/70 transition-all duration-300 group-hover:scale-115 group-hover:rotate-6 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66] group-hover:shadow-md">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-105" strokeWidth={2.2} />
                     </div>
 
                     <span className="inline-flex items-center px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-[#1E5BFF] transition-colors border border-slate-200/70 group-hover:border-blue-200">
@@ -157,7 +157,7 @@ export default function ServicesSection({}: Props) {
                   <p className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-[#1E5BFF]">
                     {item.subtitle}
                   </p>
-                  <h3 className="text-xs sm:text-lg font-bold text-[#0A1F66] transition-colors group-hover:text-[#1E5BFF] mt-0.5 line-clamp-1 sm:line-clamp-none">
+                  <h3 className="text-xs sm:text-lg font-bold text-[#0A1F66] transition-colors duration-300 group-hover:text-[#1E5BFF] mt-0.5 line-clamp-1 sm:line-clamp-none">
                     {item.title}
                   </h3>
 
@@ -204,10 +204,10 @@ export default function ServicesSection({}: Props) {
 
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0A1F66] hover:bg-[#12319A] text-white text-xs font-bold shadow-md shadow-blue-950/15 transition-all shrink-0 active:scale-95"
+            className="luxury-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0A1F66] hover:bg-[#12319A] text-white text-xs font-bold shadow-md shadow-blue-950/15 transition-all shrink-0 active:scale-95 cursor-pointer"
           >
             <span>Explore Full Business Services</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
       </Container>

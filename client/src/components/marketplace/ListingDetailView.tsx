@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ListingEnquiryForm from "@/components/marketplace/ListingEnquiryForm";
@@ -72,7 +72,7 @@ export default function ListingDetailView({
     rawCity.charAt(0).toUpperCase() + rawCity.slice(1).toLowerCase();
   const categoryName = item.categoryId?.name || "Coworking Space";
 
-  // Curated Fallback Images
+  // Curated Fallback Images (strictly only used if listing has 0 images from vendor)
   const fallbackGallery = [
     "/images/workspace/conf3.webp",
     "/images/workspace/conf1.webp",
@@ -83,20 +83,20 @@ export default function ListingDetailView({
     "/images/workspace/openseat1.webp",
   ];
 
-  // Raw media from backend
-  const rawMediaList = (item.media || [])
-    .map((m: any) => m?.mediaId?.secureUrl || m?.url || "")
-    .filter(Boolean);
+  // Raw media from backend - extract all valid secure URLs uploaded by vendor
+  const rawMediaList = useMemo(() => {
+    return (item.media || [])
+      .map((m: any) => m?.mediaId?.secureUrl || m?.secureUrl || m?.url || "")
+      .filter((url: string) => typeof url === "string" && url.trim().length > 0);
+  }, [item.media]);
 
-  // Unified Gallery of at least 4 photos
+  // Dynamic Gallery: Strictly reflects the vendor's actual uploaded images.
+  // NEVER pads with random fallback photos if vendor has uploaded any images!
   const fullGallery: string[] = useMemo(() => {
-    const combined = [...rawMediaList];
-    for (const fb of fallbackGallery) {
-      if (combined.length < 5 && !combined.includes(fb)) {
-        combined.push(fb);
-      }
+    if (rawMediaList.length > 0) {
+      return rawMediaList;
     }
-    return combined.length > 0 ? combined : fallbackGallery;
+    return fallbackGallery;
   }, [rawMediaList]);
 
   const primaryImage = fullGallery[0];
@@ -112,12 +112,7 @@ export default function ListingDetailView({
       return item.serviceIds.map((svc: any, idx: number) => {
         const sPrice = Number(svc.price) || basePrice;
         const sOrig = Math.round(sPrice * 1.25);
-        const imagesPool = [
-          fullGallery[1] || fallbackGallery[1],
-          fullGallery[2] || fallbackGallery[2],
-          fullGallery[0] || fallbackGallery[0],
-          fullGallery[3] || fallbackGallery[3],
-        ];
+        const imagesPool = fullGallery.length > 0 ? fullGallery : fallbackGallery;
 
         return {
           id: svc._id || `svc-${idx}`,
@@ -152,7 +147,7 @@ export default function ListingDetailView({
         name: "Open Flexi Desk",
         subtitle: "Hot desk in collaborative open workspace",
         capacityLabel: "1 Person / Hot Desk",
-        image: fullGallery[2] || "/images/workspace/openseat3.webp",
+        image: fullGallery[2 % fullGallery.length] || primaryImage,
         price: openDeskPrice,
         originalPrice: Math.round(openDeskPrice * 1.3),
         unit: "day",
@@ -170,7 +165,7 @@ export default function ListingDetailView({
         name: "Dedicated Desk",
         subtitle: "Your own fixed workstation with lockable storage",
         capacityLabel: "1 Reserved Seat",
-        image: fullGallery[0] || "/images/workspace/conf3.webp",
+        image: fullGallery[0] || primaryImage,
         price: dedicatedPrice,
         originalPrice: Math.round(dedicatedPrice * 1.25),
         unit: baseUnit,
@@ -189,7 +184,7 @@ export default function ListingDetailView({
         name: "Private Executive Cabin",
         subtitle: "Soundproof acoustic office suite for teams",
         capacityLabel: "3, 6, 10, 20 Seater Options",
-        image: fullGallery[1] || "/images/workspace/conf1.webp",
+        image: fullGallery[1 % fullGallery.length] || primaryImage,
         price: cabinPrice,
         originalPrice: Math.round(cabinPrice * 1.2),
         unit: "month",
@@ -207,7 +202,7 @@ export default function ListingDetailView({
         name: "Meeting & AV Boardroom",
         subtitle: "Executive conference suite for pitches & syncs",
         capacityLabel: "6 - 14 Seater AV Suite",
-        image: fullGallery[3] || "/images/workspace/conf2.webp",
+        image: fullGallery[3 % fullGallery.length] || primaryImage,
         price: meetingRoomPrice,
         originalPrice: 1800,
         unit: "hour",
@@ -221,7 +216,7 @@ export default function ListingDetailView({
         statusLabel: "Hourly On-Demand",
       },
     ];
-  }, [item, basePrice, baseUnit, fullGallery]);
+  }, [item, basePrice, baseUnit, fullGallery, primaryImage]);
 
   // Selected seating option state
   const [selectedPlanId, setSelectedPlanId] = useState<string>(
@@ -234,9 +229,37 @@ export default function ListingDetailView({
     );
   }, [seatingOptions, selectedPlanId]);
 
-  // Lightbox State
+  // Lightbox & Mobile Gallery State
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [activeMobilePhotoIndex, setActiveMobilePhotoIndex] = useState(0);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
+
+  // Keyboard navigation for photo lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLightboxOpen(false);
+      } else if (e.key === "ArrowLeft") {
+        setActivePhotoIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === "ArrowRight") {
+        setActivePhotoIndex((prev) => Math.min(fullGallery.length - 1, prev + 1));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, fullGallery.length]);
+
+  // Activate mobile detail layout rules (lifts VIKI bot, hides mobile teaser overlap)
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.body.classList.add("listing-detail-active");
+      return () => {
+        document.body.classList.remove("listing-detail-active");
+      };
+    }
+  }, []);
 
   // Copy Address Toast
   const [copied, setCopied] = useState(false);
@@ -257,6 +280,29 @@ export default function ListingDetailView({
 
   const fullAddress = `${item.location?.address || "One Horizon Center, Golf Course Road"}${item.location?.area ? `, ${item.location.area}` : ", DLF Phase 5"}${item.location?.city ? `, ${String(item.location.city).toUpperCase()}` : ", GURUGRAM"}, HR 122002`;
 
+  // Center amenities array ordered for maximum impact
+  const centerAmenities = useMemo(
+    () => [
+      { name: "High-Speed Wi-Fi (1Gbps)", type: "free", icon: Wifi },
+      { name: "Central Air Conditioning", type: "free", icon: Check },
+      { name: "100% DG Power Backup", type: "free", icon: Zap },
+      { name: "Tea & Artisan Coffee", type: "free", icon: Coffee },
+      { name: "Ergonomic Chairs & Desks", type: "free", icon: Check },
+      { name: "Filtered RO Drinking Water", type: "free", icon: Check },
+      { name: "2 Wheeler Parking", type: "free", icon: Car },
+      { name: "4 Wheeler Parking", type: "free", icon: Car },
+      { name: "Desk Charging Ports", type: "free", icon: Zap },
+      { name: "Acoustic Phone Booths", type: "premier", icon: PhoneCall },
+      { name: "Meeting & AV Boardrooms", type: "paid", icon: Layers },
+      { name: "Security Personnel & CCTV", type: "free", icon: Lock },
+      { name: "Separate Male/Female Washroom", type: "free", icon: Check },
+      { name: "Cafeteria & Pantry Lounge", type: "free", icon: Coffee },
+      { name: "Fire Extinguisher & Alarms", type: "free", icon: Check },
+      { name: "First Aid Emergency Kit", type: "free", icon: Check },
+    ],
+    []
+  );
+
   const scrollToForm = () => {
     const el = document.getElementById("enquiry-booking-section");
     if (el) {
@@ -265,27 +311,27 @@ export default function ListingDetailView({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 lg:pb-16 text-slate-800">
+    <div className="min-h-screen bg-[#F8FAFC] pb-32 sm:pb-28 lg:pb-16 text-slate-800 overflow-x-hidden">
       {/* 1. Breadcrumbs Bar */}
-      <div className="bg-white border-b border-slate-200/80 py-3.5 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white border-b border-slate-200/80 py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-slate-500 overflow-x-auto whitespace-nowrap">
-            <Link href="/" className="hover:text-[#0A1F66] transition">
+          <div className="flex items-center gap-2 text-xs text-slate-500 overflow-x-auto whitespace-nowrap no-scrollbar py-0.5">
+            <Link href="/" className="hover:text-[#0A1F66] transition shrink-0">
               Home
             </Link>
             <ChevronRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
             <Link
               href={`/${rawCity.toLowerCase()}`}
-              className="hover:text-[#0A1F66] capitalize transition"
+              className="hover:text-[#0A1F66] capitalize transition shrink-0"
             >
               {cityName}
             </Link>
             <ChevronRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-            <span className="text-slate-500">
+            <span className="text-slate-500 shrink-0">
               {item.location?.area || "Coworking"}
             </span>
             <ChevronRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-            <span className="text-[#0A1F66] font-bold truncate max-w-[200px] sm:max-w-xs">
+            <span className="text-[#0A1F66] font-bold truncate max-w-[130px] sm:max-w-xs shrink-0">
               {item.title}
             </span>
           </div>
@@ -293,7 +339,7 @@ export default function ListingDetailView({
           <button
             type="button"
             onClick={handleCopyAddress}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#1E5BFF] transition cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#1E5BFF] transition cursor-pointer shrink-0"
           >
             {copied ? (
               <>
@@ -312,21 +358,134 @@ export default function ListingDetailView({
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8">
-        {/* 2. Photo Showcase Gallery (myHQ Layout: 1 Large + 3 Stacked) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        {/* 2. Photo Showcase Gallery */}
+        {/* Mobile Swipeable Gallery Carousel (< md) */}
+        <div className="md:hidden relative rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+          <div
+            id="mobile-gallery-scroll"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const index = Math.round(el.scrollLeft / (el.clientWidth || 1));
+              if (index !== activeMobilePhotoIndex) {
+                setActiveMobilePhotoIndex(index);
+              }
+            }}
+            className="flex w-full overflow-x-auto snap-x snap-mandatory scrollbar-none aspect-[16/11]"
+          >
+            {fullGallery.map((img, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  setActivePhotoIndex(idx);
+                  setLightboxOpen(true);
+                }}
+                className="w-full flex-none snap-center relative h-full cursor-pointer"
+              >
+                <Image
+                  src={img}
+                  alt={`${item.title} photo ${idx + 1}`}
+                  fill
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : undefined}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 800px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+              </div>
+            ))}
+          </div>
+
+          {/* Top Left: Popular Badge */}
+          <div className="absolute top-3 left-3 pointer-events-none">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/95 text-[#0A1F66] shadow-md backdrop-blur-md">
+              <Flame className="w-3 h-3 text-[#F4A900] fill-[#F4A900]" />
+              <span>Popular Choice</span>
+            </span>
+          </div>
+
+          {/* Top Right: Share Button */}
+          <div className="absolute top-3 right-3">
+            <button
+              type="button"
+              onClick={handleCopyAddress}
+              className="p-2 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition active:scale-95 cursor-pointer"
+              aria-label="Share listing"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+
+          {/* Bottom Right: Photo Counter Pill (Tap opens Lightbox) */}
+          <div className="absolute bottom-3 right-3">
+            <button
+              type="button"
+              onClick={() => {
+                setActivePhotoIndex(activeMobilePhotoIndex);
+                setLightboxOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-black/60 hover:bg-black/80 backdrop-blur-md shadow transition cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#1E5BFF]" />
+              <span>
+                {activeMobilePhotoIndex + 1} / {fullGallery.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Bottom Left: Mini Indicator Dots */}
+          <div className="absolute bottom-3.5 left-3 flex items-center gap-1.5 pointer-events-none">
+            {fullGallery.slice(0, Math.min(fullGallery.length, 7)).map((_, dotIdx) => (
+              <span
+                key={dotIdx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  activeMobilePhotoIndex === dotIdx
+                    ? "w-4 bg-white"
+                    : "w-1.5 bg-white/50"
+                }`}
+              />
+            ))}
+            {fullGallery.length > 7 && (
+              <span className="text-[10px] font-bold text-white/90 drop-shadow-sm ml-0.5">
+                +{fullGallery.length - 7}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Photo Showcase Gallery (Fully Responsive & Dynamic for 1, 2, 3, 4, 10+ photos) */}
+        <div
+          className={`hidden md:grid gap-3 sm:gap-4 ${
+            fullGallery.length === 1
+              ? "grid-cols-1"
+              : fullGallery.length === 2
+              ? "grid-cols-2"
+              : "grid-cols-3"
+          }`}
+        >
           {/* Main Large Photo */}
           <div
             onClick={() => {
               setActivePhotoIndex(0);
               setLightboxOpen(true);
             }}
-            className="md:col-span-2 relative aspect-[16/10] sm:aspect-[16/9.5] rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group"
+            className={`${
+              fullGallery.length === 1
+                ? "col-span-1 aspect-[21/9] sm:aspect-[2.3/1]"
+                : fullGallery.length === 2
+                ? "col-span-1 aspect-[16/10] sm:aspect-[16/9.5]"
+                : "col-span-2 aspect-[16/10] sm:aspect-[16/9.5]"
+            } relative rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group`}
           >
             <Image
               src={primaryImage}
               alt={item.title}
               fill
               priority
+              loading="eager"
               sizes="(max-width: 768px) 100vw, 66vw"
               className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             />
@@ -352,38 +511,74 @@ export default function ListingDetailView({
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-900 bg-white/95 hover:bg-white backdrop-blur-md shadow-lg transition active:scale-95 cursor-pointer"
               >
                 <Camera className="w-4 h-4 text-[#1E5BFF]" />
-                <span>View all {fullGallery.length} photos</span>
+                <span>
+                  {fullGallery.length === 1
+                    ? "View photo"
+                    : `View all ${fullGallery.length} photos`}
+                </span>
               </button>
             </div>
           </div>
 
-          {/* 3 Secondary Stacked Photos */}
-          <div className="grid grid-cols-3 md:grid-cols-1 gap-2.5 sm:gap-3">
-            {fullGallery.slice(1, 4).map((photoUrl, idx) => (
-              <div
-                key={idx}
-                onClick={() => {
-                  setActivePhotoIndex(idx + 1);
-                  setLightboxOpen(true);
-                }}
-                className="relative aspect-video sm:aspect-[16/9] md:aspect-[16/8] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group"
-              >
-                <Image
-                  src={photoUrl}
-                  alt={`Center photo ${idx + 2}`}
-                  fill
-                  sizes="(max-width: 768px) 33vw, 33vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-                <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors" />
-              </div>
-            ))}
-          </div>
+          {/* Secondary Stacked Photos (Only when more than 1 photo exists) */}
+          {fullGallery.length > 1 && (
+            <div
+              className={`col-span-1 grid gap-2.5 sm:gap-3 ${
+                fullGallery.length === 2
+                  ? "grid-cols-1"
+                  : fullGallery.length === 3
+                  ? "grid-cols-1 grid-rows-2 h-full"
+                  : "grid-cols-1 grid-rows-3 h-full"
+              }`}
+            >
+              {fullGallery.slice(1, 4).map((photoUrl, idx) => {
+                const photoNum = idx + 2;
+                const isLastVisible = idx === 2 && fullGallery.length > 4;
+                const remainingCount = fullGallery.length - 4;
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setActivePhotoIndex(idx + 1);
+                      setLightboxOpen(true);
+                    }}
+                    className={`relative rounded-xl sm:rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group ${
+                      fullGallery.length === 2
+                        ? "aspect-[16/10] sm:aspect-[16/9.5]"
+                        : fullGallery.length === 3
+                        ? "h-full min-h-[140px]"
+                        : "h-full min-h-[100px]"
+                    }`}
+                  >
+                    <Image
+                      src={photoUrl}
+                      alt={`Center photo ${photoNum}`}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors" />
+
+                    {/* +N More Overlay if vendor uploaded more than 4 photos */}
+                    {isLastVisible && (
+                      <div className="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white transition">
+                        <span className="text-xl sm:text-2xl font-black">+{remainingCount}</span>
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-200">
+                          More Photos
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 3. Property Title, Rating & Key Badges Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-4 border-b border-slate-200/80">
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#1E5BFF] border border-blue-200/60">
                 {categoryName}
@@ -393,28 +588,28 @@ export default function ListingDetailView({
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0A1F66] tracking-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-[#0A1F66] tracking-tight leading-snug break-words">
               {item.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs sm:text-sm text-slate-600">
-              <div className="flex items-center gap-1 font-semibold text-slate-700">
-                <MapPin className="w-4 h-4 text-[#1E5BFF] shrink-0" />
-                <span className="truncate max-w-md">{fullAddress}</span>
+            <div className="flex flex-wrap items-center gap-y-1.5 gap-x-3 text-xs sm:text-sm text-slate-600">
+              <div className="flex items-start gap-1 font-semibold text-slate-700 min-w-0">
+                <MapPin className="w-4 h-4 text-[#1E5BFF] shrink-0 mt-0.5" />
+                <span className="line-clamp-2">{fullAddress}</span>
               </div>
               <button
                 type="button"
                 onClick={handleCopyAddress}
-                className="text-xs font-bold text-[#1E5BFF] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#1E5BFF] hover:underline cursor-pointer shrink-0"
               >
                 {copied ? "Copied!" : "Copy Address"}
               </button>
             </div>
 
             {/* Social Proof Pill (Matches myHQ) */}
-            <div className="pt-1 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/60">
-                <TrendingUp className="w-3.5 h-3.5 text-purple-600" />
+            <div className="pt-1 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200/60">
+                <TrendingUp className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span>Booked 172 times in last 30 days</span>
               </span>
               <span className="text-xs text-slate-400">• Highly Rated Space</span>
@@ -422,7 +617,7 @@ export default function ListingDetailView({
           </div>
 
           {/* Rating Box on Right */}
-          <div className="flex items-center md:flex-col md:items-end gap-2 bg-white md:bg-transparent p-3 md:p-0 rounded-xl border md:border-0 border-slate-200">
+          <div className="flex items-center md:flex-col md:items-end justify-between md:justify-start gap-2 bg-slate-50 md:bg-transparent p-3 md:p-0 rounded-xl border md:border-0 border-slate-200/80">
             <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 text-white font-black text-sm shadow-xs">
               <Star className="w-4 h-4 fill-white" />
               <span>4.8</span>
@@ -473,7 +668,7 @@ export default function ListingDetailView({
                     >
                       <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
                         {/* Seating Option Thumbnail */}
-                        <div className="relative w-full sm:w-44 h-32 sm:h-28 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                        <div className="relative w-full sm:w-44 h-36 sm:h-28 rounded-xl overflow-hidden bg-slate-100 shrink-0">
                           <Image
                             src={option.image}
                             alt={option.name}
@@ -486,10 +681,15 @@ export default function ListingDetailView({
                               POPULAR
                             </span>
                           )}
+                          {option.statusLabel && (
+                            <span className="sm:hidden absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md">
+                              {option.statusLabel}
+                            </span>
+                          )}
                         </div>
 
-                        {/* Plan Details & Why Choose */}
-                        <div className="flex-1 space-y-1.5 min-w-0">
+                        {/* Plan Details & Features */}
+                        <div className="flex-1 space-y-2 min-w-0">
                           <div className="flex items-center justify-between gap-2">
                             <h3 className="text-base font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors">
                               {option.name}
@@ -501,27 +701,27 @@ export default function ListingDetailView({
                             )}
                           </div>
 
-                          <p className="text-xs text-slate-500 flex items-center gap-1 font-medium">
+                          <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
                             <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{option.capacityLabel}</span>
                           </p>
 
-                          {/* Feature Tags ("Why choose?") */}
+                          {/* Feature Tags (Full readable text wrapping, no truncate cutting off) */}
                           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            {option.features.slice(0, 3).map((feat, fIdx) => (
+                            {option.features.slice(0, 4).map((feat, fIdx) => (
                               <span
                                 key={fIdx}
-                                className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md font-medium"
+                                className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-md font-medium leading-tight"
                               >
                                 <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                                <span className="truncate max-w-[150px] sm:max-w-none">{feat}</span>
+                                <span>{feat}</span>
                               </span>
                             ))}
                           </div>
                         </div>
 
                         {/* Pricing & Selection CTA */}
-                        <div className="sm:border-l sm:border-slate-100 sm:pl-5 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
+                        <div className="pt-3 sm:pt-0 border-t border-slate-100 sm:border-t-0 sm:border-l sm:border-slate-100 sm:pl-5 flex items-center sm:flex-col sm:items-end justify-between sm:justify-center gap-3 shrink-0">
                           <div className="text-left sm:text-right">
                             <div className="text-xs text-slate-400 line-through">
                               ₹{option.originalPrice.toLocaleString("en-IN")}
@@ -545,7 +745,7 @@ export default function ListingDetailView({
                               e.stopPropagation();
                               setSelectedPlanId(option.id);
                             }}
-                            className={`w-28 sm:w-32 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                            className={`min-w-[100px] sm:w-32 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
                               isSelected
                                 ? "bg-[#0A1F66] text-white shadow-xs"
                                 : "bg-white hover:bg-slate-50 text-[#0A1F66] border border-slate-300"
@@ -788,56 +988,64 @@ export default function ListingDetailView({
 
               {/* Available Included Amenities Grid */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  AVAILABLE AT THIS CENTER
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[
-                    { name: "2 Wheeler Parking", type: "free", icon: Car },
-                    { name: "4 Wheeler Parking", type: "free", icon: Car },
-                    { name: "High-Speed Wi-Fi (1Gbps)", type: "free", icon: Wifi },
-                    { name: "Tea & Artisan Coffee", type: "free", icon: Coffee },
-                    { name: "Filtered RO Drinking Water", type: "free", icon: Check },
-                    { name: "Ergonomic Chairs & Desks", type: "free", icon: Check },
-                    { name: "Separate Male/Female Washroom", type: "free", icon: Check },
-                    { name: "Cafeteria & Pantry Lounge", type: "free", icon: Coffee },
-                    { name: "Central Air Conditioning", type: "free", icon: Check },
-                    { name: "100% DG Power Backup", type: "free", icon: Zap },
-                    { name: "Desk Charging Ports", type: "free", icon: Zap },
-                    { name: "Security Personnel & CCTV", type: "free", icon: Lock },
-                    { name: "Fire Extinguisher & Alarms", type: "free", icon: Check },
-                    { name: "First Aid Emergency Kit", type: "free", icon: Check },
-                    { name: "Acoustic Phone Booths", type: "premier", icon: PhoneCall },
-                    { name: "Meeting & AV Boardrooms", type: "paid", icon: Layers },
-                  ].map((amenity, idx) => (
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    AVAILABLE AT THIS CENTER
+                  </h4>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {centerAmenities.length} Amenities
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                  {(showAllAmenities ? centerAmenities : centerAmenities.slice(0, 6)).map((amenity, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 flex items-center justify-between gap-2 text-xs"
+                      className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/70 flex items-center justify-between gap-2.5 text-xs"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <amenity.icon className="w-3.5 h-3.5 text-[#1E5BFF] shrink-0" />
-                        <span className="font-semibold text-slate-800 truncate">
+                        <amenity.icon className="w-4 h-4 text-[#1E5BFF] shrink-0" />
+                        <span className="font-semibold text-slate-800 leading-tight">
                           {amenity.name}
                         </span>
                       </div>
                       {amenity.type === "free" && (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded shrink-0">
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md shrink-0">
                           Free
                         </span>
                       )}
                       {amenity.type === "premier" && (
-                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded shrink-0">
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-md shrink-0">
                           Premier
                         </span>
                       )}
                       {amenity.type === "paid" && (
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded shrink-0">
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md shrink-0">
                           On-Demand
                         </span>
                       )}
                     </div>
                   ))}
                 </div>
+
+                {centerAmenities.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllAmenities(!showAllAmenities)}
+                    className="w-full sm:w-auto mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-[#0A1F66] transition cursor-pointer active:scale-98 shadow-2xs"
+                  >
+                    <span>
+                      {showAllAmenities
+                        ? "Show Fewer Amenities"
+                        : `View All ${centerAmenities.length} Amenities (+${centerAmenities.length - 6} more)`}
+                    </span>
+                    {showAllAmenities ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-[#1E5BFF]" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-[#1E5BFF]" />
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Not Included / Optional Section */}
@@ -1092,33 +1300,34 @@ export default function ListingDetailView({
       </div>
 
       {/* 5. Mobile Sticky Bottom Action Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-4 py-3 shadow-lg">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-4">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               {activePlan.name}
             </span>
             <div className="flex items-baseline gap-1">
               <span className="text-base font-black text-[#0A1F66]">
                 ₹{activePlan.price.toLocaleString("en-IN")}
               </span>
-              <span className="text-xs text-slate-500">/{activePlan.unit}</span>
+              <span className="text-xs text-slate-500 font-medium">/{activePlan.unit}</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={scrollToForm}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] text-white text-xs font-bold shadow-md cursor-pointer"
+            className="shrink-0 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 active:scale-95 text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            Book Desk / Tour
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Book Tour / Desk</span>
           </button>
         </div>
       </div>
 
       {/* 6. Fullscreen Photo Lightbox Modal */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
           {/* Top Bar */}
           <div className="flex items-center justify-between text-white pb-4 max-w-6xl mx-auto w-full">
             <span className="text-sm font-bold">
@@ -1141,7 +1350,8 @@ export default function ListingDetailView({
                 alt={`Photo ${activePhotoIndex + 1}`}
                 fill
                 priority
-                sizes="100vw"
+                loading="eager"
+                sizes="(max-width: 1024px) 100vw, 1024px"
                 className="object-contain"
               />
             </div>

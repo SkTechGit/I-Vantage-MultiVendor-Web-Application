@@ -48,7 +48,7 @@ export default function WhyChooseUs() {
   return (
     <section className="relative bg-gradient-to-b from-slate-50/70 via-white to-slate-50/70 py-20 sm:py-28 border-t border-slate-200/70 overflow-hidden">
       {/* Subtle Background Lighting */}
-      <div className="absolute left-1/2 -top-24 -translate-x-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute left-1/2 -top-24 -translate-x-1/2 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
 
       <Container>
         {/* Section Header */}
@@ -60,7 +60,7 @@ export default function WhyChooseUs() {
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
             Why High-Growth Companies{" "}
-            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent animate-gradient-flow">
               Trust i-VANTAGE
             </span>
           </h2>
@@ -78,26 +78,26 @@ export default function WhyChooseUs() {
             return (
               <div
                 key={item.title}
-                className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/85 bg-white p-3.5 sm:p-8 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_16px_36px_rgba(30,91,255,0.09)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-1.5"
+                className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/85 bg-white p-3.5 sm:p-8 shadow-[0_2px_12px_rgba(10,31,102,0.03)] hover:shadow-[0_20px_40px_rgba(30,91,255,0.12)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-2 cursor-pointer"
               >
-                {/* Background Watermark Number */}
-                <span className="absolute right-3 top-2 sm:right-6 sm:top-4 text-xl sm:text-4xl font-black text-slate-100/90 select-none group-hover:text-blue-50 transition-colors">
+                {/* Background Watermark Number with depth transition */}
+                <span className="absolute right-3 top-2 sm:right-6 sm:top-4 text-xl sm:text-4xl font-black text-slate-100/90 select-none group-hover:text-blue-100/70 group-hover:scale-110 transition-all duration-500">
                   {item.num}
                 </span>
 
                 <div>
-                  {/* Icon Box */}
-                  <div className="mb-2.5 sm:mb-6 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/80 shadow-xs transition-all duration-300 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66]">
-                    <Icon className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={2.2} />
+                  {/* Icon Box with 3D Spring Micro-Interaction */}
+                  <div className="mb-2.5 sm:mb-6 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/80 shadow-xs transition-all duration-300 group-hover:scale-115 group-hover:rotate-6 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66] group-hover:shadow-md">
+                    <Icon className="w-4 h-4 sm:w-6 sm:h-6 transition-transform duration-300 group-hover:scale-105" strokeWidth={2.2} />
                   </div>
 
                   {/* Micro Highlight Badge */}
-                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#B45309] mb-1">
+                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#B45309] mb-1 transition-colors group-hover:text-[#D97706]">
                     {item.highlight}
                   </p>
 
                   {/* Title */}
-                  <h3 className="text-xs sm:text-lg font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors leading-snug line-clamp-2">
+                  <h3 className="text-xs sm:text-lg font-bold text-[#0A1F66] group-hover:text-[#1E5BFF] transition-colors duration-300 leading-snug line-clamp-2">
                     {item.title}
                   </h3>
 
@@ -108,8 +108,8 @@ export default function WhyChooseUs() {
                 </div>
 
                 {/* Bottom Border Accent */}
-                <div className="mt-3 sm:mt-6 pt-2 sm:pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-[#1E5BFF] transition-colors">
-                  <Zap className="w-3 h-3 text-[#F4A900]" />
+                <div className="mt-3 sm:mt-6 pt-2 sm:pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-[#1E5BFF] transition-colors duration-300">
+                  <Zap className="w-3 h-3 text-[#F4A900] group-hover:animate-bounce" />
                   <span className="truncate">Enterprise Standard</span>
                 </div>
               </div>

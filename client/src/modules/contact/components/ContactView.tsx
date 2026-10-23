@@ -87,16 +87,16 @@ export default function ContactView() {
                 </p>
               </div>
 
-              {/* B. Center: 3D Isometric Architectural Workspace Model (Reference 2 Inspiration) */}
+              {/* B. Center: Welldone Tech Park Flagship Campus Image */}
               <div className="relative group rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-gradient-to-b from-white/10 to-white/0">
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
                   <Image
-                    src="/images/contact/isometric-office.jpg"
-                    alt="i-VANTAGE Luxury Corporate Workspace & Architectural Hub, Welldone Tech Park, Gurgaon"
+                    src="/images/contact/welldone-tech-park.jpg"
+                    alt="i-VANTAGE Flagship Workspace Hub at Welldone Tech Park, Sohna Road, Gurgaon"
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0C152B]/90 via-[#0C152B]/20 to-black/10" />
 

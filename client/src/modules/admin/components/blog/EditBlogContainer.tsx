@@ -8,7 +8,11 @@ import { getAdminBlogById, getBlogCategories } from "@/modules/blog/blog.api";
 import BlogEditor from "./BlogEditor";
 import { toast } from "sonner";
 
-export default function EditBlogContainer() {
+interface Props {
+  basePath?: string;
+}
+
+export default function EditBlogContainer({ basePath = "/admin/blogs" }: Props = {}) {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -35,7 +39,7 @@ export default function EditBlogContainer() {
       } catch (err) {
         console.error("Failed to load blog for edit:", err);
         toast.error("Failed to load blog");
-        router.push("/admin/blogs");
+        router.push(basePath);
       } finally {
         if (!ignore) {
           setLoading(false);
@@ -48,7 +52,7 @@ export default function EditBlogContainer() {
     return () => {
       ignore = true;
     };
-  }, [id, router]);
+  }, [id, router, basePath]);
 
   if (loading || !blog) {
     return (
@@ -59,5 +63,5 @@ export default function EditBlogContainer() {
     );
   }
 
-  return <BlogEditor initialBlog={blog} categories={categories} />;
+  return <BlogEditor initialBlog={blog} categories={categories} basePath={basePath} />;
 }

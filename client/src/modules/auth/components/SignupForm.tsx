@@ -164,6 +164,8 @@ export default function SignupForm() {
           router.push("/admin/dashboard");
         } else if (inviteData?.role === "vendor" || res?.user?.role === "vendor") {
           router.push("/vendor");
+        } else if (inviteData?.role === "professional" || res?.user?.role === "professional") {
+          router.push("/dashboard/professional");
         } else {
           router.push("/");
         }
@@ -374,6 +376,8 @@ export default function SignupForm() {
                     ? "Super Administrator"
                     : inviteData.role === "vendor"
                     ? "Vendor Partner"
+                    : inviteData.role === "professional"
+                    ? "Verified Professional Partner"
                     : "Standard User"}
                 </p>
               </div>

@@ -1,9 +1,13 @@
 import axiosInstance from "@/lib/axios";
 
 export const getPublicServices = async () => {
-  const { data } = await axiosInstance.get("/services");
-
-  return data.data;
+  try {
+    const { data } = await axiosInstance.get("/services");
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (err: any) {
+    console.warn("Notice: Services endpoint temporarily unavailable:", err?.message || err);
+    return [];
+  }
 };
 
 

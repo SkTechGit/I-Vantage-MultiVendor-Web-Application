@@ -14,6 +14,8 @@ export const SCOPED_COOKIES = {
   ADMIN_REFRESH: "iv_admin_refresh",
   VENDOR_ACCESS: "iv_vendor_token",
   VENDOR_REFRESH: "iv_vendor_refresh",
+  PRO_ACCESS: "iv_pro_token",
+  PRO_REFRESH: "iv_pro_refresh",
   GLOBAL_ACCESS: "accessToken",
   GLOBAL_REFRESH: "refreshToken",
 };
@@ -22,6 +24,7 @@ export const setAuthCookie = (res, token, role = null, portal = null) => {
   const options = getBaseCookieOptions();
   const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin";
   const isVendor = portal === "vendor" || role === "vendor";
+  const isPro = portal === "professional" || role === "professional";
 
   if (isSuperAdmin) {
     res.cookie(SCOPED_COOKIES.ADMIN_ACCESS, token, {
@@ -30,6 +33,11 @@ export const setAuthCookie = (res, token, role = null, portal = null) => {
     });
   } else if (isVendor) {
     res.cookie(SCOPED_COOKIES.VENDOR_ACCESS, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+  } else if (isPro) {
+    res.cookie(SCOPED_COOKIES.PRO_ACCESS, token, {
       ...options,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
@@ -46,6 +54,7 @@ export const setRefreshTokenCookie = (res, token, role = null, portal = null) =>
   const options = getBaseCookieOptions();
   const isSuperAdmin = portal === "admin" || role === "super_admin" || role === "superadmin";
   const isVendor = portal === "vendor" || role === "vendor";
+  const isPro = portal === "professional" || role === "professional";
 
   if (isSuperAdmin) {
     res.cookie(SCOPED_COOKIES.ADMIN_REFRESH, token, {
@@ -54,6 +63,11 @@ export const setRefreshTokenCookie = (res, token, role = null, portal = null) =>
     });
   } else if (isVendor) {
     res.cookie(SCOPED_COOKIES.VENDOR_REFRESH, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    });
+  } else if (isPro) {
+    res.cookie(SCOPED_COOKIES.PRO_REFRESH, token, {
       ...options,
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
@@ -79,12 +93,17 @@ export const clearAuthCookies = (res, portal = "all") => {
   } else if (portal === "vendor") {
     res.clearCookie(SCOPED_COOKIES.VENDOR_ACCESS, options);
     res.clearCookie(SCOPED_COOKIES.VENDOR_REFRESH, options);
+  } else if (portal === "professional") {
+    res.clearCookie(SCOPED_COOKIES.PRO_ACCESS, options);
+    res.clearCookie(SCOPED_COOKIES.PRO_REFRESH, options);
   } else {
     // portal === "all" or general clear
     res.clearCookie(SCOPED_COOKIES.ADMIN_ACCESS, options);
     res.clearCookie(SCOPED_COOKIES.ADMIN_REFRESH, options);
     res.clearCookie(SCOPED_COOKIES.VENDOR_ACCESS, options);
     res.clearCookie(SCOPED_COOKIES.VENDOR_REFRESH, options);
+    res.clearCookie(SCOPED_COOKIES.PRO_ACCESS, options);
+    res.clearCookie(SCOPED_COOKIES.PRO_REFRESH, options);
     res.clearCookie(AUTH_COOKIE.ACCESS_NAME, options);
     res.clearCookie(AUTH_COOKIE.REFRESH_NAME, options);
   }

@@ -15,6 +15,14 @@ import {
 import ApiError from "../../utils/ApiError.js";
 import { sendRoleChangeNotification } from "../../utils/email.js";
 import { createNotification } from "../notifications/notification.service.js";
+import ProfessionalProfile from "../professionals/professionals.model.js";
+import ProfessionalCategory from "../professionals/professionals.category.model.js";
+import { generateUniqueSlug } from "../professionals/professionals.service.js";
+import {
+  PROFILE_STATUS,
+  VERIFICATION_STATUS,
+  DEFAULT_PROCESS_STEPS,
+} from "../professionals/professionals.constants.js";
 
 /* -------------------------------------------------------------------------- */
 /*                                    Login                                   */
@@ -61,7 +69,13 @@ export const login = async ({
       (mUser && mUser.role === "vendor")
     );
 
-  const isUser = !isSuperAdmin && !isVendor;
+  const isProfessional =
+    Boolean(
+      (authUser && authUser.role === "professional") ||
+      (mUser && mUser.role === "professional")
+    );
+
+  const isUser = !isSuperAdmin && !isVendor && !isProfessional;
 
   // 4. Strict Persona Isolation & Portal Validation (Product-Based RBAC Standard)
   // Each portal has an explicit security contract:
@@ -123,6 +137,21 @@ export const login = async ({
         requiredRole: "super_admin",
         correctPortalUrl: "/login",
         error: "Super Administrator privileges required. Access denied.",
+      }
+    );
+  }
+
+  if (requiredRole === "professional" && !isProfessional && !isSuperAdmin) {
+    throw new ApiError(
+      403,
+      "Access Denied: This portal is exclusively for Verified Professional Partners. Please register as a verified professional.",
+      "ROLE_MISMATCH",
+      {
+        currentRole: isVendor ? "vendor" : "user",
+        requiredRole: "professional",
+        correctPortalUrl: isVendor ? "/vendor/login" : "/admin/login",
+        signupUrl: "/professional/signup",
+        error: "Access Denied: This portal is exclusively for Verified Professional Partners.",
       }
     );
   }
@@ -345,6 +374,10 @@ export const register = async ({
   password,
   phone,
   businessName,
+  headline,
+  categoryId,
+  city = "Gurugram",
+  qualification,
   role = "vendor",
   ipAddress = "127.0.0.1",
   userAgent = "Unknown",
@@ -372,7 +405,7 @@ export const register = async ({
   if (existingAuth) {
     throw new ApiError(
       400,
-      "This email is already registered as an Enterprise Administrator. Please log in to the Admin Console."
+      "This email is already registered as an Administrator or Professional Partner. Please log in."
     );
   }
 
@@ -386,79 +419,156 @@ export const register = async ({
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
 
+  const effectiveRole =
+    role === "super_admin" || role === "superadmin"
+      ? "vendor"
+      : role === "professional"
+      ? "professional"
+      : role;
+
   const newUser = await User.create({
     name: name.trim(),
     email: normalizedEmail,
     passwordHash,
     phone: normalizedPhone || phone?.trim(),
     businessName: businessName?.trim(),
-    role: (role === "super_admin" || role === "superadmin") ? "vendor" : role, // Never allow self-registering as super_admin
+    role: effectiveRole,
     status: "active",
     lastLogin: new Date(),
     lastLoginIp: ipAddress,
     loginCount: 1,
-    registeredVia: "vendor_portal",
+    registeredVia: effectiveRole === "professional" ? "professional_portal" : "vendor_portal",
   });
 
-  const effectiveRole = newUser.role;
+  let authUser = null;
+  let createdProfile = null;
+
+  if (effectiveRole === "professional") {
+    // Create counterpart in Auth collection for professional portal authentication
+    authUser = await Auth.create({
+      fullName: name.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone || phone?.trim() || null,
+      password: passwordHash,
+      role: "professional",
+      status: "active",
+      isActive: true,
+      approvedAt: new Date(),
+    });
+
+    // Resolve category
+    let category = null;
+    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+      category = await ProfessionalCategory.findById(categoryId);
+    }
+    if (!category && categoryId) {
+      category = await ProfessionalCategory.findOne({
+        $or: [{ slug: categoryId }, { name: new RegExp(`^${categoryId}$`, "i") }],
+      });
+    }
+    if (!category) {
+      category = await ProfessionalCategory.findOne({ isActive: true }).sort({ sortOrder: 1 });
+    }
+
+    const categoryLabel = category?.label || category?.name || "Verified Professional";
+    const proSlug = await generateUniqueSlug(name.trim(), categoryLabel);
+
+    createdProfile = await ProfessionalProfile.create({
+      userId: authUser._id,
+      categoryId: category?._id,
+      slug: proSlug,
+      fullName: name.trim(),
+      headline: headline?.trim() || `${categoryLabel} & Business Advisor`,
+      summary: `Advising startups, businesses, and leadership teams across ${city || "Gurugram"}.`,
+      city: city?.trim() || "Gurugram",
+      qualification: qualification?.trim() || "",
+      contactEmail: normalizedEmail,
+      contactPhone: normalizedPhone || phone?.trim() || null,
+      status: PROFILE_STATUS.PUBLISHED,
+      verificationStatus: VERIFICATION_STATUS.VERIFIED,
+      verifiedAt: new Date(),
+      processSteps: DEFAULT_PROCESS_STEPS,
+      completeness: 80,
+    });
+  }
+
+  const primaryId = authUser ? authUser._id : newUser._id;
   const accessToken = generateAccessToken({
-    id: newUser._id,
-    email: newUser.email,
+    id: primaryId,
+    email: normalizedEmail,
     role: effectiveRole,
-    tokenVersion: newUser.tokenVersion || 0,
+    tokenVersion: 0,
   });
 
   const refreshToken = generateRefreshToken({
-    id: newUser._id,
-    tokenVersion: newUser.tokenVersion || 0,
+    id: primaryId,
+    tokenVersion: 0,
   });
 
   await AuditLog.create({
-    action: "vendor_registered",
-    portal: "vendor_portal",
-    performedBy: newUser._id,
-    targetEmail: newUser.email,
-    targetUser: newUser._id,
+    action: effectiveRole === "professional" ? "professional_registered" : "vendor_registered",
+    portal: effectiveRole === "professional" ? "professional_portal" : "vendor_portal",
+    performedBy: primaryId,
+    targetEmail: normalizedEmail,
+    targetUser: primaryId,
     ipAddress,
     userAgent,
-    metadata: { role: newUser.role, businessName: newUser.businessName },
+    metadata: {
+      role: effectiveRole,
+      businessName: newUser.businessName,
+      profileId: createdProfile?._id?.toString(),
+    },
   }).catch((err) => console.error("Audit log error:", err));
 
   realtimeHub.broadcast("users", "USER_REGISTERED", {
-    userId: newUser._id,
-    email: newUser.email,
-    name: newUser.name,
-    role: newUser.role,
+    userId: primaryId,
+    email: normalizedEmail,
+    name: name.trim(),
+    role: effectiveRole,
     businessName: newUser.businessName,
-    portal: "vendor_portal",
-    createdAt: newUser.createdAt,
+    portal: effectiveRole === "professional" ? "professional_portal" : "vendor_portal",
+    createdAt: new Date(),
   });
 
   // Live SuperAdmin Notification
   createNotification({
-    title: `New Partner Registered: ${newUser.businessName || newUser.name}`,
-    message: `${newUser.name} registered workspace account (${newUser.email}).`,
-    category: "vendor",
+    title:
+      effectiveRole === "professional"
+        ? `New Professional Registered: ${name.trim()}`
+        : `New Partner Registered: ${newUser.businessName || newUser.name}`,
+    message:
+      effectiveRole === "professional"
+        ? `${name.trim()} registered as a Verified Professional Partner (${normalizedEmail}).`
+        : `${newUser.name} registered workspace account (${newUser.email}).`,
+    category: effectiveRole === "professional" ? "professional" : "vendor",
     priority: "high",
-    actionUrl: "/admin/team",
+    actionUrl: effectiveRole === "professional" ? "/admin/professionals" : "/admin/team",
     metadata: {
-      vendorId: newUser._id.toString(),
-      email: newUser.email,
-      phone: newUser.phone,
+      userId: primaryId.toString(),
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      profileId: createdProfile?._id?.toString(),
     },
   }).catch(() => {});
 
   return {
     user: {
-      _id: newUser._id,
-      id: newUser._id.toString(),
-      name: newUser.name,
-      fullName: newUser.name,
-      email: newUser.email,
-      phone: newUser.phone,
+      _id: primaryId,
+      id: primaryId.toString(),
+      name: name.trim(),
+      fullName: name.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone || phone?.trim(),
       businessName: newUser.businessName,
-      role: newUser.role,
-      status: newUser.status,
+      role: effectiveRole,
+      status: "active",
+      profile: createdProfile
+        ? {
+            _id: createdProfile._id,
+            slug: createdProfile.slug,
+            fullName: createdProfile.fullName,
+          }
+        : undefined,
     },
     token: accessToken,
     accessToken,
@@ -584,6 +694,67 @@ export const signup = async ({ fullName, email, password, phone, inviteToken }) 
     invitation.status = "accepted";
     invitation.acceptedAt = new Date();
     await invitation.save();
+
+    // Dual-collection synchronization for marketplace & professional portals
+    try {
+      let mUser = await User.findOne({ email: normalizedEmail });
+      if (!mUser) {
+        mUser = await User.create({
+          name: fullName.trim(),
+          email: normalizedEmail,
+          phone: normalizedPhone || "",
+          passwordHash: user.password,
+          role: invitation.role,
+          status: "active",
+          businessName: fullName.trim() + (invitation.role === "professional" ? " Practice" : " Workspaces"),
+          tokenVersion: 1,
+        });
+      } else {
+        mUser.role = invitation.role;
+        mUser.status = "active";
+        await mUser.save();
+      }
+
+      if (invitation.role === "professional") {
+        let prof = await ProfessionalProfile.findOne({
+          $or: [{ userId: user._id }, { contactEmail: normalizedEmail }],
+        });
+        if (!prof) {
+          let category = await ProfessionalCategory.findOne({ isActive: true }).sort({ sortOrder: 1 });
+          if (!category) {
+            category = await ProfessionalCategory.findOne({});
+          }
+          if (!category) {
+            category = await ProfessionalCategory.create({
+              slug: "consulting-advisory",
+              name: "Consulting & Advisory",
+              label: "Consulting & Advisory",
+              description: "General consulting and business advisory services",
+              isActive: true,
+            });
+          }
+          const slug = await generateUniqueSlug(fullName.trim());
+          const categoryLabel = category?.name || category?.label || "Professional Advisor";
+          await ProfessionalProfile.create({
+            userId: user._id,
+            categoryId: category._id,
+            slug,
+            fullName: fullName.trim(),
+            headline: `${categoryLabel} & Business Advisor`,
+            summary: `${fullName.trim()} is an empaneled advisor on the i-VANTAGE platform.`,
+            city: "Gurugram",
+            contactEmail: normalizedEmail,
+            contactPhone: normalizedPhone || null,
+            status: "PUBLISHED",
+            verificationStatus: "VERIFIED",
+            verifiedAt: new Date(),
+            completeness: 80,
+          });
+        }
+      }
+    } catch (syncErr) {
+      console.error("Invite signup sync error:", syncErr);
+    }
 
     // Audit log
     await AuditLog.create({
@@ -765,7 +936,7 @@ export const refreshToken = async (rawRefreshToken) => {
 
 export const createInvitation = async ({ email, role = "vendor", adminId }) => {
   const normalizedEmail = email.toLowerCase().trim();
-  const allowedRoles = ["super_admin", "vendor", "user"];
+  const allowedRoles = ["super_admin", "vendor", "user", "professional"];
   const targetRole = allowedRoles.includes(role) ? role : "vendor";
 
   // Check if active user already exists
@@ -1014,7 +1185,7 @@ export const getTeamMembers = async () => {
 
 export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
   const normalizedNewRole = newRole === "superadmin" ? "super_admin" : newRole;
-  const allowedRoles = ["super_admin", "vendor", "user"];
+  const allowedRoles = ["super_admin", "vendor", "user", "professional"];
   if (!allowedRoles.includes(normalizedNewRole)) {
     throw new ApiError(
       400,
@@ -1043,7 +1214,7 @@ export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
           fullName: mUserDoc.name,
           email: mUserDoc.email.toLowerCase().trim(),
           password: mUserDoc.passwordHash || (await bcrypt.hash("Admin@123456", 10)),
-          role: newRole,
+          role: normalizedNewRole,
           status: mUserDoc.status || "active",
           isActive: mUserDoc.status === "active",
           lastLogin: mUserDoc.lastLogin || null,
@@ -1073,18 +1244,56 @@ export const updateMemberRole = async (targetUserId, newRole, adminUser) => {
       mUser.status = user.isActive ? "active" : "suspended";
       mUser.tokenVersion = (mUser.tokenVersion || 0) + 1;
       await mUser.save();
-    } else if (newRole === "vendor" || newRole === "user") {
+    } else if (newRole === "vendor" || newRole === "user" || newRole === "professional") {
       await User.create({
         name: user.fullName,
         email: normalizedEmail,
-        phone: "",
+        phone: user.phone || "",
         passwordHash: user.password,
         role: marketplaceRole,
         status: user.isActive ? "active" : "suspended",
-        businessName: user.fullName + " Workspaces",
+        businessName: user.fullName + (newRole === "professional" ? " Practice" : " Workspaces"),
         tokenVersion: 1,
         lastLogin: user.lastLogin || null,
       });
+    }
+
+    if (normalizedNewRole === "professional") {
+      let prof = await ProfessionalProfile.findOne({
+        $or: [{ userId: user._id }, { contactEmail: normalizedEmail }],
+      });
+      if (!prof) {
+        let category = await ProfessionalCategory.findOne({ isActive: true }).sort({ sortOrder: 1 });
+        if (!category) {
+          category = await ProfessionalCategory.findOne({});
+        }
+        if (!category) {
+          category = await ProfessionalCategory.create({
+            slug: "consulting-advisory",
+            name: "Consulting & Advisory",
+            label: "Consulting & Advisory",
+            description: "General consulting and business advisory services",
+            isActive: true,
+          });
+        }
+        const slug = await generateUniqueSlug(user.fullName || "professional");
+        const categoryLabel = category?.name || category?.label || "Professional Advisor";
+        await ProfessionalProfile.create({
+          userId: user._id,
+          categoryId: category._id,
+          slug,
+          fullName: user.fullName || "Verified Professional",
+          headline: `${categoryLabel} & Business Advisor`,
+          summary: `${user.fullName || "Empaneled professional"} is an empaneled advisor on the i-VANTAGE platform.`,
+          city: "Gurugram",
+          contactEmail: normalizedEmail,
+          contactPhone: user.phone || null,
+          status: "PUBLISHED",
+          verificationStatus: "VERIFIED",
+          verifiedAt: new Date(),
+          completeness: 80,
+        });
+      }
     }
   } catch (syncErr) {
     console.error("Marketplace users synchronization error:", syncErr);

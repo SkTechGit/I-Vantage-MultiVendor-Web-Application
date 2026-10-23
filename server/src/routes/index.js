@@ -16,6 +16,7 @@ import mediaRoutes from "../modules/media/media.routes.js";
 import marketplaceLeadRoutes from "../modules/marketplace-leads/lead.routes.js";
 import vendorRoutes from "../modules/vendor/vendor.routes.js";
 import newsletterRoutes from "../modules/newsletter/subscriber.routes.js";
+import professionalsRoutes from "../modules/professionals/professionals.routes.js";
 
 const router = Router();
 
@@ -39,5 +40,8 @@ router.use("/marketplace-categories", marketplaceCategoryRoutes);
 router.use("/marketplace-services", marketplaceServiceRoutes);
 router.use("/media", mediaRoutes);
 router.use("/marketplace-leads", marketplaceLeadRoutes);
+
+/* Professionals Network routes */
+router.use("/professionals", professionalsRoutes);
 
 export default router;

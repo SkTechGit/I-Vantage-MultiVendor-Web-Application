@@ -32,12 +32,18 @@ export const createService = async (data) => {
 /* -------------------------------------------------------------------------- */
 
 export const getAllServices = async () => {
-  return await Service.find()
-    .populate("category", "name slug")
-    .sort({
-      sortOrder: 1,
-      createdAt: -1,
-    });
+  try {
+    return await Service.find()
+      .populate("category", "name slug")
+      .sort({
+        sortOrder: 1,
+        createdAt: -1,
+      })
+      .lean();
+  } catch (err) {
+    console.error("Error fetching all services:", err.message || err);
+    return [];
+  }
 };
 
 /* -------------------------------------------------------------------------- */

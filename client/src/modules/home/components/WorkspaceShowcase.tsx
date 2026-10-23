@@ -22,7 +22,7 @@ export default function WorkspaceShowcase() {
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#0A1F66] tracking-tight leading-tight">
             Spaces Engineered for{" "}
-            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] bg-clip-text text-transparent animate-gradient-flow">
               Focus & High Growth
             </span>
           </h2>
@@ -84,7 +84,7 @@ export default function WorkspaceShowcase() {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Reception */}
-            <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300">
+            <div className="luxury-hover-lift overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_20px_40px_rgba(10,31,102,0.12)] hover:border-[#1E5BFF]/50 transition-all duration-300">
               <div className="p-4 sm:p-5">
                 <WorkspaceGallery images={receptionImages} />
               </div>
@@ -103,7 +103,7 @@ export default function WorkspaceShowcase() {
             </div>
 
             {/* Pantry */}
-            <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_16px_32px_rgba(10,31,102,0.08)] transition-all duration-300">
+            <div className="luxury-hover-lift overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_4px_20px_rgba(10,31,102,0.04)] hover:shadow-[0_20px_40px_rgba(10,31,102,0.12)] hover:border-[#1E5BFF]/50 transition-all duration-300">
               <div className="p-4 sm:p-5">
                 <WorkspaceGallery images={pantryImages} />
               </div>

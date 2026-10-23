@@ -4,6 +4,7 @@ import {
   Mail,
   Phone,
   Briefcase,
+  Award,
   User as UserIcon,
   Shield,
   ChevronDown,
@@ -23,7 +24,10 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   Filter,
+  Eye,
 } from "lucide-react";
+import axiosInstance from "@/lib/axios";
+import ProfessionalDetailsModal from "../professionals/ProfessionalDetailsModal";
 import { PlatformUser } from "./team.types";
 
 export interface VendorsDirectoryTableProps {
@@ -36,6 +40,11 @@ export interface VendorsDirectoryTableProps {
   onToggleStatus: (vendor: PlatformUser) => void;
   onRoleChange: (vendorId: string, vendorName: string, newRole: string) => void;
   onOpenDeleteModal: (vendor: PlatformUser) => void;
+  title?: string;
+  subtitle?: string;
+  badgeLabel?: string;
+  entityLabel?: string;
+  iconType?: "vendor" | "professional";
 }
 
 type StatusFilter = "all" | "active" | "suspended" | "logged_in" | "never_logged_in";
@@ -72,11 +81,38 @@ export default function VendorsDirectoryTable({
   onToggleStatus,
   onRoleChange,
   onOpenDeleteModal,
+  title = "Registered Marketplace Coworking Vendors",
+  subtitle = "Coworking operators & space owners managing listings on the i-VANTAGE platform.",
+  badgeLabel = "Total Partners",
+  entityLabel = "partners",
+  iconType = "vendor",
 }: VendorsDirectoryTableProps) {
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [selectedProfessional, setSelectedProfessional] = useState<any | null>(null);
+
+  const handleOpenDetails = async (vendor: PlatformUser) => {
+    setSelectedProfessional({
+      ...vendor,
+      fullName: vendor.name,
+      contactEmail: vendor.email,
+      contactPhone: vendor.phone,
+      headline: `${vendor.businessName || vendor.name}`,
+    });
+
+    try {
+      const res = await axiosInstance.get(
+        `/professionals/admin/all?q=${encodeURIComponent(vendor.email)}`
+      );
+      if (res.data?.data && res.data.data.length > 0) {
+        setSelectedProfessional(res.data.data[0]);
+      }
+    } catch {
+      // Retain baseline vendor object
+    }
+  };
 
   // Enterprise Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,11 +262,15 @@ export default function VendorsDirectoryTable({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-[#0A1F66]">
-                Registered Marketplace Coworking Vendors
+                {title}
               </h2>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#1E5BFF] border border-blue-200">
-                <Sparkles className="w-3 h-3 text-[#F4A900]" />
-                {vendors.length} Total Partners
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                iconType === "professional"
+                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  : "bg-blue-50 text-[#1E5BFF] border border-blue-200"
+              }`}>
+                <Sparkles className={`w-3 h-3 ${iconType === "professional" ? "text-purple-600" : "text-[#F4A900]"}`} />
+                {vendors.length} {badgeLabel}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -248,7 +288,7 @@ export default function VendorsDirectoryTable({
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Coworking operators &amp; space owners managing listings on the i-VANTAGE platform.
+              {subtitle}
             </p>
           </div>
 
@@ -276,7 +316,7 @@ export default function VendorsDirectoryTable({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search partner, business, email, phone..."
+                placeholder={`Search ${entityLabel}, business, email, phone...`}
                 className="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50/50 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E5BFF]/30 focus:border-[#1E5BFF] transition"
               />
               {searchTerm && (
@@ -343,7 +383,7 @@ export default function VendorsDirectoryTable({
           {/* Quick Active Filter Indicator */}
           <div className="text-xs text-slate-500 font-medium">
             Showing <span className="font-bold text-slate-800">{totalItems}</span> of{" "}
-            <span className="font-bold text-slate-800">{vendors.length}</span> partners
+            <span className="font-bold text-slate-800">{vendors.length}</span> {entityLabel}
           </div>
         </div>
       </div>
@@ -353,7 +393,9 @@ export default function VendorsDirectoryTable({
         <table className="w-full text-left text-sm text-slate-600">
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-500 border-b border-slate-200">
             <tr>
-              <th className="pl-4 sm:pl-6 pr-2 py-3">Vendor &amp; Business</th>
+              <th className="pl-4 sm:pl-6 pr-2 py-3">
+                {iconType === "professional" ? "Professional & Practice" : "Vendor & Business"}
+              </th>
               <th className="px-2 py-3">Contact Details</th>
               <th className="px-2 py-3">Role</th>
               <th className="px-2 py-3">Status &amp; Access</th>
@@ -367,15 +409,21 @@ export default function VendorsDirectoryTable({
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Building2 className="w-8 h-8 text-slate-300" />
+                    {iconType === "professional" ? (
+                      <Award className="w-8 h-8 text-slate-300" />
+                    ) : (
+                      <Building2 className="w-8 h-8 text-slate-300" />
+                    )}
                     <p className="text-sm font-semibold text-slate-600">
                       {hasActiveFilters
-                        ? "No matching partners found"
-                        : "No registered vendors found"}
+                        ? `No matching ${entityLabel} found`
+                        : `No registered ${entityLabel} found`}
                     </p>
                     <p className="text-xs text-slate-400 max-w-sm">
                       {hasActiveFilters
-                        ? "Try adjusting your search query or status filter to see more partners."
+                        ? `Try adjusting your search query or status filter to see more ${entityLabel}.`
+                        : iconType === "professional"
+                        ? "When a verified professional joins or is assigned the role, they will appear here."
                         : "When a partner signs up on /vendor/signup, they will appear here automatically."}
                     </p>
                     {hasActiveFilters && (
@@ -401,6 +449,8 @@ export default function VendorsDirectoryTable({
                 const currentRoleVal =
                   vendor.role === "superadmin" || vendor.role === "super_admin"
                     ? "super_admin"
+                    : vendor.role === "professional"
+                    ? "professional"
                     : vendor.role === "vendor"
                     ? "vendor"
                     : "user";
@@ -410,11 +460,17 @@ export default function VendorsDirectoryTable({
 
                 return (
                   <tr key={vendor._id} className="hover:bg-slate-50/70 transition">
-                    {/* 1. VENDOR & BUSINESS */}
+                    {/* 1. VENDOR / PROFESSIONAL & BUSINESS */}
                     <td className="pl-4 sm:pl-6 pr-2 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1E5BFF] font-bold text-xs shrink-0 shadow-2xs">
-                          {vendor.businessName ? (
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
+                          iconType === "professional" || vendor.role === "professional"
+                            ? "bg-purple-50 border border-purple-200 text-purple-700"
+                            : "bg-blue-50 border border-blue-200 text-[#1E5BFF]"
+                        }`}>
+                          {iconType === "professional" || vendor.role === "professional" ? (
+                            <Award className="w-4 h-4 text-purple-600" />
+                          ) : vendor.businessName ? (
                             <Building2 className="w-4 h-4 text-[#1E5BFF]" />
                           ) : (
                             (vendor.name || "V").charAt(0).toUpperCase()
@@ -472,13 +528,16 @@ export default function VendorsDirectoryTable({
                             className={`appearance-none cursor-pointer pl-5 pr-5 py-1 text-[11px] font-semibold rounded-full border transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed ${
                               currentRoleVal === "vendor"
                                 ? "bg-blue-50 text-[#1E5BFF] border-blue-200 hover:bg-blue-100 focus:ring-blue-400"
+                                : currentRoleVal === "professional"
+                                ? "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 focus:ring-purple-400"
                                 : currentRoleVal === "super_admin"
                                 ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 focus:ring-indigo-400"
                                 : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 focus:ring-slate-400"
                             }`}
-                            title="Change partner role (Super Admin only)"
+                            title="Change role (Super Admin only)"
                           >
                             <option value="vendor">Vendor</option>
+                            <option value="professional">Professional</option>
                             <option value="user">User</option>
                             <option value="super_admin">SuperAdmin</option>
                           </select>
@@ -488,6 +547,8 @@ export default function VendorsDirectoryTable({
                               <Loader2 size={10} className="animate-spin text-slate-500" />
                             ) : currentRoleVal === "vendor" ? (
                               <Briefcase size={10} className="text-[#1E5BFF]" />
+                            ) : currentRoleVal === "professional" ? (
+                              <Award size={10} className="text-purple-600" />
                             ) : currentRoleVal === "super_admin" ? (
                               <Shield size={10} className="text-indigo-600" />
                             ) : (
@@ -500,9 +561,25 @@ export default function VendorsDirectoryTable({
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-blue-50 text-[#1E5BFF] border border-blue-200">
-                          <Briefcase size={10} />
-                          Vendor
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          currentRoleVal === "professional"
+                            ? "bg-purple-50 text-purple-700 border border-purple-200"
+                            : currentRoleVal === "vendor"
+                            ? "bg-blue-50 text-[#1E5BFF] border border-blue-200"
+                            : "bg-slate-100 text-slate-700 border border-slate-200"
+                        }`}>
+                          {currentRoleVal === "professional" ? (
+                            <Award size={10} />
+                          ) : currentRoleVal === "vendor" ? (
+                            <Briefcase size={10} />
+                          ) : (
+                            <UserIcon size={10} />
+                          )}
+                          {currentRoleVal === "professional"
+                            ? "Professional"
+                            : currentRoleVal === "vendor"
+                            ? "Vendor"
+                            : "User"}
                         </span>
                       )}
                     </td>
@@ -597,8 +674,20 @@ export default function VendorsDirectoryTable({
                     </td>
 
                     {/* 7. ACTIONS */}
-                    <td className="pr-4 sm:pr-6 pl-2 py-3 text-center w-12 shrink-0">
-                      <div className="flex items-center justify-center">
+                    <td className="pr-4 sm:pr-6 pl-2 py-3 text-right shrink-0">
+                      <div className="flex items-center justify-end gap-2">
+                        {iconType === "professional" && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDetails(vendor)}
+                            className="group relative inline-flex items-center gap-1.5 px-3.5 py-1 text-[11px] font-bold text-white rounded-full bg-gradient-to-r from-[#0A1F66] via-[#1E5BFF] to-[#0A1F66] bg-[length:200%_100%] hover:bg-right shadow-[0_2px_10px_rgba(10,31,102,0.3)] hover:shadow-[0_4px_16px_rgba(30,91,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-300 border border-blue-400/30 cursor-pointer overflow-hidden shrink-0"
+                            title={`View complete details of ${vendor.name}`}
+                          >
+                            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                            <Eye className="relative w-3.5 h-3.5 text-blue-200 group-hover:text-white transition-colors shrink-0" />
+                            <span className="relative tracking-tight">View Details</span>
+                          </button>
+                        )}
                         {isSuperAdmin ? (
                           <button
                             type="button"
@@ -772,6 +861,13 @@ export default function VendorsDirectoryTable({
           )}
         </div>
       </div>
+
+      {/* Professional Read-Only Details Dossier Modal */}
+      <ProfessionalDetailsModal
+        isOpen={Boolean(selectedProfessional)}
+        professional={selectedProfessional}
+        onClose={() => setSelectedProfessional(null)}
+      />
     </div>
   );
 }

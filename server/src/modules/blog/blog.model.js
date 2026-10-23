@@ -70,6 +70,20 @@ const blogSchema = new mongoose.Schema(
       index: true,
     },
 
+    authorRole: {
+      type: String,
+      enum: ["super_admin", "professional", "admin"],
+      default: "super_admin",
+      index: true,
+    },
+
+    professionalProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProfessionalProfile",
+      default: null,
+      index: true,
+    },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BlogCategory",

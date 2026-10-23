@@ -41,10 +41,11 @@ const WORKSPACES = [
 
 // Curated Business & Legal Services (Single-line, punchy labels)
 const BUSINESS_SERVICES = [
+  { label: "Verified CA & Legal Experts", href: "/professionals" },
   { label: "Company Incorporation", href: "/services" },
   { label: "GST & ROC Filings", href: "/services" },
   { label: "Trademark & IP Protection", href: "/services" },
-  { label: "Accounting & Auditing", href: "/services" },
+  { label: "Accounting & Tax Advisory", href: "/professionals" },
   { label: "Startup India Advisory", href: "/services" },
   { label: "Enterprise Tech & Cloud", href: "/services" },
 ];

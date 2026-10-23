@@ -16,6 +16,10 @@ export const NAVIGATION = [
     href: "/services",
   },
   {
+    label: "Professionals",
+    href: "/professionals",
+  },
+  {
     label: "Blogs",
     href: "/blogs",
   },

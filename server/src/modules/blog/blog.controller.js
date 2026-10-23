@@ -73,7 +73,7 @@ export const getBlogTags = asyncHandler(async (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 export const getAdminBlogs = asyncHandler(async (req, res) => {
-  const result = await blogService.getAdminBlogs(req.query);
+  const result = await blogService.getAdminBlogs(req.query, req.user);
 
   res.status(200).json({
     success: true,
@@ -82,7 +82,7 @@ export const getAdminBlogs = asyncHandler(async (req, res) => {
 });
 
 export const getAdminBlogById = asyncHandler(async (req, res) => {
-  const blog = await blogService.getAdminBlogById(req.params.id);
+  const blog = await blogService.getAdminBlogById(req.params.id, req.user);
 
   res.status(200).json({
     success: true,
@@ -92,7 +92,7 @@ export const getAdminBlogById = asyncHandler(async (req, res) => {
 
 export const createBlog = asyncHandler(async (req, res) => {
   const validated = createBlogSchema.parse(req.body);
-  const blog = await blogService.createBlog(validated, req.user._id);
+  const blog = await blogService.createBlog(validated, req.user);
 
   res.status(201).json({
     success: true,
@@ -103,7 +103,7 @@ export const createBlog = asyncHandler(async (req, res) => {
 
 export const updateBlog = asyncHandler(async (req, res) => {
   const validated = updateBlogSchema.parse(req.body);
-  const blog = await blogService.updateBlog(req.params.id, validated, req.user._id);
+  const blog = await blogService.updateBlog(req.params.id, validated, req.user);
 
   res.status(200).json({
     success: true,
@@ -118,7 +118,7 @@ export const updateBlogStatus = asyncHandler(async (req, res) => {
     req.params.id,
     validated.status,
     validated.scheduledAt,
-    req.user._id
+    req.user
   );
 
   res.status(200).json({
@@ -130,7 +130,7 @@ export const updateBlogStatus = asyncHandler(async (req, res) => {
 
 export const deleteBlog = asyncHandler(async (req, res) => {
   const permanent = req.query.permanent === "true";
-  const result = await blogService.deleteBlog(req.params.id, req.user._id, permanent);
+  const result = await blogService.deleteBlog(req.params.id, req.user, permanent);
 
   res.status(200).json({
     success: true,
@@ -139,7 +139,7 @@ export const deleteBlog = asyncHandler(async (req, res) => {
 });
 
 export const getBlogDashboardStats = asyncHandler(async (req, res) => {
-  const stats = await blogService.getBlogDashboardStats();
+  const stats = await blogService.getBlogDashboardStats(req.user);
 
   res.status(200).json({
     success: true,

@@ -113,6 +113,7 @@ export default function AboutHero() {
                     alt="i-VANTAGE Business Hub Reception at Welldone Tech Park, Gurgaon"
                     fill
                     priority
+                    loading="eager"
                     sizes="(max-width: 1024px) 100vw, 40vw"
                     className="object-cover transition-transform duration-700 hover:scale-105"
                   />

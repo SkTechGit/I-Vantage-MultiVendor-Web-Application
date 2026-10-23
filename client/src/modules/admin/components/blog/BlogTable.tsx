@@ -19,6 +19,7 @@ import {
   Loader2,
   RefreshCw,
   RotateCcw,
+  Calendar,
 } from "lucide-react";
 import { Blog, BlogCategory, BlogStats, BlogStatus } from "@/modules/blog/blog.types";
 import {
@@ -26,6 +27,7 @@ import {
   updateBlogStatus,
   resetBlogViews,
 } from "@/modules/blog/blog.api";
+import { useRealtimeEvent } from "@/context/RealtimeContext";
 
 interface Props {
   initialBlogs: Blog[];
@@ -33,6 +35,9 @@ interface Props {
   categories: BlogCategory[];
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  basePath?: string;
+  portalTitle?: string;
+  portalSubtitle?: string;
 }
 
 export default function BlogTable({
@@ -41,6 +46,9 @@ export default function BlogTable({
   categories,
   onRefresh,
   isRefreshing,
+  basePath = "/admin/blogs",
+  portalTitle,
+  portalSubtitle,
 }: Props) {
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [stats, setStats] = useState<BlogStats>(initialStats);
@@ -64,6 +72,32 @@ export default function BlogTable({
     }, 0);
     return () => clearTimeout(timer);
   }, [initialStats]);
+
+  // Real-time synchronization directly inside table for instantaneous views feedback
+  useRealtimeEvent("blogs", (event?: { type?: string; payload?: { blogId?: string; viewsCount?: number } }) => {
+    const type = event?.type;
+    const payload = event?.payload;
+
+    if (type === "BLOG_VIEW_INCREMENTED" && payload?.blogId && typeof payload.viewsCount === "number") {
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b._id === payload.blogId
+            ? { ...b, viewsCount: payload.viewsCount! }
+            : b
+        )
+      );
+      setStats((prev) => ({
+        ...prev,
+        totalViews: (prev.totalViews || 0) + 1,
+      }));
+    } else if (type === "BLOG_VIEWS_RESET" && payload?.blogId) {
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b._id === payload.blogId ? { ...b, viewsCount: 0 } : b
+        )
+      );
+    }
+  });
 
   // Client filtering
   const filteredBlogs = blogs.filter((b) => {
@@ -212,33 +246,33 @@ export default function BlogTable({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0A1F66] sm:text-3xl">
-            Blog Articles & Content CMS
+            {portalTitle || "Blog Articles & Content CMS"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Create, publish, edit, and schedule insights for the i-VANTAGE public portal.
+            {portalSubtitle || "Create, publish, edit, and schedule insights for the i-VANTAGE public portal."}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => onRefresh?.()}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-60"
+            className="h-9.5 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95 disabled:opacity-60 whitespace-nowrap shrink-0 cursor-pointer"
             title="Refresh views and articles live"
           >
             <RefreshCw
-              size={15}
+              size={14}
               className={isRefreshing ? "animate-spin text-[#1E5BFF]" : "text-slate-500"}
             />
             <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
 
           <Link
-            href="/admin/blogs/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#1E5BFF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1546CC]"
+            href={`${basePath}/new`}
+            className="h-9.5 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1E5BFF] px-3.5 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#1546CC] active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <Plus size={16} />
+            <Plus size={15} className="shrink-0" />
             <span>Create Blog</span>
           </Link>
         </div>
@@ -279,11 +313,19 @@ export default function BlogTable({
         </div>
 
         <div className="col-span-2 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:col-span-4 lg:col-span-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#C8942C]">
-            <TrendingUp size={14} />
-            <span>Total Views</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#C8942C]">
+              <TrendingUp size={14} />
+              <span>Total Views</span>
+            </div>
+            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-full">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-[#0A1F66]">{stats.totalViews}</p>
+          <p className="mt-2 text-2xl font-bold text-[#0A1F66]">
+            {Number(stats.totalViews || 0).toLocaleString()}
+          </p>
         </div>
       </div>
 
@@ -334,156 +376,197 @@ export default function BlogTable({
       </div>
 
       {/* Desktop Data Table */}
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs md:block">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <tr>
-              <th className="p-4">Article</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Category</th>
-              <th className="p-4">Views</th>
-              <th className="p-4">Date</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredBlogs.length > 0 ? (
-              filteredBlogs.map((blog) => (
-                <tr key={blog._id} className="transition-colors hover:bg-slate-50/60">
-                  {/* Article Thumbnail + Title */}
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                        {blog.coverImage?.url ? (
-                          <Image
-                            src={blog.coverImage.url}
-                            alt={blog.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-slate-200 text-slate-400">
-                            <FileText size={16} />
-                          </div>
-                        )}
+      <div className="hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs md:block overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-600 min-w-[760px]">
+            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="py-3.5 pl-5 pr-3 min-w-[240px]">Article</th>
+                <th className="py-3.5 px-3 w-28 whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-3 w-32 whitespace-nowrap">Category</th>
+                <th className="py-3.5 px-3 w-24 whitespace-nowrap">Views</th>
+                <th className="py-3.5 px-3 w-36 whitespace-nowrap">Date Published</th>
+                <th className="py-3.5 pl-3 pr-5 text-right w-28 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredBlogs.length > 0 ? (
+                filteredBlogs.map((blog) => (
+                  <tr key={blog._id} className="transition-colors hover:bg-slate-50/60">
+                    {/* Article Thumbnail + Title */}
+                    <td className="py-3.5 pl-5 pr-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                          {blog.coverImage?.url ? (
+                            <Image
+                              src={blog.coverImage.url}
+                              alt={blog.title}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-slate-200 text-slate-400">
+                              <FileText size={16} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 max-w-xs lg:max-w-md">
+                          <Link
+                            href={`${basePath}/${blog._id}/edit`}
+                            className="font-bold text-[#0A1F66] transition hover:text-[#1E5BFF] line-clamp-1"
+                          >
+                            {blog.title}
+                          </Link>
+                          <p className="mt-0.5 text-xs text-slate-400 truncate">
+                            /{blog.slug}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 max-w-xs lg:max-w-md">
+                    </td>
+
+                    {/* Status Badge */}
+                    <td className="py-3.5 px-3 whitespace-nowrap">
+                      {getStatusBadge(blog.status)}
+                    </td>
+
+                    {/* Category */}
+                    <td className="py-3.5 px-3 whitespace-nowrap text-xs font-medium text-slate-700">
+                      {blog.category?.name || "Unassigned"}
+                    </td>
+
+                    {/* Views */}
+                    <td className="py-3.5 px-3 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-800">
+                        <Eye size={13} className="text-[#1E5BFF]" />
+                        <span>{Number(blog.viewsCount || 0).toLocaleString()}</span>
+                        <span className="relative flex h-2 w-2 ml-0.5" title="Live Realtime Tracked">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Date */}
+                    <td className="py-3.5 px-3 whitespace-nowrap text-xs">
+                      {blog.publishedAt ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-700 flex items-center gap-1.5 text-xs">
+                            <Calendar size={13} className="text-slate-400 shrink-0" />
+                            {new Date(blog.publishedAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="text-[11px] text-slate-400 pl-4.5 font-normal">
+                            {new Date(blog.publishedAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      ) : blog.scheduledAt ? (
+                        <div className="flex flex-col">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md w-fit">
+                            <Clock size={11} />
+                            Scheduled
+                          </span>
+                          <span className="text-[11px] text-slate-600 mt-1">
+                            {new Date(blog.scheduledAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                          <Clock size={11} className="text-slate-400" />
+                          Unpublished
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 pl-3 pr-5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {/* Preview Button */}
                         <Link
-                          href={`/admin/blogs/${blog._id}/edit`}
-                          className="font-bold text-[#0A1F66] transition hover:text-[#1E5BFF] line-clamp-1"
+                          href={`${basePath}/${blog._id}/preview`}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                          title="Preview Article"
                         >
-                          {blog.title}
+                          <Eye size={16} />
                         </Link>
-                        <p className="mt-0.5 text-xs text-slate-400 truncate">
-                          /{blog.slug}
-                        </p>
+
+                        {/* Edit Button */}
+                        <Link
+                          href={`${basePath}/${blog._id}/edit`}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#1E5BFF] transition"
+                          title="Edit Article"
+                        >
+                          <Pencil size={16} />
+                        </Link>
+
+                        {/* Reset Views Button (for testing admin only) */}
+                        {basePath === "/admin/blogs" && (
+                          <button
+                            type="button"
+                            onClick={() => handleResetViews(blog._id, blog.title)}
+                            disabled={actionLoading === blog._id}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition"
+                            title="Reset Views (Testing)"
+                          >
+                            <RotateCcw size={15} />
+                          </button>
+                        )}
+
+                        {/* Quick Publish / Unpublish Toggle */}
+                        {blog.status === "draft" && (
+                          <button
+                            type="button"
+                            disabled={actionLoading === blog._id}
+                            onClick={() => handleStatusChange(blog._id, "published")}
+                            className="rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 transition"
+                          >
+                            Publish
+                          </button>
+                        )}
+
+                        {blog.status === "published" && (
+                          <button
+                            type="button"
+                            disabled={actionLoading === blog._id}
+                            onClick={() => handleStatusChange(blog._id, "draft")}
+                            className="rounded-lg px-2 py-1 text-xs font-semibold text-amber-600 hover:bg-amber-50 transition"
+                          >
+                            Unpublish
+                          </button>
+                        )}
+
+                        {/* Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmId(blog._id)}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                          title="Delete Article"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-
-                  {/* Status Badge */}
-                  <td className="p-4 whitespace-nowrap">
-                    {getStatusBadge(blog.status)}
-                  </td>
-
-                  {/* Category */}
-                  <td className="p-4 whitespace-nowrap text-xs font-medium text-slate-700">
-                    {blog.category?.name || "Unassigned"}
-                  </td>
-
-                  {/* Views */}
-                  <td className="p-4 whitespace-nowrap text-xs font-semibold text-slate-700">
-                    {blog.viewsCount}
-                  </td>
-
-                  {/* Date */}
-                  <td className="p-4 whitespace-nowrap text-xs text-slate-500">
-                    {blog.publishedAt
-                      ? new Date(blog.publishedAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "Unpublished"}
-                  </td>
-
-                  {/* Actions */}
-                  <td className="p-4 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {/* Preview Button */}
-                      <Link
-                        href={`/admin/blogs/${blog._id}/preview`}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                        title="Preview Article"
-                      >
-                        <Eye size={16} />
-                      </Link>
-
-                      {/* Edit Button */}
-                      <Link
-                        href={`/admin/blogs/${blog._id}/edit`}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#1E5BFF]"
-                        title="Edit Article"
-                      >
-                        <Pencil size={16} />
-                      </Link>
-
-                      {/* Reset Views Button (for testing) */}
-                      <button
-                        type="button"
-                        onClick={() => handleResetViews(blog._id, blog.title)}
-                        disabled={actionLoading === blog._id}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
-                        title="Reset Views (Testing)"
-                      >
-                        <RotateCcw size={15} />
-                      </button>
-
-                      {/* Quick Publish / Unpublish Toggle */}
-                      {blog.status === "draft" && (
-                        <button
-                          type="button"
-                          disabled={actionLoading === blog._id}
-                          onClick={() => handleStatusChange(blog._id, "published")}
-                          className="rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
-                        >
-                          Publish
-                        </button>
-                      )}
-
-                      {blog.status === "published" && (
-                        <button
-                          type="button"
-                          disabled={actionLoading === blog._id}
-                          onClick={() => handleStatusChange(blog._id, "draft")}
-                          className="rounded-lg px-2 py-1 text-xs font-semibold text-amber-600 hover:bg-amber-50"
-                        >
-                          Unpublish
-                        </button>
-                      )}
-
-                      {/* Delete Button */}
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmId(blog._id)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                        title="Delete Article"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-sm text-slate-500">
+                    No blog articles found matching your query.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="p-10 text-center text-sm text-slate-500">
-                  No blog articles found matching your query.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Responsive Cards */}
@@ -525,25 +608,27 @@ export default function BlogTable({
 
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/admin/blogs/${blog._id}/preview`}
+                    href={`${basePath}/${blog._id}/preview`}
                     className="rounded-lg bg-slate-100 p-2 text-slate-600"
                   >
                     <Eye size={14} />
                   </Link>
                   <Link
-                    href={`/admin/blogs/${blog._id}/edit`}
+                    href={`${basePath}/${blog._id}/edit`}
                     className="rounded-lg bg-blue-50 p-2 text-[#1E5BFF]"
                   >
                     <Pencil size={14} />
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => handleResetViews(blog._id, blog.title)}
-                    className="rounded-lg bg-amber-50 p-2 text-amber-600"
-                    title="Reset Views"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
+                  {basePath === "/admin/blogs" && (
+                    <button
+                      type="button"
+                      onClick={() => handleResetViews(blog._id, blog.title)}
+                      className="rounded-lg bg-amber-50 p-2 text-amber-600"
+                      title="Reset Views"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmId(blog._id)}

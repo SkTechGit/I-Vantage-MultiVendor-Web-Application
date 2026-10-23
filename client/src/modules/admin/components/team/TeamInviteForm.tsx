@@ -5,8 +5,8 @@ import Button from "@/components/ui/Button";
 export interface TeamInviteFormProps {
   inviteEmail: string;
   setInviteEmail: (email: string) => void;
-  inviteRole: "vendor" | "super_admin" | "user";
-  setInviteRole: (role: "vendor" | "super_admin" | "user") => void;
+  inviteRole: "vendor" | "super_admin" | "user" | "professional";
+  setInviteRole: (role: "vendor" | "super_admin" | "user" | "professional") => void;
   submittingInvite: boolean;
   generatedInviteUrl: string | null;
   copied: boolean;
@@ -67,11 +67,12 @@ export default function TeamInviteForm({
             id="inviteRole"
             value={inviteRole}
             onChange={(e) =>
-              setInviteRole(e.target.value as "vendor" | "super_admin" | "user")
+              setInviteRole(e.target.value as "vendor" | "super_admin" | "user" | "professional")
             }
             className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100"
           >
             <option value="vendor">Vendor (Partner Portal Access)</option>
+            <option value="professional">Professional (Practitioner Portal Access)</option>
             <option value="user">User (Standard Access)</option>
             <option value="super_admin">Super Admin (Universal Executive Access)</option>
           </select>

@@ -37,32 +37,33 @@ router.get("/article/:slug", getPublicBlogBySlug);
 router.post("/article/:slug/view", trackView);
 
 /* -------------------------------------------------------------------------- */
-/*                           Admin Protected Routes                           */
+/*                           CMS Protected Routes                             */
 /* -------------------------------------------------------------------------- */
 
-const adminAuth = [authenticate, authorize(["super_admin"])];
+// Allows both super_admin and professional; strict data isolation is enforced in service layer
+const cmsAuth = [authenticate, authorize(["super_admin", "professional", "admin"])];
+const superAdminOnly = [authenticate, authorize(["super_admin"])];
 
-router.get("/admin/list", ...adminAuth, getAdminBlogs);
-router.get("/admin/stats", ...adminAuth, getBlogDashboardStats);
-router.post("/admin/create", ...adminAuth, createBlog);
-router.get("/admin/detail/:id", ...adminAuth, getAdminBlogById);
-router.put("/admin/update/:id", ...adminAuth, updateBlog);
-router.patch("/admin/status/:id", ...adminAuth, updateBlogStatus);
-router.delete("/admin/delete/:id", ...adminAuth, deleteBlog);
+// CMS Endpoints (Accessible to Super Admin and Professional authors)
+router.get(["/admin/list", "/cms/list"], ...cmsAuth, getAdminBlogs);
+router.get(["/admin/stats", "/cms/stats"], ...cmsAuth, getBlogDashboardStats);
+router.post(["/admin/create", "/cms/create"], ...cmsAuth, createBlog);
+router.get(["/admin/detail/:id", "/cms/detail/:id"], ...cmsAuth, getAdminBlogById);
+router.put(["/admin/update/:id", "/cms/update/:id"], ...cmsAuth, updateBlog);
+router.patch(["/admin/status/:id", "/cms/status/:id"], ...cmsAuth, updateBlogStatus);
+router.delete(["/admin/delete/:id", "/cms/delete/:id"], ...cmsAuth, deleteBlog);
 
-// Admin Category Management
-router.post("/admin/categories", ...adminAuth, createBlogCategory);
-router.delete("/admin/categories/:id", ...adminAuth, deleteBlogCategory);
-
-// Admin Media Upload
+// Category & Media Upload (shared for CMS editors)
+router.post(["/admin/categories", "/cms/categories"], ...cmsAuth, createBlogCategory);
 router.post(
-  "/admin/media/upload",
-  ...adminAuth,
+  ["/admin/media/upload", "/cms/media/upload"],
+  ...cmsAuth,
   upload.single("image"),
   uploadBlogMedia
 );
 
-// Admin Reset Views (for testing & analytics recalibration)
-router.post("/admin/reset-views/:id", ...adminAuth, resetViews);
+// Admin-Only Governance
+router.delete(["/admin/categories/:id", "/cms/categories/:id"], ...superAdminOnly, deleteBlogCategory);
+router.post(["/admin/reset-views/:id", "/cms/reset-views/:id"], ...superAdminOnly, resetViews);
 
 export default router;

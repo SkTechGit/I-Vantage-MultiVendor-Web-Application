@@ -68,28 +68,41 @@ export const getPublicCategories = async () => {
     return publicCategoriesCache;
   }
 
-  const [categories, services] = await Promise.all([
-    Category.find({ isActive: true })
-      .select("name slug description image")
-      .sort({ sortOrder: 1 })
-      .lean(),
-    Service.find({ isActive: true })
-      .select("name category slug description image")
-      .sort({ sortOrder: 1 })
-      .lean(),
-  ]);
+  try {
+    const [categories, services] = await Promise.all([
+      Category.find({ isActive: true })
+        .select("name slug description image")
+        .sort({ sortOrder: 1 })
+        .lean(),
+      Service.find({ isActive: true })
+        .select("name category slug description image")
+        .sort({ sortOrder: 1 })
+        .lean(),
+    ]);
 
-  const result = categories.map((category) => ({
-    ...category,
-    services: services.filter(
-      (service) => service.category.toString() === category._id.toString()
-    ),
-  }));
+    const result = (categories || []).map((category) => ({
+      ...category,
+      services: (services || []).filter(
+        (service) =>
+          service.category &&
+          category._id &&
+          service.category.toString() === category._id.toString()
+      ),
+    }));
 
-  publicCategoriesCache = result;
-  publicCategoriesCacheTime = now;
+    if (result.length > 0) {
+      publicCategoriesCache = result;
+      publicCategoriesCacheTime = now;
+    }
 
-  return result;
+    return result;
+  } catch (err) {
+    console.error("Error fetching public categories:", err.message || err);
+    if (publicCategoriesCache) {
+      return publicCategoriesCache;
+    }
+    return [];
+  }
 };
 
 /* -------------------------------------------------------------------------- */

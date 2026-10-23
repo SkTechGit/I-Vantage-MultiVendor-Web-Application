@@ -80,20 +80,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  let categories = [];
-  let services = [];
-
-  try {
-    categories = await getPublicCategories();
-  } catch (error: any) {
-    console.error("Failed to load categories on server:", error?.message || error);
-  }
-
-  try {
-    services = await getPublicServices();
-  } catch (error: any) {
-    console.error("Failed to load services on server:", error?.message || error);
-  }
+  const [categories, services] = await Promise.all([
+    getPublicCategories(),
+    getPublicServices(),
+  ]);
 
   return (
     <HomePage

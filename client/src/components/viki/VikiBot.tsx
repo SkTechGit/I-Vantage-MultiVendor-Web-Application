@@ -127,9 +127,10 @@ const PROMPT_QUESTIONS = [
 ];
 
 // Teaser Timing Configurations (in milliseconds)
-const TEASER_INITIAL_DELAY = 4000; // 4 seconds after page load
-const TEASER_REAPPEAR_DELAY = 60000; // 1 minute after close/dismiss
+const TEASER_INITIAL_DELAY = 4000; // 4 seconds after page load for first-time visitors
+const TEASER_REAPPEAR_DELAY = 5 * 60 * 1000; // 5 minutes after close/dismiss or interaction (300,000 ms)
 const TEASER_ROTATION_INTERVAL = 60000; // 1 minute per suggested question
+const DISMISSED_STORAGE_KEY = "viki_prompt_dismissed_at";
 
 type ChatStatus =
   | "closed"
@@ -169,6 +170,15 @@ export default function VikiBot() {
   } = useVikiChat();
 
   /*
+   * Helper to persist dismissal timestamp in localStorage
+   */
+  const markPromptDismissed = () => {
+    try {
+      localStorage.setItem(DISMISSED_STORAGE_KEY, String(Date.now()));
+    } catch {}
+  };
+
+  /*
    * Coordinated Open & Close Machine
    */
   const openChat = () => {
@@ -176,6 +186,7 @@ export default function VikiBot() {
     if (promptTimerRef.current) {
       clearTimeout(promptTimerRef.current);
     }
+    markPromptDismissed();
     setLauncherTapped(true);
     setIsPromptVisible(false);
     setChatStatus("opening");
@@ -183,6 +194,15 @@ export default function VikiBot() {
 
   const closeChat = useCallback(() => {
     setChatStatus((prev) => (prev === "closed" || prev === "closing" ? prev : "closing"));
+    markPromptDismissed();
+    if (promptTimerRef.current) {
+      clearTimeout(promptTimerRef.current);
+    }
+    promptTimerRef.current = setTimeout(() => {
+      if (!isOpenRef.current) {
+        setIsPromptVisible(true);
+      }
+    }, TEASER_REAPPEAR_DELAY);
   }, []);
 
   /*
@@ -244,14 +264,32 @@ export default function VikiBot() {
   }, [messages, isLoading, chatStatus]);
 
   /*
-   * Show VIKI teaser after initial delay (4 seconds).
+   * Show VIKI teaser:
+   * - First time visitor: shows quickly after initial delay (4 seconds).
+   * - If dismissed/interacted: respects the 5-minute cooldown (300,000 ms),
+   *   even across page navigations or refreshes.
    */
   useEffect(() => {
+    let delay = TEASER_INITIAL_DELAY;
+
+    try {
+      const dismissedAt = localStorage.getItem(DISMISSED_STORAGE_KEY);
+      if (dismissedAt) {
+        const elapsed = Date.now() - Number(dismissedAt);
+        if (elapsed < TEASER_REAPPEAR_DELAY) {
+          // Less than 5 minutes have passed since last dismissal
+          delay = TEASER_REAPPEAR_DELAY - elapsed;
+        }
+      }
+    } catch {}
+
     const timer = setTimeout(() => {
       if (!isOpenRef.current) {
         setIsPromptVisible(true);
       }
-    }, TEASER_INITIAL_DELAY);
+    }, delay);
+
+    promptTimerRef.current = timer;
 
     return () => clearTimeout(timer);
   }, []);
@@ -316,6 +354,7 @@ export default function VikiBot() {
     if (promptTimerRef.current) {
       clearTimeout(promptTimerRef.current);
     }
+    markPromptDismissed();
     setIsPromptVisible(false);
     openChat();
 
@@ -324,10 +363,11 @@ export default function VikiBot() {
 
   /*
    * Close teaser without opening VIKI.
-   * Reappears after 1 minute (60 seconds).
+   * Enforces full 5-minute cooldown (300,000 ms) before reappearing.
    */
   const closePrompt = () => {
     setIsPromptVisible(false);
+    markPromptDismissed();
 
     if (promptTimerRef.current) {
       clearTimeout(promptTimerRef.current);
@@ -356,7 +396,9 @@ export default function VikiBot() {
 
       {!isOpen && isPromptVisible && (
         <div
+          id="viki-prompt-teaser"
           className="
+            viki-teaser-container
             fixed
             bottom-[76px]
             left-3

@@ -257,9 +257,14 @@ export default function AdminListingsPage() {
                             <span className="font-bold text-slate-900 block text-sm line-clamp-1">
                               {item.title}
                             </span>
-                            <span className="text-[10px] bg-blue-50 text-[#1E5BFF] px-1.5 py-0.5 rounded font-semibold">
-                              {item.categoryId?.name || "Space"}
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] bg-blue-50 text-[#1E5BFF] px-1.5 py-0.5 rounded font-semibold">
+                                {item.categoryId?.name || "Space"}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                • {item.media?.length || 0} {item.media?.length === 1 ? "photo" : "photos"}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </td>

@@ -11,7 +11,17 @@ import {
 import { useRealtimeEvent } from "@/context/RealtimeContext";
 import BlogTable from "./BlogTable";
 
-export default function BlogManagement() {
+interface Props {
+  basePath?: string;
+  portalTitle?: string;
+  portalSubtitle?: string;
+}
+
+export default function BlogManagement({
+  basePath = "/admin/blogs",
+  portalTitle,
+  portalSubtitle,
+}: Props = {}) {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [stats, setStats] = useState<BlogStats>({
     total: 0,
@@ -79,13 +89,36 @@ export default function BlogManagement() {
     };
   }, [loadData]);
 
-  // Debounced silent refetch for real-time blog synchronization
+  // Real-time synchronization: Instant optimistic update on view increment + debounced revalidation
   const refetchTimerRef = useRef<NodeJS.Timeout | null>(null);
-  useRealtimeEvent("blogs", () => {
+  useRealtimeEvent("blogs", (event?: { type?: string; payload?: { blogId?: string; viewsCount?: number } }) => {
+    const type = event?.type;
+    const payload = event?.payload;
+
+    if (type === "BLOG_VIEW_INCREMENTED" && payload?.blogId && typeof payload.viewsCount === "number") {
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b._id === payload.blogId
+            ? { ...b, viewsCount: payload.viewsCount! }
+            : b
+        )
+      );
+      setStats((prev) => ({
+        ...prev,
+        totalViews: (prev.totalViews || 0) + 1,
+      }));
+    } else if (type === "BLOG_VIEWS_RESET" && payload?.blogId) {
+      setBlogs((prev) =>
+        prev.map((b) =>
+          b._id === payload.blogId ? { ...b, viewsCount: 0 } : b
+        )
+      );
+    }
+
     if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
     refetchTimerRef.current = setTimeout(() => {
       loadData(true);
-    }, 300);
+    }, 400);
   });
 
   if (loading) {
@@ -106,6 +139,9 @@ export default function BlogManagement() {
       categories={categories}
       onRefresh={() => loadData(false)}
       isRefreshing={refreshing}
+      basePath={basePath}
+      portalTitle={portalTitle}
+      portalSubtitle={portalSubtitle}
     />
   );
 }

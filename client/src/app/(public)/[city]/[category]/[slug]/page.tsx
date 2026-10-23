@@ -13,11 +13,12 @@ interface Props {
 export default async function ListingDetailPage({ params }: Props) {
   const { city, category, slug } = await params;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api/v1").replace("//localhost", "//127.0.0.1");
   let listing: any = null;
+  const decodedSlug = decodeURIComponent(slug);
 
   try {
-    const res = await fetch(`${apiUrl}/listings/${encodeURIComponent(slug)}`, {
+    const res = await fetch(`${apiUrl}/listings/${encodeURIComponent(decodedSlug)}`, {
       next: { revalidate: 60 },
     });
     if (res.ok) {

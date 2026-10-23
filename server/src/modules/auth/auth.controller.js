@@ -48,8 +48,20 @@ export const login = async (req, res, next) => {
 
     const portal =
       req.headers["x-portal"] ||
-      (validatedData.requiredRole === "super_admin" || validatedData.requiredRole === "superadmin" ? "admin" : validatedData.requiredRole === "vendor" ? "vendor" : null) ||
-      (user?.role === "super_admin" || user?.role === "superadmin" || user?.role === "admin" ? "admin" : user?.role === "vendor" ? "vendor" : "all");
+      (validatedData.requiredRole === "super_admin" || validatedData.requiredRole === "superadmin"
+        ? "admin"
+        : validatedData.requiredRole === "vendor"
+        ? "vendor"
+        : validatedData.requiredRole === "professional"
+        ? "professional"
+        : null) ||
+      (user?.role === "super_admin" || user?.role === "superadmin" || user?.role === "admin"
+        ? "admin"
+        : user?.role === "vendor"
+        ? "vendor"
+        : user?.role === "professional"
+        ? "professional"
+        : "all");
 
     setAuthCookies(res, accessToken || token, refreshToken, user?.role, portal);
 
@@ -111,7 +123,13 @@ export const register = async (req, res, next) => {
       userAgent,
     });
 
-    const portal = req.headers["x-portal"] || (user?.role === "vendor" ? "vendor" : "all");
+    const portal =
+      req.headers["x-portal"] ||
+      (user?.role === "professional"
+        ? "professional"
+        : user?.role === "vendor"
+        ? "vendor"
+        : "all");
     setAuthCookies(res, accessToken || token, refreshToken, user?.role, portal);
 
     res.status(201).json({
@@ -159,25 +177,52 @@ export const refreshTokenHandler = async (req, res, next) => {
     req.headers["x-portal"] ||
     req.query?.portal ||
     req.body?.portal ||
-    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor")
+      ? "vendor"
+      : req.baseUrl?.includes("professionals") || req.originalUrl?.includes("/professionals")
+      ? "professional"
+      : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin")
+      ? "admin"
+      : "all");
 
   try {
     let rawToken = null;
+    let effectivePortal = portal;
+
     if (portal === "admin") {
       rawToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] || req.body?.refreshToken || req.headers["x-refresh-token"];
+      // Fallback: Check if professional or vendor session is present on shared routes
+      if (!rawToken && req.cookies[SCOPED_COOKIES.PRO_REFRESH]) {
+        rawToken = req.cookies[SCOPED_COOKIES.PRO_REFRESH];
+        effectivePortal = "professional";
+      } else if (!rawToken && req.cookies[SCOPED_COOKIES.VENDOR_REFRESH]) {
+        rawToken = req.cookies[SCOPED_COOKIES.VENDOR_REFRESH];
+        effectivePortal = "vendor";
+      }
     } else if (portal === "vendor") {
       rawToken = req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] || req.body?.refreshToken || req.headers["x-refresh-token"];
+      if (!rawToken && req.cookies[SCOPED_COOKIES.ADMIN_REFRESH]) {
+        rawToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH];
+        effectivePortal = "admin";
+      }
+    } else if (portal === "professional") {
+      rawToken = req.cookies[SCOPED_COOKIES.PRO_REFRESH] || req.body?.refreshToken || req.headers["x-refresh-token"];
+      if (!rawToken && req.cookies[SCOPED_COOKIES.ADMIN_REFRESH]) {
+        rawToken = req.cookies[SCOPED_COOKIES.ADMIN_REFRESH];
+        effectivePortal = "admin";
+      }
     } else {
       rawToken =
         req.cookies[AUTH_COOKIE.REFRESH_NAME] ||
         req.cookies[SCOPED_COOKIES.ADMIN_REFRESH] ||
         req.cookies[SCOPED_COOKIES.VENDOR_REFRESH] ||
+        req.cookies[SCOPED_COOKIES.PRO_REFRESH] ||
         req.body?.refreshToken ||
         req.headers["x-refresh-token"];
     }
 
     if (!rawToken) {
-      clearAuthCookies(res, portal);
+      clearAuthCookies(res, effectivePortal);
       return res.status(401).json({
         success: false,
         message: "No active session refresh token found for this portal.",
@@ -186,7 +231,7 @@ export const refreshTokenHandler = async (req, res, next) => {
 
     const { user, accessToken, refreshToken } = await authService.refreshToken(rawToken);
 
-    setAuthCookies(res, accessToken, refreshToken, user?.role, portal);
+    setAuthCookies(res, accessToken, refreshToken, user?.role, effectivePortal);
 
     res.status(200).json({
       success: true,
@@ -210,7 +255,13 @@ export const logout = async (req, res) => {
     req.query?.portal ||
     req.headers["x-portal"] ||
     req.body?.portal ||
-    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor") ? "vendor" : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin") ? "admin" : "all");
+    (req.baseUrl?.includes("vendor") || req.originalUrl?.includes("/vendor")
+      ? "vendor"
+      : req.baseUrl?.includes("admin") || req.originalUrl?.includes("/admin")
+      ? "admin"
+      : req.baseUrl?.includes("professionals") || req.originalUrl?.includes("/professionals")
+      ? "professional"
+      : "all");
   clearAuthCookies(res, portal);
 
   res.status(200).json({

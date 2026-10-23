@@ -15,25 +15,37 @@ export default function NavLinks({ onClick }: Props) {
 
   return (
     <>
-      {NAVIGATION.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          onClick={onClick}
-          className={clsx(
-            "relative py-2 text-[13.5px] xl:text-[15px] font-medium transition-all duration-300 whitespace-nowrap",
-            pathname === item.href
-              ? "text-[#0B2E8A] font-semibold"
-              : "text-slate-700 hover:text-[#1E5BFF]"
-          )}
-        >
-          {item.label}
+      {NAVIGATION.map((item) => {
+        const isActive = pathname === item.href;
 
-          {pathname === item.href && (
-            <span className="absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-[#C8942C]" />
-          )}
-        </Link>
-      ))}
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onClick}
+            className={clsx(
+              "group/nav relative py-2 text-[13.5px] xl:text-[15px] font-medium transition-colors duration-300 whitespace-nowrap",
+              isActive
+                ? "text-[#0B2E8A] font-bold"
+                : "text-slate-700 hover:text-[#1E5BFF]"
+            )}
+          >
+            <span className="relative z-10 transition-transform duration-200 group-hover/nav:-translate-y-0.5 inline-block">
+              {item.label}
+            </span>
+
+            {/* Active Pill Indicator */}
+            {isActive && (
+              <span className="absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#F4A900] shadow-xs" />
+            )}
+
+            {/* Hover Indicator for Inactive items */}
+            {!isActive && (
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 bg-[#1E5BFF]/70 rounded-full transition-all duration-300 ease-out group-hover/nav:w-4/5" />
+            )}
+          </Link>
+        );
+      })}
     </>
   );
 }

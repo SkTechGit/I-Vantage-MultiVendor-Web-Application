@@ -67,8 +67,8 @@ export default function Hero() {
       {/* =========================================================
           1. AMBIENT CORPORATE LIGHTING & GRID OVERLAY
       ========================================================= */}
-      <div className="pointer-events-none absolute -left-20 top-10 -z-0 h-[480px] w-[480px] rounded-full bg-[#1E5BFF]/08 blur-[130px]" />
-      <div className="pointer-events-none absolute -right-20 top-40 -z-0 h-[450px] w-[450px] rounded-full bg-[#F4A900]/06 blur-[120px]" />
+      <div className="pointer-events-none absolute -left-20 top-10 -z-0 h-[480px] w-[480px] rounded-full bg-[#1E5BFF]/10 blur-[130px] animate-pulse-glow" />
+      <div className="pointer-events-none absolute -right-20 top-40 -z-0 h-[450px] w-[450px] rounded-full bg-[#F4A900]/08 blur-[120px] animate-pulse-glow [animation-delay:3s]" />
 
       {/* Subtle Precision Matrix */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#0a1f6608_1px,transparent_1px),linear-gradient(to_bottom,#0a1f6608_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_65%_55%_at_50%_35%,#000_65%,transparent_100%)]" />
@@ -80,7 +80,7 @@ export default function Hero() {
           ========================================================= */}
           <div className="flex min-w-0 flex-col">
             {/* Luminous Brand Badge */}
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/70 bg-white/90 px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#0A1F66] shadow-xs backdrop-blur-md">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/80 bg-white/95 px-3.5 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#0A1F66] shadow-xs backdrop-blur-md transition-all duration-300 hover:border-[#1E5BFF]/40 hover:shadow-sm">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F4A900] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F4A900]" />
@@ -88,10 +88,10 @@ export default function Hero() {
               <span>INDIA&apos;S PREMIER BUSINESS ECOSYSTEM</span>
             </div>
 
-            {/* High-Impact Headline */}
+            {/* High-Impact Headline with Flowing Gradient */}
             <h1 className="mt-3 max-w-2xl text-[24px] font-black leading-[1.12] tracking-[-0.03em] text-[#0A1F66] sm:mt-6 sm:text-4xl md:text-[46px] lg:text-[46px] xl:text-[52px]">
               Everything Your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E5BFF] via-[#2563EB] to-[#1E5BFF]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1E5BFF] via-[#0A1F66] to-[#1E5BFF] animate-gradient-flow">
                 Business Needs
               </span>{" "}
               to Grow
@@ -107,10 +107,10 @@ export default function Hero() {
             {/* =========================================================
                 EXECUTIVE TELEMETRY BADGES
             ========================================================= */}
-            <div className="mt-4 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-xs backdrop-blur-md sm:mt-7">
+            <div className="mt-4 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md sm:mt-7 transition-all duration-300 hover:shadow-md hover:border-slate-300">
               {/* Stat 1 */}
-              <div className="flex min-w-0 items-center gap-3 border-r border-slate-100 px-3.5 py-3.5 sm:px-5 sm:py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs">
+              <div className="group flex min-w-0 items-center gap-3 border-r border-slate-100 px-3.5 py-3.5 sm:px-5 sm:py-4 transition-colors hover:bg-blue-50/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs transition-transform duration-300 group-hover:scale-110">
                   <Users size={20} />
                 </div>
                 <div className="min-w-0">
@@ -124,8 +124,8 @@ export default function Hero() {
               </div>
 
               {/* Stat 2 */}
-              <div className="flex min-w-0 items-center gap-3 px-3.5 py-3.5 sm:px-5 sm:py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50/80 text-[#D97706] border border-amber-100/60 shadow-2xs">
+              <div className="group flex min-w-0 items-center gap-3 px-3.5 py-3.5 sm:px-5 sm:py-4 transition-colors hover:bg-amber-50/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50/80 text-[#D97706] border border-amber-100/60 shadow-2xs transition-transform duration-300 group-hover:scale-110">
                   <Building2 size={20} />
                 </div>
                 <div className="min-w-0">
@@ -140,16 +140,16 @@ export default function Hero() {
             </div>
 
             {/* =========================================================
-                HIGH-CONVERSION CALL-TO-ACTIONS
+                HIGH-CONVERSION CALL-TO-ACTIONS WITH LUXURY SHEEN
             ========================================================= */}
             <div className="mt-6 flex w-full flex-col gap-3 sm:mt-7 sm:w-auto sm:flex-row">
               <Link href="#serviceSection" className="w-full sm:w-auto">
                 <button
                   type="button"
-                  className="group flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] via-[#12319A] to-[#1E5BFF] px-6 text-sm font-bold text-white shadow-md shadow-blue-900/15 hover:brightness-110 transition-all active:scale-95"
+                  className="luxury-btn group flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0A1F66] via-[#12319A] to-[#1E5BFF] px-6 text-sm font-bold text-white shadow-md shadow-blue-900/20 hover:shadow-lg hover:shadow-blue-900/30 transition-all cursor-pointer"
                 >
                   <span>Explore All Services</span>
-                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </button>
               </Link>
 
@@ -159,9 +159,9 @@ export default function Hero() {
                   setSelectedServices([]);
                   setIsLeadFormOpen(true);
                 }}
-                className="flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-6 text-sm font-bold text-[#0A1F66] shadow-xs hover:bg-slate-50 hover:border-slate-300 hover:text-[#1E5BFF] transition-all active:scale-95"
+                className="luxury-btn group flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-6 text-sm font-bold text-[#0A1F66] shadow-xs hover:bg-slate-50 hover:border-[#1E5BFF]/30 hover:text-[#1E5BFF] transition-all cursor-pointer"
               >
-                <Sparkles size={16} className="text-[#F4A900]" />
+                <Sparkles size={16} className="text-[#F4A900] transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
                 <span>Book a VIP Tour</span>
               </button>
             </div>
@@ -171,15 +171,15 @@ export default function Hero() {
             ========================================================= */}
             <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
               {trustPoints.map((point) => (
-                <div key={point} className="flex min-w-0 items-center gap-2">
+                <div key={point} className="flex min-w-0 items-center gap-2 group cursor-default">
                   <CheckCircle2
                     size={14}
-                    className="shrink-0 text-[#1E5BFF]"
+                    className="shrink-0 text-[#1E5BFF] transition-transform duration-300 group-hover:scale-115"
                     fill="#1E5BFF"
                     color="#ffffff"
                     strokeWidth={2}
                   />
-                  <span className="truncate text-xs font-semibold text-slate-700 sm:text-[13px]">
+                  <span className="truncate text-xs font-semibold text-slate-700 transition-colors group-hover:text-[#0A1F66] sm:text-[13px]">
                     {point}
                   </span>
                 </div>
@@ -192,41 +192,42 @@ export default function Hero() {
           ========================================================= */}
           <div className="relative min-w-0">
             {/* Luminous Backing Aura */}
-            <div className="pointer-events-none absolute -right-6 top-6 h-60 w-60 rounded-full bg-blue-100/60 blur-3xl" />
+            <div className="pointer-events-none absolute -right-6 top-6 h-64 w-64 rounded-full bg-blue-200/50 blur-3xl animate-pulse-glow" />
 
             <div className="relative space-y-3.5">
               {/* Main Architectural Showcase Card */}
-              <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl ring-1 ring-slate-900/5 group">
+              <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl ring-1 ring-slate-900/5 group luxury-hover-lift">
                 <Image
                   src="/images/workspace/reception1.webp"
                   alt="i-VANTAGE Welldone Tech Park Flagship Hub"
                   width={900}
                   height={600}
                   priority
+                  loading="eager"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 55vw"
-                  className="h-[210px] w-full object-cover transition-transform duration-700 group-hover:scale-103 sm:h-[400px] md:h-[440px] lg:h-[420px] xl:h-[460px]"
+                  className="h-[210px] w-full object-cover transition-transform duration-700 group-hover:scale-104 sm:h-[400px] md:h-[440px] lg:h-[420px] xl:h-[460px]"
                 />
 
                 {/* Subtle Cinematic Vignette */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0A1F66]/50 via-transparent to-black/10" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0A1F66]/60 via-transparent to-black/10 transition-opacity duration-300 group-hover:opacity-85" />
 
-                {/* Floating Glassmorphic Location Badge */}
-                <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-slate-950/60 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-lg">
+                {/* Floating Glassmorphic Location Badge (gentle luxury float) */}
+                <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-slate-950/70 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-lg animate-luxury-float">
                   <MapPin size={13} className="text-[#F4A900]" />
                   <span>Welldone Tech Park, Sec 48 Gurugram</span>
                 </div>
 
-                {/* Floating Glassmorphic Facility Telemetry */}
-                <div className="absolute bottom-4 left-4 right-4 hidden sm:flex items-center justify-between rounded-2xl border border-white/20 bg-slate-950/70 p-3 text-xs text-white backdrop-blur-md shadow-lg">
+                {/* Floating Glassmorphic Facility Telemetry (reverse complementary float) */}
+                <div className="absolute bottom-4 left-4 right-4 hidden sm:flex items-center justify-between rounded-2xl border border-white/25 bg-slate-950/75 p-3 text-xs text-white backdrop-blur-md shadow-lg animate-luxury-float-reverse">
                   <div className="flex items-center gap-2">
-                    <Zap size={15} className="text-[#F4A900]" />
+                    <Zap size={15} className="text-[#F4A900] animate-pulse" />
                     <span className="font-semibold">100% Leased Line & Power Backup</span>
                   </div>
                   <span className="text-[11px] font-mono text-blue-300">24/7 BIOMETRIC SECURE</span>
                 </div>
               </div>
 
-              {/* 4 Pillars Micro-Grid */}
+              {/* 4 Pillars Micro-Grid with 3D spring hover and luxury lift */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
                 {serviceHighlights.map((service) => {
                   const Icon = service.icon;
@@ -234,13 +235,13 @@ export default function Hero() {
                   return (
                     <div
                       key={service.title}
-                      className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-[#1E5BFF]/40 hover:shadow-md"
+                      className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-3 shadow-2xs transition-all duration-300 hover:-translate-y-1.5 hover:border-[#1E5BFF]/50 hover:shadow-lg hover:shadow-blue-900/5 cursor-pointer"
                     >
-                      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 transition-colors group-hover:bg-[#1E5BFF] group-hover:text-white">
+                      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 transition-all duration-300 group-hover:scale-115 group-hover:rotate-6 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66] shadow-2xs">
                         <Icon size={16} strokeWidth={2.2} />
                       </div>
 
-                      <h3 className="text-xs font-bold leading-tight text-[#0A1F66]">
+                      <h3 className="text-xs font-bold leading-tight text-[#0A1F66] transition-colors duration-300 group-hover:text-[#1E5BFF]">
                         {service.title}
                       </h3>
 

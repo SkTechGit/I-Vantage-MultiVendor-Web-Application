@@ -41,15 +41,49 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
+export const getPortalFromContext = (
+  currentPath: string,
+  reqUrl: string = ""
+): "professional" | "vendor" | "admin" | "all" => {
+  // 1. Browser path takes strict precedence as it represents the active session context
+  if (
+    currentPath.startsWith("/dashboard/professional") ||
+    currentPath.startsWith("/professional")
+  ) {
+    return "professional";
+  }
+  if (
+    currentPath.startsWith("/dashboard/vendor") ||
+    currentPath.startsWith("/vendor")
+  ) {
+    return "vendor";
+  }
+  if (currentPath.startsWith("/admin")) {
+    return "admin";
+  }
+
+  // 2. Fallback to requested URL pattern for background or public API calls
+  if (reqUrl.includes("/professionals")) {
+    return "professional";
+  }
+  if (reqUrl.includes("/vendor")) {
+    return "vendor";
+  }
+  if (reqUrl.includes("/admin")) {
+    return "admin";
+  }
+
+  return "all";
+};
+
 axiosInstance.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const path = window.location.pathname;
     const url = config.url || "";
     if (!config.headers["x-portal"]) {
-      if (url.includes("/admin") || path.startsWith("/admin")) {
-        config.headers["x-portal"] = "admin";
-      } else if (url.includes("/vendor") || path.startsWith("/vendor")) {
-        config.headers["x-portal"] = "vendor";
+      const portal = getPortalFromContext(path, url);
+      if (portal !== "all") {
+        config.headers["x-portal"] = portal;
       }
     }
   }
@@ -69,31 +103,37 @@ axiosInstance.interceptors.response.use(
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
         const reqUrl = originalRequest?.url || "";
-        const isAdmin = reqUrl.includes("/admin") || currentPath.startsWith("/admin");
-        const isVendor = reqUrl.includes("/vendor") || currentPath.startsWith("/vendor");
+        const portal = getPortalFromContext(currentPath, reqUrl);
 
         try {
-          if (isAdmin) {
+          if (portal === "admin") {
             localStorage.removeItem("iv_admin_user");
-          } else if (isVendor) {
+          } else if (portal === "vendor") {
             localStorage.removeItem("iv_vendor_user");
+          } else if (portal === "professional") {
+            localStorage.removeItem("iv_pro_user");
           } else {
             localStorage.removeItem("iv_user");
           }
         } catch { }
 
         if (
-          isAdmin &&
+          portal === "admin" &&
           currentPath !== "/admin/login" &&
           currentPath !== "/admin/signup"
         ) {
           window.location.href = "/admin/login?reason=session_invalidated";
         } else if (
-          isVendor &&
+          portal === "vendor" &&
           currentPath !== "/vendor/login" &&
           currentPath !== "/vendor/signup"
         ) {
           window.location.href = "/vendor/login?reason=session_invalidated";
+        } else if (
+          portal === "professional" &&
+          currentPath !== "/professional/login"
+        ) {
+          window.location.href = "/professional/login?reason=session_invalidated";
         }
       }
     };
@@ -137,11 +177,7 @@ axiosInstance.interceptors.response.use(
       let portal = "all";
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        if (url.includes("/admin") || currentPath.startsWith("/admin")) {
-          portal = "admin";
-        } else if (url.includes("/vendor") || currentPath.startsWith("/vendor")) {
-          portal = "vendor";
-        }
+        portal = getPortalFromContext(currentPath, url);
       }
 
       try {

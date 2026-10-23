@@ -12,6 +12,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Camera,
 } from "lucide-react";
 import ListingEnquiryModal, {
   EnquiryListingTarget,
@@ -110,8 +111,13 @@ export default function MarketplaceListingCards({
       ) : (
         /* Spaces Cards Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {listings.map((item) => {
+          {listings.map((item, idx) => {
+            const rawMedia = (item.media || [])
+              .map((m: any) => m?.mediaId?.secureUrl || m?.secureUrl || m?.url || "")
+              .filter(Boolean);
+            const photoCount = rawMedia.length;
             const coverImg =
+              rawMedia[0] ||
               item.media?.[0]?.mediaId?.secureUrl ||
               "/images/workspace/conf3.webp";
             const catSlug = item.categoryId?.slug || "spaces";
@@ -120,7 +126,7 @@ export default function MarketplaceListingCards({
             return (
               <div
                 key={item._id}
-                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between group"
+                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs hover:shadow-[0_20px_40px_rgba(10,31,102,0.12)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-2 flex flex-col justify-between group cursor-pointer"
               >
                 <div>
                   {/* Thumbnail */}
@@ -129,10 +135,12 @@ export default function MarketplaceListingCards({
                       src={coverImg}
                       alt={item.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, 400px"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      priority={idx < 2}
+                      loading={idx < 2 ? "eager" : undefined}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                      className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 group-hover:opacity-90" />
 
                     <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-2xs">
                       {item.categoryId?.name || "Workspace"}
@@ -148,11 +156,21 @@ export default function MarketplaceListingCards({
                         /{item.pricing?.unit?.replace("per-", "") || "month"}
                       </span>
                     </div>
+
+                    {/* Dynamic Photo Count Badge */}
+                    {photoCount > 0 && (
+                      <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                        <Camera className="w-3 h-3 text-white" />
+                        <span>
+                          {photoCount} {photoCount === 1 ? "Photo" : "Photos"}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Details */}
                   <div className="p-5 space-y-2">
-                    <h3 className="font-bold text-slate-900 text-base line-clamp-1 group-hover:text-[#1E5BFF] transition">
+                    <h3 className="font-bold text-slate-900 text-base line-clamp-1 group-hover:text-[#1E5BFF] transition-colors duration-300">
                       <Link href={detailUrl}>{item.title}</Link>
                     </h3>
 
@@ -183,10 +201,10 @@ export default function MarketplaceListingCards({
                 <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
                   <Link
                     href={detailUrl}
-                    className="text-xs font-bold text-[#1E5BFF] hover:underline flex items-center gap-1"
+                    className="group/link text-xs font-bold text-[#1E5BFF] hover:text-[#0A1F66] flex items-center gap-1 transition-colors"
                   >
                     <span>View Details</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
                   </Link>
 
                   <button
@@ -203,7 +221,7 @@ export default function MarketplaceListingCards({
                         vendorName: item.vendorId?.businessName,
                       })
                     }
-                    className="px-4 py-2 bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-xs"
+                    className="luxury-btn px-4 py-2 bg-gradient-to-r from-[#0A1F66] to-[#1E5BFF] hover:brightness-110 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
                   >
                     Enquire Now
                   </button>

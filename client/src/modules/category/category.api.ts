@@ -1,9 +1,13 @@
 import axiosInstance from "@/lib/axios";
 
 export const getPublicCategories = async () => {
-  const { data } = await axiosInstance.get("/categories/public");
-
-  return data.data;
+  try {
+    const { data } = await axiosInstance.get("/categories/public");
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (err: any) {
+    console.warn("Notice: Categories endpoint temporarily unavailable:", err?.message || err);
+    return [];
+  }
 };
 
 export const getCategories = async () => {

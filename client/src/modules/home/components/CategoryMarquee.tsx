@@ -61,16 +61,18 @@ export default function CategoryMarquee({ categories }: Props) {
                 shadow-[0_2px_8px_rgba(10,31,102,0.03)]
                 transition-all
                 duration-300
-                hover:-translate-y-0.5
-                hover:border-[#1E5BFF]/40
-                hover:shadow-[0_10px_24px_rgba(30,91,255,0.08)]
+                hover:-translate-y-1.5
+                hover:border-[#1E5BFF]/50
+                hover:shadow-[0_12px_28px_rgba(30,91,255,0.12)]
+                active:scale-95
+                cursor-pointer
                 sm:w-[250px]
                 sm:px-4
                 sm:py-3.5
               "
             >
               {/* Luxury Icon Box */}
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/60 shadow-2xs transition-all duration-300 group-hover:bg-[#1E5BFF] group-hover:text-white group-hover:border-[#1E5BFF] sm:h-10 sm:w-10">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/80 text-[#1E5BFF] border border-blue-100/60 shadow-2xs transition-all duration-300 group-hover:scale-115 group-hover:rotate-6 group-hover:bg-[#0A1F66] group-hover:text-white group-hover:border-[#0A1F66] group-hover:shadow-md sm:h-10 sm:w-10">
                 <ArrowUpRight
                   size={16}
                   strokeWidth={2.4}
