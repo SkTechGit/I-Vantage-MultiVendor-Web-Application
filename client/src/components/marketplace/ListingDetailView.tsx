@@ -36,6 +36,7 @@ import {
   PhoneCall,
   Flame,
   ArrowRight,
+  Maximize2,
 } from "lucide-react";
 
 interface ListingDetailViewProps {
@@ -478,7 +479,7 @@ export default function ListingDetailView({
                 : fullGallery.length === 2
                 ? "col-span-1 aspect-[16/10] sm:aspect-[16/9.5]"
                 : "col-span-2 aspect-[16/10] sm:aspect-[16/9.5]"
-            } relative rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group`}
+            } relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/90 shadow-[0_4px_24px_rgba(10,31,102,0.06)] hover:shadow-[0_16px_36px_rgba(10,31,102,0.12)] transition-all duration-500 cursor-pointer group`}
           >
             <Image
               src={primaryImage}
@@ -487,20 +488,29 @@ export default function ListingDetailView({
               priority
               loading="eager"
               sizes="(max-width: 768px) 100vw, 66vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+            {/* Subtle natural contrast overlay - zero white gloss/glare */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity" />
 
             {/* Popular / Verified Badge */}
-            <div className="absolute top-3 sm:top-4 left-3 sm:left-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-[#0A1F66] shadow-md backdrop-blur-md border border-white/60">
+            <div className="absolute top-3.5 sm:top-4 left-3.5 sm:left-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/95 text-[#0A1F66] shadow-sm border border-slate-100">
                 <Flame className="w-3.5 h-3.5 text-[#F4A900] fill-[#F4A900]" />
                 <span>Popular Choice</span>
               </span>
             </div>
 
+            {/* Modern Hover Expand Pill */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/80 text-white text-xs font-semibold backdrop-blur-md shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Click to Expand</span>
+              </span>
+            </div>
+
             {/* View All Photos Button */}
-            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4">
+            <div className="absolute bottom-3.5 sm:bottom-4 right-3.5 sm:right-4">
               <button
                 type="button"
                 onClick={(e) => {
@@ -508,7 +518,7 @@ export default function ListingDetailView({
                   setActivePhotoIndex(0);
                   setLightboxOpen(true);
                 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-900 bg-white/95 hover:bg-white backdrop-blur-md shadow-lg transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-white/95 hover:bg-white hover:text-[#0A1F66] shadow-md border border-slate-200/80 transition-all active:scale-95 cursor-pointer"
               >
                 <Camera className="w-4 h-4 text-[#1E5BFF]" />
                 <span>
@@ -523,7 +533,7 @@ export default function ListingDetailView({
           {/* Secondary Stacked Photos (Only when more than 1 photo exists) */}
           {fullGallery.length > 1 && (
             <div
-              className={`col-span-1 grid gap-2.5 sm:gap-3 ${
+              className={`col-span-1 grid gap-3 sm:gap-4 ${
                 fullGallery.length === 2
                   ? "grid-cols-1"
                   : fullGallery.length === 3
@@ -543,7 +553,7 @@ export default function ListingDetailView({
                       setActivePhotoIndex(idx + 1);
                       setLightboxOpen(true);
                     }}
-                    className={`relative rounded-xl sm:rounded-2xl overflow-hidden bg-slate-200 shadow-xs cursor-pointer group ${
+                    className={`relative rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/90 shadow-[0_4px_16px_rgba(10,31,102,0.04)] hover:shadow-[0_12px_28px_rgba(10,31,102,0.1)] transition-all duration-500 cursor-pointer group ${
                       fullGallery.length === 2
                         ? "aspect-[16/10] sm:aspect-[16/9.5]"
                         : fullGallery.length === 3
@@ -553,16 +563,23 @@ export default function ListingDetailView({
                   >
                     <Image
                       src={photoUrl}
-                      alt={`Center photo ${photoNum}`}
+                      alt={`Workspace photo ${photoNum}`}
                       fill
                       sizes="(max-width: 768px) 33vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
                     />
-                    <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors" />
+                    <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-slate-950/25 transition-colors" />
+
+                    {/* Subtle Expand icon on hover */}
+                    <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="p-1.5 rounded-lg bg-black/60 text-white backdrop-blur-xs flex items-center justify-center">
+                        <Maximize2 className="w-3 h-3" />
+                      </span>
+                    </div>
 
                     {/* +N More Overlay if vendor uploaded more than 4 photos */}
                     {isLastVisible && (
-                      <div className="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center text-white transition">
+                      <div className="absolute inset-0 bg-slate-950/75 group-hover:bg-slate-950/85 backdrop-blur-[2px] flex flex-col items-center justify-center text-white transition">
                         <span className="text-xl sm:text-2xl font-black">+{remainingCount}</span>
                         <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-200">
                           More Photos

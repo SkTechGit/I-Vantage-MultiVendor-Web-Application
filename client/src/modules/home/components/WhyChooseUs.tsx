@@ -70,8 +70,8 @@ export default function WhyChooseUs() {
           </p>
         </div>
 
-        {/* 4 Feature Pillars Grid: 2-columns on mobile, 4-columns on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-8">
+        {/* 4 Feature Pillars Grid: 1-col on small mobile, 2-cols on regular mobile, 4-cols on desktop */}
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-8">
           {features.map((item) => {
             const Icon = item.icon;
 

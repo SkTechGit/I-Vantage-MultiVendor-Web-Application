@@ -24,6 +24,14 @@ const listingSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    legacySlugs: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+        index: true,
+      },
+    ],
     description: {
       type: String,
       required: true,

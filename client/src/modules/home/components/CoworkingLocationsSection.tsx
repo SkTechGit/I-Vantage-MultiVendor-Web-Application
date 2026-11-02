@@ -22,6 +22,7 @@ import {
 import ListingEnquiryModal, {
   EnquiryListingTarget,
 } from "@/components/marketplace/ListingEnquiryModal";
+import { WorkspaceGridSkeleton } from "@/components/common/Skeletons";
 
 interface SpaceCardItem {
   id: string;
@@ -361,19 +362,10 @@ export default function CoworkingLocationsSection() {
           })}
         </div>
 
-        {/* Space Cards Grid: Fixed 4 cards in a row on desktop (lg:grid-cols-4), compact sizing */}
+        {/* Space Cards Grid: Fixed 4 cards in a row on desktop (lg:grid-cols-4) with high-end shimmer loading */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="bg-white rounded-2xl h-80 animate-pulse border border-slate-200 p-4 space-y-4"
-              >
-                <div className="h-44 bg-slate-200 rounded-xl" />
-                <div className="h-4 bg-slate-200 rounded w-3/4" />
-                <div className="h-3 bg-slate-200 rounded w-1/2" />
-              </div>
-            ))}
+          <div className="mb-8">
+            <WorkspaceGridSkeleton count={4} columns={4} />
           </div>
         ) : filteredSpaces.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-8 space-y-3 mb-8">
@@ -393,9 +385,9 @@ export default function CoworkingLocationsSection() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5 mb-8">
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-8">
             {displayedSpaces.map((item, idx) => {
-              const detailUrl = `/spaces/${encodeURIComponent(item.slug || item.id)}`;
+              const detailUrl = `/${item.city || "gurugram"}/${item.categorySlug || "spaces"}/${encodeURIComponent(item.slug || item.id)}`;
 
               return (
                 <article
@@ -410,16 +402,16 @@ export default function CoworkingLocationsSection() {
                   />
 
                   <div>
-                    {/* Compact Card Image - h-28 on mobile, h-44 on desktop */}
-                    <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-100">
+                    {/* Compact Card Image */}
+                    <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-900">
                       <Image
                         src={item.image}
                         alt={item.title}
                         fill
                         priority={idx < 2}
-                        loading={idx < 2 ? "eager" : undefined}
+                        loading={idx < 2 ? "eager" : "lazy"}
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-108 z-1 relative"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/30 transition-opacity duration-300 group-hover:opacity-90" />
 

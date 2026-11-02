@@ -19,7 +19,13 @@ import {
   APPLICATION_STATUS,
   DEFAULT_PROCESS_STEPS,
 } from "./professionals.constants.js";
-import { sendEmail, OFFICIAL_CONTACT } from "../../utils/email.js";
+import {
+  sendEmail,
+  OFFICIAL_CONTACT,
+  sendProfessionalEnquiryNotifications,
+  sendProfessionalReviewSubmissionNotifications,
+  sendProfessionalApprovalDecisionNotifications,
+} from "../../utils/email.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
 
 /* -------------------------------------------------------------------------- */
@@ -440,49 +446,22 @@ export const submitConsultationEnquiry = async (slug, input, meta = {}) => {
     { upsert: true, new: true }
   );
 
-  // Email notifications (never blocking response)
+  // Multi-party email notifications (SuperAdmins + Professional + Client Confirmation)
   const serviceName = matchedService ? matchedService.title : "General Consultation";
   const proEmail = profile.contactEmail;
 
-  // 1. Send notification to Professional if email is set
-  if (proEmail) {
-    sendEmail({
-      to: proEmail,
-      subject: `New Consultation Enquiry from ${input.name} | i-VANTAGE`,
-      html: `
-        <div style="font-family: sans-serif; color: #0b1533; line-height: 1.6;">
-          <h2 style="color: #0A1F66;">New Client Consultation Request</h2>
-          <p>Hello <strong>${profile.fullName}</strong>,</p>
-          <p>You have received a new consultation request on your i-VANTAGE profile:</p>
-          <div style="background: #F4F8FF; padding: 16px; border-radius: 8px; border-left: 4px solid #1E5BFF;">
-            <p style="margin: 4px 0;"><strong>Client Name:</strong> ${input.name}</p>
-            <p style="margin: 4px 0;"><strong>Phone:</strong> ${input.phone}</p>
-            <p style="margin: 4px 0;"><strong>Email:</strong> ${input.email}</p>
-            <p style="margin: 4px 0;"><strong>Service Required:</strong> ${serviceName}</p>
-            <p style="margin: 4px 0;"><strong>Consultation Mode:</strong> ${input.mode || "Online"}</p>
-            <p style="margin: 8px 0 0;"><strong>Client Message:</strong></p>
-            <p style="margin: 4px 0; font-style: italic; color: #4B5878;">"${input.message}"</p>
-          </div>
-          <p style="margin-top: 16px;">Please reach out to the client promptly.</p>
-        </div>
-      `,
-    }).catch(console.error);
-  }
-
-  // 2. Send notification to i-VANTAGE Admin Team
-  sendEmail({
-    to: OFFICIAL_CONTACT.email,
-    subject: `[Lead Alert] Professional Consultation: ${profile.fullName} (${serviceName})`,
-    html: `
-      <div style="font-family: sans-serif; color: #0b1533;">
-        <h3 style="color: #0A1F66;">Professional Lead Received</h3>
-        <p><strong>Professional:</strong> ${profile.fullName} (${profile.slug})</p>
-        <p><strong>Client:</strong> ${input.name} (${input.phone}, ${input.email})</p>
-        <p><strong>Service:</strong> ${serviceName}</p>
-        <p><strong>Message:</strong> ${input.message}</p>
-      </div>
-    `,
-  }).catch(console.error);
+  sendProfessionalEnquiryNotifications({
+    clientName: input.name,
+    clientPhone: input.phone,
+    clientEmail: input.email,
+    clientMessage: input.message,
+    serviceName,
+    consultationMode: input.mode || "Online",
+    preferredDate: input.preferredDate,
+    proName: profile.fullName,
+    proEmail: proEmail,
+    proSlug: profile.slug,
+  }).catch((err) => console.error("Professional enquiry email dispatch error:", err.message));
 
   // Realtime Alert
   if (realtimeHub && typeof realtimeHub.broadcast === "function") {
@@ -652,6 +631,13 @@ export const submitProfileForReview = async (userId) => {
     entityId: profile._id.toString(),
   });
 
+  // Notify SuperAdmins of review queue addition + confirm to professional
+  sendProfessionalReviewSubmissionNotifications({
+    proName: profile.fullName,
+    proEmail: profile.contactEmail,
+    type: "Professional Verification & Credentials",
+  }).catch((err) => console.error("Professional review submission email error:", err.message));
+
   return profile;
 };
 
@@ -751,6 +737,13 @@ export const adminApproveProfile = async (id, actorId) => {
     entityId: profile._id.toString(),
   });
 
+  // Dispatch approval notification to Professional
+  sendProfessionalApprovalDecisionNotifications({
+    proName: profile.fullName,
+    proEmail: profile.contactEmail,
+    status: "APPROVED",
+  }).catch((err) => console.error("Professional approval email error:", err.message));
+
   return profile;
 };
 
@@ -774,6 +767,13 @@ export const adminVerifyProfessional = async (id, registrationBody, registration
     diff: { registrationBody, registrationNumber },
   });
 
+  // Dispatch verified credentials notification
+  sendProfessionalApprovalDecisionNotifications({
+    proName: profile.fullName,
+    proEmail: profile.contactEmail,
+    status: "APPROVED",
+  }).catch((err) => console.error("Professional verify email error:", err.message));
+
   return profile;
 };
 
@@ -793,6 +793,14 @@ export const adminSuspendProfile = async (id, reason, actorId) => {
     entityId: profile._id.toString(),
     diff: { reason },
   });
+
+  // Dispatch suspension alert
+  sendProfessionalApprovalDecisionNotifications({
+    proName: profile.fullName,
+    proEmail: profile.contactEmail,
+    status: "SUSPENDED",
+    reason: profile.rejectionReason,
+  }).catch((err) => console.error("Professional suspend email error:", err.message));
 
   return profile;
 };
@@ -829,6 +837,13 @@ export const adminApproveRevision = async (revisionId, actorId) => {
     diff: revision.changes,
   });
 
+  // Dispatch revision approved email
+  sendProfessionalApprovalDecisionNotifications({
+    proName: profile.fullName,
+    proEmail: profile.contactEmail,
+    status: "APPROVED",
+  }).catch((err) => console.error("Revision approve email error:", err.message));
+
   return { profile, revision };
 };
 
@@ -851,6 +866,18 @@ export const adminRejectRevision = async (revisionId, reason, actorId) => {
     entityId: revision._id.toString(),
     diff: { reason },
   });
+
+  // Dispatch revision rejected email
+  ProfessionalProfile.findById(revision.professionalId).then((prof) => {
+    if (prof) {
+      sendProfessionalApprovalDecisionNotifications({
+        proName: prof.fullName,
+        proEmail: prof.contactEmail,
+        status: "REJECTED",
+        reason: revision.rejectionReason,
+      }).catch((err) => console.error("Revision reject email error:", err.message));
+    }
+  }).catch(() => {});
 
   return revision;
 };

@@ -25,7 +25,7 @@ export default function Logo({
       width={width}
       height={height}
       priority={priority}
-      className={`h-11 sm:h-12 w-auto object-contain select-none transition-transform duration-200 hover:scale-102 ${imageClassName || className}`}
+      className={`h-9 sm:h-11 xl:h-12 w-auto object-contain select-none transition-transform duration-200 hover:scale-102 ${imageClassName || className}`}
     />
   );
 
@@ -38,4 +38,4 @@ export default function Logo({
       {imageElement}
     </Link>
   );
-}
+}

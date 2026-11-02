@@ -3,6 +3,10 @@ import { getPublicBlogs } from "@/modules/blog/blog.api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://i-vantage.in";
+  const internalApi = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api/v1").replace(
+    "//localhost",
+    "//127.0.0.1"
+  );
 
   // Static site pages
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -11,6 +15,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/gurugram`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.95,
     },
     {
       url: `${baseUrl}/about`,
@@ -44,11 +54,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic published blogs and professionals
+  // Dynamic published blogs, professionals & listings
   try {
-    const [blogData, proData] = await Promise.all([
+    const [blogData, proData, listingData] = await Promise.all([
       getPublicBlogs({ limit: 500 }).catch(() => ({ blogs: [] })),
-      fetch(`${baseUrl}/api/v1/professionals?limit=500`).then((r) => r.json()).catch(() => ({ data: [] })),
+      fetch(`${internalApi}/professionals?limit=500`)
+        .then((r) => r.json())
+        .catch(() => ({ data: [] })),
+      fetch(`${internalApi}/listings?limit=500`)
+        .then((r) => r.json())
+        .catch(() => ({ data: [] })),
     ]);
 
     const blogRoutes: MetadataRoute.Sitemap = (blogData.blogs || []).map((blog) => ({
@@ -65,7 +80,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    return [...staticRoutes, ...blogRoutes, ...proRoutes];
+    const listingRoutes: MetadataRoute.Sitemap = (
+      Array.isArray(listingData?.data) ? listingData.data : (listingData?.data?.listings || [])
+    ).map((item: any) => ({
+      url: `${baseUrl}/${item.location?.city || "gurugram"}/${item.category?.slug || item.categoryId?.slug || "spaces"}/${item.slug}`,
+      lastModified: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    }));
+
+    return [...staticRoutes, ...listingRoutes, ...blogRoutes, ...proRoutes];
   } catch {
     return staticRoutes;
   }

@@ -70,7 +70,7 @@ export default function HowItWorks() {
           {/* Subtle flowing connecting gradient line for desktop */}
           <div className="hidden lg:block absolute top-1/2 left-8 right-8 h-[2.5px] -translate-y-12 bg-gradient-to-r from-[#0A1F66]/30 via-[#1E5BFF]/50 to-[#F4A900]/40 z-0 pointer-events-none animate-gradient-flow rounded-full" />
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6 relative z-10">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 relative z-10">
             {steps.map((item, index) => {
               const Icon = item.icon;
               return (

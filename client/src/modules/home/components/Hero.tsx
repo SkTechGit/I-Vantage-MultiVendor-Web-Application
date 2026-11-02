@@ -109,7 +109,7 @@ export default function Hero() {
             ========================================================= */}
             <div className="mt-4 grid w-full max-w-[500px] grid-cols-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md sm:mt-7 transition-all duration-300 hover:shadow-md hover:border-slate-300">
               {/* Stat 1 */}
-              <div className="group flex min-w-0 items-center gap-3 border-r border-slate-100 px-3.5 py-3.5 sm:px-5 sm:py-4 transition-colors hover:bg-blue-50/30">
+              <div className="group flex min-w-0 items-center gap-2 sm:gap-3 border-r border-slate-100 px-2.5 py-3 sm:px-5 sm:py-4 transition-colors hover:bg-blue-50/30">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E5BFF] border border-blue-100/60 shadow-2xs transition-transform duration-300 group-hover:scale-110">
                   <Users size={20} />
                 </div>
@@ -124,7 +124,7 @@ export default function Hero() {
               </div>
 
               {/* Stat 2 */}
-              <div className="group flex min-w-0 items-center gap-3 px-3.5 py-3.5 sm:px-5 sm:py-4 transition-colors hover:bg-amber-50/20">
+              <div className="group flex min-w-0 items-center gap-2 sm:gap-3 px-2.5 py-3 sm:px-5 sm:py-4 transition-colors hover:bg-amber-50/20">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50/80 text-[#D97706] border border-amber-100/60 shadow-2xs transition-transform duration-300 group-hover:scale-110">
                   <Building2 size={20} />
                 </div>
@@ -169,7 +169,7 @@ export default function Hero() {
             {/* =========================================================
                 TRUST POINTS
             ========================================================= */}
-            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
+            <div className="mt-6 grid grid-cols-1 min-[420px]:grid-cols-2 gap-x-4 gap-y-2.5 sm:mt-7 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-3">
               {trustPoints.map((point) => (
                 <div key={point} className="flex min-w-0 items-center gap-2 group cursor-default">
                   <CheckCircle2

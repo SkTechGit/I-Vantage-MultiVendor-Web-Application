@@ -81,6 +81,34 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source:
+          "/gurugram/day-pass/i-vantage-business-hub-or-coworking-day-pass-in-gurgaon-or-coworking-day-pass-in-gurgaon-sector-48-sohna-road",
+        destination: "/gurugram/day-pass/ivantage-day-pass-sector-48",
+        permanent: true,
+      },
+      {
+        source:
+          "/gurugram/coworking-seat/i-vantage-business-hub-or-coworking-space-in-welldone-tech-park-or-premium-coworking-space-in-gurgaon-sector-48-sohna-road",
+        destination: "/gurugram/coworking-seat/ivantage-coworking-welldone-tech-park",
+        permanent: true,
+      },
+      {
+        source:
+          "/gurugram/meeting-room/i-vantage-business-hub-or-on-demand-meeting-room-in-welldone-tech-park-or-6-seater-meeting-room-in-gurgaon",
+        destination: "/gurugram/meeting-room/ivantage-meeting-room-welldone-tech-park",
+        permanent: true,
+      },
+      {
+        source:
+          "/noida/coworking-seat/get-set-office-sector-63-noida-or-premium-coworking-space-and-virtual-office",
+        destination: "/noida/coworking-seat/get-set-office-sector-63-noida",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

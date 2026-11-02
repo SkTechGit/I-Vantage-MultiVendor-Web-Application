@@ -129,16 +129,16 @@ export default function MarketplaceListingCards({
                 className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs hover:shadow-[0_20px_40px_rgba(10,31,102,0.12)] hover:border-[#1E5BFF]/50 transition-all duration-300 hover:-translate-y-2 flex flex-col justify-between group cursor-pointer"
               >
                 <div>
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video w-full bg-slate-100 overflow-hidden">
+                  {/* Thumbnail with clean slate background */}
+                  <div className="relative aspect-video w-full bg-slate-900 overflow-hidden">
                     <Image
                       src={coverImg}
                       alt={item.title}
                       fill
                       priority={idx < 2}
-                      loading={idx < 2 ? "eager" : undefined}
+                      loading={idx < 2 ? "eager" : "lazy"}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-                      className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                      className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out z-1 relative"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 group-hover:opacity-90" />
 

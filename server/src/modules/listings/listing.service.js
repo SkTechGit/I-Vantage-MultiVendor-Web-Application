@@ -4,7 +4,12 @@ import Service from "../marketplace-services/service.model.js";
 import AuditLog from "../auth/audit-log.model.js";
 import realtimeHub from "../realtime/realtime.hub.js";
 import slugify from "slugify";
+import User from "../users/user.model.js";
 import { createNotification } from "../notifications/notification.service.js";
+import {
+  sendListingSubmissionNotifications,
+  sendListingReviewDecisionNotifications,
+} from "../../utils/email.js";
 
 /**
  * Format listing to public DTO (strips internal & sensitive fields)
@@ -43,6 +48,7 @@ export const toPublicListingDTO = (listing) => {
     media: mediaList,
     status: l.status,
     isLive: l.isLive,
+    legacySlugs: l.legacySlugs || [],
     publishedAt: l.publishedAt,
     createdAt: l.createdAt,
     vendorId: {
@@ -76,6 +82,7 @@ export const toVendorListingDTO = (listing) => {
     media: l.media || [],
     status: l.status,
     isLive: l.isLive,
+    legacySlugs: l.legacySlugs || [],
     rejectionReason: l.rejectionReason,
     publishedAt: l.publishedAt,
     createdAt: l.createdAt,
@@ -175,6 +182,7 @@ export const getPublicListingBySlug = async (slug) => {
   const query = {
     $or: [
       { slug: clean },
+      { legacySlugs: clean },
       ...(mongoose.Types.ObjectId.isValid(slug) ? [{ _id: slug }] : []),
     ],
     isLive: true,
@@ -226,14 +234,46 @@ export const getVendorListings = async (vendorId, query = {}) => {
 };
 
 /**
+ * Clean & Concise Slug Generator for Listings
+ * Removes pipe delimiters, dashes, duplicates, and keeps SEO-friendly keywords <= 55 chars
+ */
+export const generateCleanListingSlug = (title) => {
+  let clean = String(title || "workspace")
+    .replace(/\|/g, " ")
+    .replace(/[—–]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Deduplicate repeating tokens
+  const words = clean.split(" ");
+  const uniqueWords = [];
+  const seen = new Set();
+  for (const w of words) {
+    const key = w.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (key.length > 2 && seen.has(key)) continue;
+    if (key.length > 2) seen.add(key);
+    uniqueWords.push(w);
+  }
+  clean = uniqueWords.join(" ");
+
+  let s = slugify(clean, {
+    lower: true,
+    strict: true,
+    remove: /[*+~.()'"!:@|]/g,
+  });
+
+  if (s.length > 55) {
+    s = s.substring(0, 55).replace(/-[^-]*$/, "");
+  }
+  return s || "workspace";
+};
+
+/**
  * Vendor: Create listing
  * Non-negotiable: forces status="pending_review", isLive=false
  */
 export const createVendorListing = async (vendorId, data, user) => {
-  let baseSlug = slugify(data.title || "coworking-space", {
-    lower: true,
-    strict: true,
-  });
+  let baseSlug = generateCleanListingSlug(data.title || "coworking-space");
   let uniqueSlug = baseSlug;
   let counter = 1;
   while (await Listing.findOne({ slug: uniqueSlug })) {
@@ -285,6 +325,16 @@ export const createVendorListing = async (vendorId, data, user) => {
       },
     }).catch(() => {});
   } catch {}
+
+  // Send email alerts: SuperAdmins notified of new listing + Vendor receives receipt confirmation
+  const startingPrice = newListing.pricing?.startingPrice || newListing.pricing?.coworkingDedicatedDeskPrice || newListing.pricing?.coworkingHotDeskPrice;
+  sendListingSubmissionNotifications({
+    listingTitle: newListing.title,
+    city: newListing.location?.city || "Gurugram",
+    price: startingPrice,
+    vendorBusinessName: user?.businessName || user?.name || "Vendor Partner",
+    vendorEmail: user?.email,
+  }).catch((mailErr) => console.error("Listing submission email error:", mailErr.message));
 
   return toVendorListingDTO(newListing);
 };
@@ -466,6 +516,22 @@ export const reviewListingStatus = async (
     });
   } catch {}
 
+  // Asynchronously notify vendor of approval/rejection decision
+  User.findById(listing.vendorId)
+    .select("email name businessName")
+    .then((vendorUser) => {
+      if (vendorUser && vendorUser.email) {
+        sendListingReviewDecisionNotifications({
+          listingTitle: listing.title,
+          vendorEmail: vendorUser.email,
+          status,
+          rejectionReason,
+          liveUrl: listing.slug ? `https://i-vantage.in/spaces/${listing.slug}` : "",
+        }).catch((err) => console.error("Listing review decision mail error:", err.message));
+      }
+    })
+    .catch((err) => console.error("Vendor lookup error for review email:", err.message));
+
   return toAdminListingDTO(listing);
 };
 
@@ -593,10 +659,7 @@ export const getAdminListingById = async (listingId) => {
  * SuperAdmin: Create listing directly
  */
 export const createAdminListing = async (data, adminUser) => {
-  let baseSlug = slugify(data.title || "coworking-space", {
-    lower: true,
-    strict: true,
-  });
+  let baseSlug = generateCleanListingSlug(data.title || "coworking-space");
   let uniqueSlug = baseSlug;
   let counter = 1;
   while (await Listing.findOne({ slug: uniqueSlug })) {

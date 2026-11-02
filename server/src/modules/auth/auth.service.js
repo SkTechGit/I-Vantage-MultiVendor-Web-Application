@@ -13,7 +13,10 @@ import {
   verifyRefreshToken,
 } from "../../utils/jwt.js";
 import ApiError from "../../utils/ApiError.js";
-import { sendRoleChangeNotification } from "../../utils/email.js";
+import {
+  sendRoleChangeNotification,
+  sendProfessionalRegistrationNotifications,
+} from "../../utils/email.js";
 import { createNotification } from "../notifications/notification.service.js";
 import ProfessionalProfile from "../professionals/professionals.model.js";
 import ProfessionalCategory from "../professionals/professionals.category.model.js";
@@ -551,6 +554,17 @@ export const register = async ({
     },
   }).catch(() => {});
 
+  // Dispatch professional registration email alerts (SuperAdmins + Welcome to Professional)
+  if (effectiveRole === "professional") {
+    sendProfessionalRegistrationNotifications({
+      proName: name.trim(),
+      proEmail: normalizedEmail,
+      proPhone: normalizedPhone || phone?.trim(),
+      businessName: newUser.businessName,
+      userId: primaryId.toString(),
+    }).catch((mailErr) => console.error("Professional registration email error:", mailErr.message));
+  }
+
   return {
     user: {
       _id: primaryId,
@@ -1085,6 +1099,15 @@ export const approveAccessRequest = async (userId, role = "super_admin", adminId
   } catch (rtErr) {
     console.error("Realtime broadcast error:", rtErr);
   }
+
+  // Dispatch account approval & role activation notification
+  sendRoleChangeNotification({
+    email: user.email,
+    fullName: user.fullName,
+    previousRole: "pending_approval",
+    newRole: normalizedRole,
+    changedBy: "SuperAdmin Approval",
+  }).catch((err) => console.error("Access request approval email error:", err.message));
 
   user.password = undefined;
   return user;

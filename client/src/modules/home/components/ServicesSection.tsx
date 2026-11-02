@@ -132,8 +132,8 @@ export default function ServicesSection({}: Props) {
           </p>
         </div>
 
-        {/* Ultra-Premium Solution Cards Grid: 2-columns on mobile, 3-columns on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-7">
+        {/* Ultra-Premium Solution Cards Grid: 1-col on small mobile, 2-cols on regular mobile, 3-cols on desktop */}
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-7">
           {SOLUTIONS.map((item) => {
             const Icon = item.icon;
             return (

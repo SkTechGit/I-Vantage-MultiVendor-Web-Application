@@ -34,6 +34,12 @@ interface Props {
 
 
 
+const getApiUrl = () =>
+  (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api/v1").replace(
+    "//localhost",
+    "//127.0.0.1"
+  );
+
 export default async function CityCoworkingPage({ params, searchParams }: Props) {
   const { city } = await params;
   const sParams = await searchParams;
@@ -42,13 +48,13 @@ export default async function CityCoworkingPage({ params, searchParams }: Props)
   const cityName =
     normalizedCity.charAt(0).toUpperCase() + normalizedCity.slice(1);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  const apiUrl = getApiUrl();
 
   // 1. Fetch categories from Express backend
   let allCategories: any[] = [];
   try {
     const catRes = await fetch(`${apiUrl}/marketplace-categories`, {
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
     if (catRes.ok) {
       const catJson = await catRes.json();
@@ -79,7 +85,7 @@ export default async function CityCoworkingPage({ params, searchParams }: Props)
 
   try {
     const listRes = await fetch(`${apiUrl}/listings?${queryParams.toString()}`, {
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (listRes.ok) {
       const listJson = await listRes.json();

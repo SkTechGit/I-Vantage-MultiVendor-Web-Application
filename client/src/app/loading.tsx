@@ -1,7 +1,6 @@
+import React from "react";
+import PageSkeleton from "@/components/common/Skeletons";
+
 export default function Loading() {
-  return (
-    <div className="flex h-screen items-center justify-center">
-      Loading...
-    </div>
-  );
+  return <PageSkeleton />;
 }

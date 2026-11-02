@@ -143,7 +143,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Mobile Navigation"
-      className={`fixed inset-0 z-[10000] lg:hidden transition-visibility duration-300 ${
+      className={`fixed inset-0 z-[10000] xl:hidden transition-visibility duration-300 ${
         open ? "visible pointer-events-auto" : "invisible pointer-events-none"
       }`}
     >
