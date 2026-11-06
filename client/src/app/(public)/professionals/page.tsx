@@ -1,8 +1,9 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import Container from "@/components/common/Container";
 import DirectoryExplorer from "@/components/professionals/listing/DirectoryExplorer";
 import { professionalsApi } from "@/lib/professionals.api";
-import { ShieldCheck, Award, Building2 } from "lucide-react";
+import { ShieldCheck, Award, Building2, MapPin } from "lucide-react";
 
 export const revalidate = 60; // ISR revalidate every 60 seconds
 
@@ -13,6 +14,17 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://i-vantage.in/professionals",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     title: "Verified CAs, Legal Consultants, Lawyers, Tax & HR Experts | i-VANTAGE Network",
     description:
@@ -21,6 +33,11 @@ export const metadata: Metadata = {
     siteName: "i-VANTAGE Business Hub",
     locale: "en_IN",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Verified CAs, Legal Consultants, Lawyers, Tax & HR Experts | i-VANTAGE",
+    description: "Connect directly with vetted Chartered Accountants, corporate advocates, and tax consultants in India.",
   },
 };
 
@@ -52,8 +69,62 @@ export default async function ProfessionalsPage() {
     console.error("Error fetching professionals server-side:", err);
   }
 
+  const topCities = [
+    "Gurugram",
+    "Delhi",
+    "Noida",
+    "Bengaluru",
+    "Mumbai",
+    "Hyderabad",
+    "Pune",
+    "Ahmedabad",
+    "Chennai",
+    "Kolkata",
+  ];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://i-vantage.in/professionals#webpage",
+        url: "https://i-vantage.in/professionals",
+        name: "Verified Chartered Accountants, Legal, Tax & HR Professionals Network | i-VANTAGE",
+        description:
+          "Connect directly with vetted Chartered Accountants, corporate advocates, tax consultants, and HR professionals across India.",
+        breadcrumb: {
+          "@id": "https://i-vantage.in/professionals#breadcrumb",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://i-vantage.in/professionals#breadcrumb",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://i-vantage.in",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Professionals Network",
+            item: "https://i-vantage.in/professionals",
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-24">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Editorial Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-[#F8FAFC] border-b border-slate-200/70 pt-12 pb-14 sm:pt-16 sm:pb-18">
         <div
@@ -92,6 +163,25 @@ export default async function ProfessionalsPage() {
               <div className="flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 text-[#1E5BFF]" />
                 <span>Boardroom &amp; Virtual Consultations</span>
+              </div>
+            </div>
+
+            {/* City Hub Quick Links (SEO & Discovery) */}
+            <div className="pt-6 border-t border-slate-200/60 max-w-2xl mx-auto">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-[#1E5BFF]" />
+                <span>Explore Top Business Cities</span>
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {topCities.map((c) => (
+                  <Link
+                    key={c}
+                    href={`/professionals/location/${c.toLowerCase()}`}
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200 hover:border-[#1E5BFF] hover:text-[#1E5BFF] hover:bg-blue-50/50 transition-all shadow-2xs"
+                  >
+                    {c}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>

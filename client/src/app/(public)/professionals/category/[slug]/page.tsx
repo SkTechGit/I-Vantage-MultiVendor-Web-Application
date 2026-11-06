@@ -15,19 +15,52 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   let categoryName = "Professionals";
+  let categoryDesc = "";
   try {
     const categories = await professionalsApi.getCategories();
     const found = categories?.find((c: any) => c.slug === slug);
-    if (found) categoryName = found.label || found.name;
+    if (found) {
+      categoryName = found.label || found.name;
+      categoryDesc = found.description || "";
+    }
   } catch (err) {
     // fallback
   }
 
+  const title = `Top Verified ${categoryName} in India | i-VANTAGE Network`;
+  const description =
+    categoryDesc ||
+    `Connect directly with vetted ${categoryName} across India. Verified credentials, transparent advisory fee ranges, and boardroom consultations with zero brokerage.`;
+
   return {
-    title: `Verified ${categoryName} in India | i-VANTAGE Network`,
-    description: `Connect with vetted and ICAI / Bar Council verified ${categoryName}. Schedule online consultations or meet in premium I-Vantage boardrooms.`,
+    title,
+    description: description.slice(0, 160),
     alternates: {
       canonical: `https://i-vantage.in/professionals/category/${slug}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    openGraph: {
+      title,
+      description: description.slice(0, 160),
+      url: `https://i-vantage.in/professionals/category/${slug}`,
+      siteName: "i-VANTAGE Business Hub",
+      locale: "en_IN",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: description.slice(0, 160),
     },
   };
 }
@@ -69,8 +102,58 @@ export default async function CategoryProfessionalsPage({ params }: Props) {
   const categoryTitle = currentCategory?.label || currentCategory?.name || slug.replace(/-/g, " ").toUpperCase();
   const categoryDesc = currentCategory?.description || `Explore top vetted ${categoryTitle} across India with verified credentials and transparent consultation pricing.`;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `https://i-vantage.in/professionals/category/${slug}`,
+        name: `Verified ${categoryTitle} in India`,
+        description: categoryDesc,
+        url: `https://i-vantage.in/professionals/category/${slug}`,
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: initialProfessionals.map((item, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            url: `https://i-vantage.in/professionals/${item.slug}`,
+            name: item.fullName,
+          })),
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://i-vantage.in",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Professionals Network",
+            item: "https://i-vantage.in/professionals",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: categoryTitle,
+            item: `https://i-vantage.in/professionals/category/${slug}`,
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-24">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Category Header */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-[#F8FAFC] border-b border-slate-200/70 pt-8 pb-12 sm:pt-10 sm:pb-14">
         <Container>

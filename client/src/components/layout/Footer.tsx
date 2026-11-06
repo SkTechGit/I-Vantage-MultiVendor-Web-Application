@@ -39,15 +39,15 @@ const WORKSPACES = [
   { label: "Event & Workshop Spaces", href: "/contact" },
 ];
 
-// Curated Business & Legal Services (Single-line, punchy labels)
+// Curated Business & Legal Services (SEO Category Linking)
 const BUSINESS_SERVICES = [
-  { label: "Verified CA & Legal Experts", href: "/professionals" },
-  { label: "Company Incorporation", href: "/services" },
-  { label: "GST & ROC Filings", href: "/services" },
-  { label: "Trademark & IP Protection", href: "/services" },
-  { label: "Accounting & Tax Advisory", href: "/professionals" },
-  { label: "Startup India Advisory", href: "/services" },
-  { label: "Enterprise Tech & Cloud", href: "/services" },
+  { label: "Chartered Accountants (CA)", href: "/professionals/category/chartered-accountant" },
+  { label: "Corporate Lawyers & Advocates", href: "/professionals/category/legal-consultant" },
+  { label: "Tax & GST Consultants", href: "/professionals/category/tax-gst-consultant" },
+  { label: "Company Secretaries (CS)", href: "/professionals/category/company-secretary" },
+  { label: "Virtual CFOs & Advisors", href: "/professionals/category/virtual-cfo-advisor" },
+  { label: "HR & Compliance Advisors", href: "/professionals/category/hr-professional" },
+  { label: "All Verified Professionals", href: "/professionals" },
 ];
 
 // Prime NCR Business Hubs (Single-line labels)

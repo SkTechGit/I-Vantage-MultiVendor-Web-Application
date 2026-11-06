@@ -28,7 +28,7 @@ export default function ProfessionalCard({ professional }: Props) {
             {p.photoUrl ? (
               <Image
                 src={p.photoUrl}
-                alt={p.photoAlt || p.fullName}
+                alt={p.photoAlt || `Photo of ${p.fullName}, verified ${categoryName} in ${p.city}`}
                 fill
                 sizes="80px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"

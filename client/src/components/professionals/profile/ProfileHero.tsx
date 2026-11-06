@@ -84,7 +84,7 @@ export default function ProfileHero({ professional }: Props) {
               {p.photoUrl ? (
                 <Image
                   src={p.photoUrl}
-                  alt={p.photoAlt || p.fullName}
+                  alt={p.photoAlt || `Verified ${categoryName} ${p.fullName} in ${p.city}, India`}
                   fill
                   sizes="144px"
                   priority
@@ -214,13 +214,18 @@ export default function ProfileHero({ professional }: Props) {
             {/* Badges / Meta Strip */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-slate-600">
               {/* Location */}
-              <div className="flex items-center gap-1 font-medium">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>
-                  {p.city}
-                  {p.state ? `, ${p.state}` : ""}, India
-                </span>
-              </div>
+              {p.city ? (
+                <Link
+                  href={`/professionals/location/${encodeURIComponent(p.city.toLowerCase().trim())}`}
+                  className="flex items-center gap-1 font-medium hover:text-[#1E5BFF] transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>
+                    {p.city}
+                    {p.state ? `, ${p.state}` : ""}, India
+                  </span>
+                </Link>
+              ) : null}
 
               {/* Experience */}
               {p.yearsExperience && (

@@ -54,11 +54,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic published blogs, professionals & listings
+  // Dynamic published blogs, professionals, categories, locations & listings
   try {
-    const [blogData, proData, listingData] = await Promise.all([
+    const [blogData, proData, catData, listingData] = await Promise.all([
       getPublicBlogs({ limit: 500 }).catch(() => ({ blogs: [] })),
-      fetch(`${internalApi}/professionals?limit=500`)
+      fetch(`${internalApi}/professionals?limit=1000`)
+        .then((r) => r.json())
+        .catch(() => ({ data: [] })),
+      fetch(`${internalApi}/professionals/categories`)
         .then((r) => r.json())
         .catch(() => ({ data: [] })),
       fetch(`${internalApi}/listings?limit=500`)
@@ -75,6 +78,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const proRoutes: MetadataRoute.Sitemap = ((proData?.data as any[]) || []).map((pro) => ({
       url: `${baseUrl}/professionals/${pro.slug}`,
+      lastModified: pro.updatedAt ? new Date(pro.updatedAt) : new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    }));
+
+    const proCategories = Array.isArray(catData?.data) ? catData.data : [];
+    const categoryRoutes: MetadataRoute.Sitemap = proCategories.map((cat: any) => ({
+      url: `${baseUrl}/professionals/category/${cat.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    }));
+
+    const targetCities = [
+      "gurugram",
+      "delhi",
+      "noida",
+      "bengaluru",
+      "mumbai",
+      "hyderabad",
+      "pune",
+      "chennai",
+      "kolkata",
+      "ahmedabad",
+      "jaipur",
+    ];
+    const locationRoutes: MetadataRoute.Sitemap = targetCities.map((city) => ({
+      url: `${baseUrl}/professionals/location/${city}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,
@@ -89,7 +120,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     }));
 
-    return [...staticRoutes, ...listingRoutes, ...blogRoutes, ...proRoutes];
+    return [
+      ...staticRoutes,
+      ...listingRoutes,
+      ...blogRoutes,
+      ...categoryRoutes,
+      ...locationRoutes,
+      ...proRoutes,
+    ];
   } catch {
     return staticRoutes;
   }
