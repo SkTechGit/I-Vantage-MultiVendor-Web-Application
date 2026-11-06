@@ -676,11 +676,11 @@ export default function TeamManagement() {
     e.preventDefault();
     const cleanEmail = inviteEmail.trim().toLowerCase();
     if (!cleanEmail) {
-      toast.error("Please enter a valid work email address.");
+      toast.error("Please enter a valid email address.");
       return;
     }
     if (!EMAIL_REGEX.test(cleanEmail)) {
-      toast.error("Please enter a valid work email address (e.g. colleague@company.com).");
+      toast.error("Please enter a valid email address (e.g. colleague@gmail.com).");
       return;
     }
 

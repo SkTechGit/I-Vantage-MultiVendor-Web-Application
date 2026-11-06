@@ -167,6 +167,19 @@ const processStepSubSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const documentSubSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    kind: { type: String, default: "OTHER" },
+    fileUrl: { type: String, required: true, trim: true },
+    publicId: { type: String, default: "" },
+    verifiedStatus: { type: String, default: "PENDING" },
+    expiryDate: { type: String, default: "" },
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: true, timestamps: true }
+);
+
 /* -------------------------------------------------------------------------- */
 /*                         Main Professional Profile                          */
 /* -------------------------------------------------------------------------- */
@@ -267,6 +280,16 @@ const professionalProfileSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    coverUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    coverAlt: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     linkedinUrl: {
       type: String,
       trim: true,
@@ -344,6 +367,44 @@ const professionalProfileSchema = new mongoose.Schema(
     expertise: [expertiseSubSchema],
     videos: [videoSubSchema],
     experience: [experienceSubSchema],
+    documents: [documentSubSchema],
+
+    /* Designation & Professional Credentials */
+    designation: { type: String, trim: true, default: "" },
+    enrollmentDate: { type: String, trim: true, default: "" },
+    copNumber: { type: String, trim: true, default: "" },
+    copValidity: { type: String, trim: true, default: "" },
+    firmRegistrationNumber: { type: String, trim: true, default: "" },
+    regionalCouncil: { type: String, trim: true, default: "" },
+    officeAddress: { type: String, trim: true, default: "" },
+    pincode: { type: String, trim: true, default: "" },
+    isRemoteFriendly: { type: Boolean, default: true },
+    willingToTravel: { type: Boolean, default: false },
+    bookingUrl: { type: String, trim: true, default: "" },
+    caConnectUrl: { type: String, trim: true, default: "" },
+    signatureUrl: { type: String, trim: true, default: "" },
+
+    /* Fees & Advisory Engagement */
+    feeModel: { type: String, trim: true, default: "RANGE" },
+    consultationFeeMaxInr: { type: Number, default: 3500 },
+    consultationDurationMinutes: { type: Number, default: 30 },
+    freeFirstConsultation: { type: Boolean, default: false },
+    gstApplicable: { type: Boolean, default: true },
+    retainerScopeText: { type: String, trim: true, default: "" },
+    acceptedPaymentMethods: { type: [String], default: ["UPI", "NEFT_RTGS", "CARD", "NET_BANKING"] },
+    cancellationPolicyText: { type: String, trim: true, default: "Cancellations permitted up to 4 hours before consultation." },
+
+    /* Statutory Registrations */
+    gstin: { type: String, trim: true, default: "" },
+    gstinStatus: { type: String, trim: true, default: "ACTIVE" },
+    panMasked: { type: String, trim: true, default: "" },
+    citrNumber: { type: String, trim: true, default: "" },
+    udinEnabled: { type: Boolean, default: true },
+    aadhaarSeeded: { type: Boolean, default: true },
+    pfEsicRegistration: { type: String, trim: true, default: "" },
+    shopEstLicense: { type: String, trim: true, default: "" },
+    udyamNumber: { type: String, trim: true, default: "" },
+    empanelments: { type: [String], default: [] },
 
     /* Lifecycle & Governance */
     status: {

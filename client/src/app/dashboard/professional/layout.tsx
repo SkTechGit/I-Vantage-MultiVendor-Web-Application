@@ -13,6 +13,7 @@ import {
   ExternalLink,
   LogOut,
   ShieldCheck,
+  CheckCircle2,
   AlertCircle,
   Menu,
   X,
@@ -48,6 +49,16 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
       }
     };
     loadProfile();
+
+    const handleProfileUpdate = (e: any) => {
+      if (e.detail) {
+        setProfile(e.detail);
+      } else {
+        loadProfile();
+      }
+    };
+    window.addEventListener("professional-profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("professional-profile-updated", handleProfileUpdate);
   }, []);
 
   const navItems = [
@@ -129,8 +140,20 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
 
             {/* User Pill */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#0A1F66] text-white flex items-center justify-center font-bold text-xs">
-                {profile?.fullName ? profile.fullName.charAt(0) : <User className="w-4 h-4" />}
+              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#0A1F66] text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-100 shrink-0">
+                {profile?.photoUrl ? (
+                  <Image
+                    src={profile.photoUrl}
+                    alt={profile.fullName}
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                  />
+                ) : profile?.fullName ? (
+                  profile.fullName.charAt(0)
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
               </div>
               <span className="hidden md:inline-block text-xs font-bold text-slate-800">
                 {profile?.fullName || "Professional"}
@@ -155,6 +178,51 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
           
           {/* Sidebar (Span 3) */}
           <aside className={`md:col-span-3 space-y-4 ${mobileMenuOpen ? "block" : "hidden md:block"}`}>
+            {/* Professional Quick Avatar Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard/professional/profile"
+                  className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-xs ring-1 ring-slate-200 shrink-0 group block"
+                  title="Edit Profile Photo"
+                >
+                  {profile?.photoUrl ? (
+                    <Image
+                      src={profile.photoUrl}
+                      alt={profile.fullName}
+                      fill
+                      sizes="48px"
+                      className="object-cover group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#0A1F66] to-[#1E5BFF] text-white flex items-center justify-center font-black text-sm">
+                      {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "P"}
+                    </div>
+                  )}
+                </Link>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-black text-slate-900 truncate">
+                      {profile?.fullName || "Professional"}
+                    </p>
+                    {profile?.verificationStatus === "VERIFIED" && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate">
+                    {profile?.headline || "Verified Member"}
+                  </p>
+                  <Link
+                    href="/dashboard/professional/profile"
+                    className="text-[10px] font-bold text-[#1E5BFF] hover:underline inline-block mt-0.5"
+                  >
+                    Edit Photo &amp; Bio →
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* Profile Status Card */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">

@@ -45,31 +45,38 @@ export const getPortalFromContext = (
   currentPath: string,
   reqUrl: string = ""
 ): "professional" | "vendor" | "admin" | "all" => {
+  // Public directory routes must NEVER be treated as protected portals
+  if (currentPath.startsWith("/professionals")) {
+    return "all";
+  }
+
   // 1. Browser path takes strict precedence as it represents the active session context
   if (
     currentPath.startsWith("/dashboard/professional") ||
-    currentPath.startsWith("/professional")
+    currentPath === "/professional" ||
+    currentPath.startsWith("/professional/")
   ) {
     return "professional";
   }
   if (
     currentPath.startsWith("/dashboard/vendor") ||
-    currentPath.startsWith("/vendor")
+    currentPath === "/vendor" ||
+    currentPath.startsWith("/vendor/")
   ) {
     return "vendor";
   }
-  if (currentPath.startsWith("/admin")) {
+  if (currentPath === "/admin" || currentPath.startsWith("/admin/")) {
     return "admin";
   }
 
-  // 2. Fallback to requested URL pattern for background or public API calls
-  if (reqUrl.includes("/professionals")) {
+  // 2. Fallback to requested URL pattern for private API calls only
+  if (reqUrl.includes("/professionals/me")) {
     return "professional";
   }
-  if (reqUrl.includes("/vendor")) {
+  if (reqUrl.includes("/vendor/") || reqUrl.includes("/vendor?")) {
     return "vendor";
   }
-  if (reqUrl.includes("/admin")) {
+  if (reqUrl.includes("/admin/") || reqUrl.includes("/admin?")) {
     return "admin";
   }
 
@@ -117,21 +124,30 @@ axiosInstance.interceptors.response.use(
           }
         } catch { }
 
+        // NEVER redirect away from public pages (e.g. /professionals, /, /about, /services, etc.)
         if (
           portal === "admin" &&
+          (currentPath === "/admin" || currentPath.startsWith("/admin/")) &&
           currentPath !== "/admin/login" &&
           currentPath !== "/admin/signup"
         ) {
           window.location.href = "/admin/login?reason=session_invalidated";
         } else if (
           portal === "vendor" &&
+          (currentPath === "/vendor" ||
+            currentPath.startsWith("/vendor/") ||
+            currentPath.startsWith("/dashboard/vendor")) &&
           currentPath !== "/vendor/login" &&
           currentPath !== "/vendor/signup"
         ) {
           window.location.href = "/vendor/login?reason=session_invalidated";
         } else if (
           portal === "professional" &&
-          currentPath !== "/professional/login"
+          !currentPath.startsWith("/professionals") &&
+          (currentPath.startsWith("/dashboard/professional") || currentPath === "/professional") &&
+          currentPath !== "/professional/login" &&
+          currentPath !== "/professional/signup" &&
+          currentPath !== "/professional/register"
         ) {
           window.location.href = "/professional/login?reason=session_invalidated";
         }

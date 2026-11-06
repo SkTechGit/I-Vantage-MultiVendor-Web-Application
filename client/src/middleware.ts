@@ -21,6 +21,11 @@ function decodeJwtPayload(token: string): { role?: string; id?: string } | null 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Explicit bypass for public professionals directory & consumer pages
+  if (pathname.startsWith("/professionals")) {
+    return NextResponse.next();
+  }
+
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/admin/login" ||

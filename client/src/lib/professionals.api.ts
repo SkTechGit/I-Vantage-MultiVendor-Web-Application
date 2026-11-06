@@ -61,6 +61,17 @@ export interface ProcessStepItem {
   description: string;
 }
 
+export interface ProfileDocumentItem {
+  _id: string;
+  title: string;
+  kind: "COP_CERTIFICATE" | "MEMBERSHIP_CARD" | "GST_CERTIFICATE" | "PAN_CARD" | "UDYAM_CERTIFICATE" | "OTHER";
+  fileUrl: string;
+  publicId?: string;
+  verifiedStatus: "PENDING" | "VERIFIED" | "REJECTED";
+  expiryDate?: string;
+  uploadedAt: string;
+}
+
 export interface ProfessionalProfileItem {
   _id: string;
   userId?: any;
@@ -80,6 +91,8 @@ export interface ProfessionalProfileItem {
   registrationNumber: string;
   photoUrl: string;
   photoAlt?: string;
+  coverUrl?: string;
+  coverAlt?: string;
   linkedinUrl?: string;
   websiteUrl?: string;
   contactMode: "hub" | "direct";
@@ -99,6 +112,45 @@ export interface ProfessionalProfileItem {
   expertise: ExpertiseItem[];
   videos: VideoItem[];
   experience: ExperienceItem[];
+  documents?: ProfileDocumentItem[];
+
+  /* Credentials & Practice */
+  designation?: string;
+  enrollmentDate?: string;
+  copNumber?: string;
+  copValidity?: string;
+  firmRegistrationNumber?: string;
+  regionalCouncil?: string;
+  officeAddress?: string;
+  pincode?: string;
+  isRemoteFriendly?: boolean;
+  willingToTravel?: boolean;
+  bookingUrl?: string;
+  caConnectUrl?: string;
+  signatureUrl?: string;
+
+  /* Fees */
+  feeModel?: string;
+  consultationFeeMaxInr?: number;
+  consultationDurationMinutes?: number;
+  freeFirstConsultation?: boolean;
+  gstApplicable?: boolean;
+  retainerScopeText?: string;
+  acceptedPaymentMethods?: string[];
+  cancellationPolicyText?: string;
+
+  /* Statutory */
+  gstin?: string;
+  gstinStatus?: string;
+  panMasked?: string;
+  citrNumber?: string;
+  udinEnabled?: boolean;
+  aadhaarSeeded?: boolean;
+  pfEsicRegistration?: string;
+  shopEstLicense?: string;
+  udyamNumber?: string;
+  empanelments?: string[];
+
   status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "SUSPENDED" | "ARCHIVED";
   verificationStatus: "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
   verifiedAt?: string;
@@ -164,6 +216,51 @@ export const professionalsApi = {
   getMyProfile: async () => {
     const { data } = await api.get("/professionals/me/profile");
     return data.data;
+  },
+
+  uploadPhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append("photo", file);
+    const { data } = await api.post("/professionals/me/profile/photo", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  removePhoto: async () => {
+    const { data } = await api.delete("/professionals/me/profile/photo");
+    return data;
+  },
+
+  uploadCover: async (file: File) => {
+    const formData = new FormData();
+    formData.append("cover", file);
+    const { data } = await api.post("/professionals/me/profile/cover", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  removeCover: async () => {
+    const { data } = await api.delete("/professionals/me/profile/cover");
+    return data;
+  },
+
+  uploadDocument: async (file: File, meta: { title: string; kind: string; expiryDate?: string }) => {
+    const formData = new FormData();
+    formData.append("document", file);
+    formData.append("title", meta.title);
+    formData.append("kind", meta.kind);
+    if (meta.expiryDate) formData.append("expiryDate", meta.expiryDate);
+    const { data } = await api.post("/professionals/me/profile/document", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  deleteDocument: async (docId: string) => {
+    const { data } = await api.delete(`/professionals/me/profile/document/${docId}`);
+    return data;
   },
 
   updateMyContent: async (payload: any) => {

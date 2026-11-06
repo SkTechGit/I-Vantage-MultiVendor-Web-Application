@@ -109,7 +109,7 @@ export const signupSchema = z
       .min(1, VALIDATION_MESSAGES.EMAIL_REQUIRED)
       .toLowerCase()
       .refine(isValidEmail, {
-        message: "Please enter a valid work email address (e.g. name@company.com).",
+        message: "Please enter a valid email address (e.g. name@gmail.com or name@company.com).",
       }),
 
     phone: z
@@ -161,7 +161,7 @@ export const vendorSignupSchema = z
       .min(1, VALIDATION_MESSAGES.EMAIL_REQUIRED)
       .toLowerCase()
       .refine(isValidEmail, {
-        message: "Please enter a valid official email address (e.g. partner@brand.com).",
+        message: "Please enter a valid email address (e.g. partner@gmail.com or partner@brand.com).",
       }),
 
     phone: z

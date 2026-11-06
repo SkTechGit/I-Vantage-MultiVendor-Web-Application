@@ -34,10 +34,15 @@ export default function MobileActionBar({ professional, onBookClick }: Props) {
           </span>
           {p.consultationFeeInr ? (
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-black text-[#0A1F66]">
+              <span className="text-sm sm:text-base font-black text-[#0A1F66]">
                 ₹{p.consultationFeeInr.toLocaleString("en-IN")}
+                {p.consultationFeeMaxInr && p.consultationFeeMaxInr > p.consultationFeeInr
+                  ? `–₹${p.consultationFeeMaxInr.toLocaleString("en-IN")}`
+                  : ""}
               </span>
-              <span className="text-[10px] text-slate-500 font-semibold">/ session</span>
+              <span className="text-[10px] text-slate-500 font-semibold">
+                {p.consultationDurationMinutes ? `/${p.consultationDurationMinutes}m` : "/session"}
+              </span>
             </div>
           ) : (
             <span className="text-xs font-black text-[#0A1F66] truncate block">

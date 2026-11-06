@@ -138,6 +138,15 @@ export const DEFAULT_PROFESSIONAL_CATEGORIES = [
     sortOrder: 3,
     isActive: true,
   },
+  {
+    slug: "hr-professional",
+    name: "HR Professionals & Advisors",
+    label: "HR Professional",
+    description: "Specialists in talent acquisition, payroll compliance, labor laws, POSH policies, and HR strategy.",
+    iconKey: "Users",
+    sortOrder: 4,
+    isActive: true,
+  },
 ];
 
 /* -------------------------------------------------------------------------- */

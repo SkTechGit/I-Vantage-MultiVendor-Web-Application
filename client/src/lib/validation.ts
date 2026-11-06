@@ -53,7 +53,7 @@ export function isValidEmail(email: string): boolean {
 
 export const VALIDATION_MESSAGES = {
   EMAIL_REQUIRED: "Email address is required.",
-  EMAIL_INVALID: "Please enter a valid email address (e.g. name@company.com).",
+  EMAIL_INVALID: "Please enter a valid email address (e.g. name@gmail.com or name@company.com).",
   PHONE_REQUIRED: "Phone number is required.",
   PHONE_INVALID: "Please enter a valid 10-digit Indian mobile number (e.g. 9876543210).",
 } as const;

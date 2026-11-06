@@ -377,7 +377,7 @@ export default function ListYourSpaceView() {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Corporate Email <span className="text-red-500">*</span>
+                      Email Address (Gmail / Business) <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="field-email"
@@ -387,7 +387,7 @@ export default function ListYourSpaceView() {
                         setFormData({ ...formData, email: e.target.value });
                         if (errors.email) setErrors({ ...errors, email: undefined });
                       }}
-                      placeholder="e.g. partnerships@horizon.com"
+                      placeholder="e.g. partner@gmail.com or info@domain.com"
                       className={`w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 transition outline-none focus:ring-2 ${
                         errors.email
                           ? "border-red-300 bg-red-50/40 focus:ring-red-200"

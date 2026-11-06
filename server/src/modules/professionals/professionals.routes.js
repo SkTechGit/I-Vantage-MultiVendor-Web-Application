@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, authorize } from "../auth/auth.middleware.js";
 import { authRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+import upload from "../../middlewares/upload.middleware.js";
 import * as controller from "./professionals.controller.js";
 
 const router = Router();
@@ -23,6 +24,12 @@ router.get("/categories", controller.getCategories);
 
 router.get("/me/profile", proAuth, controller.getMyProfile);
 router.patch("/me/profile/content", proAuth, controller.updateMyContent);
+router.post("/me/profile/photo", proAuth, upload.single("photo"), controller.uploadProfilePhoto);
+router.delete("/me/profile/photo", proAuth, controller.removeProfilePhoto);
+router.post("/me/profile/cover", proAuth, upload.single("cover"), controller.uploadCoverPhoto);
+router.delete("/me/profile/cover", proAuth, controller.removeCoverPhoto);
+router.post("/me/profile/document", proAuth, upload.single("document"), controller.uploadProfileDocument);
+router.delete("/me/profile/document/:docId", proAuth, controller.deleteProfileDocument);
 router.post("/me/profile/identity", proAuth, controller.requestIdentityChange);
 router.post("/me/profile/submit", proAuth, controller.submitForReview);
 router.get("/me/enquiries", proAuth, controller.getMyEnquiries);

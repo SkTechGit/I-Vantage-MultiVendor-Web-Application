@@ -7,16 +7,16 @@ import { ShieldCheck, Award, Building2 } from "lucide-react";
 export const revalidate = 60; // ISR revalidate every 60 seconds
 
 export const metadata: Metadata = {
-  title: "Verified Chartered Accountants, Tax & Legal Experts | i-VANTAGE Network",
+  title: "Verified CAs, Legal Consultants, Lawyers, Tax & HR Experts | i-VANTAGE Network",
   description:
-    "Find and consult ICAI & Bar Council verified Chartered Accountants, GST & Tax consultants, and corporate lawyers in India. Transparent fees, direct engagement, and premium boardroom facilities.",
+    "Connect with vetted Chartered Accountants, Legal Consultants, Lawyers, Tax & GST advisors, and HR Professionals across India. Statutorily verified credentials, transparent pricing, and zero brokerage.",
   alternates: {
     canonical: "https://i-vantage.in/professionals",
   },
   openGraph: {
-    title: "Verified Chartered Accountants, Tax & Legal Experts | i-VANTAGE Network",
+    title: "Verified CAs, Legal Consultants, Lawyers, Tax & HR Experts | i-VANTAGE Network",
     description:
-      "Find and consult ICAI & Bar Council verified Chartered Accountants, GST & Tax consultants, and corporate lawyers in India.",
+      "Connect with vetted Chartered Accountants, Legal Consultants, Lawyers, Tax & GST advisors, and HR Professionals across India.",
     url: "https://i-vantage.in/professionals",
     siteName: "i-VANTAGE Business Hub",
     locale: "en_IN",
@@ -71,19 +71,19 @@ export default async function ProfessionalsPage() {
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A1F66] leading-[1.15]">
-              India&apos;s Verified Network of Chartered Accountants &amp; Legal Minds
+              India&apos;s Verified Network of Chartered Accountants, Legal, Tax &amp; HR Professionals
             </h1>
 
             {/* Subheading */}
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
-              Connect directly with vetted corporate advisors, statutory auditors, GST practitioners, and corporate advocates. ICAI &amp; Bar Council verified with zero brokerage.
+              Connect directly with vetted Chartered Accountants, corporate lawyers, legal consultants, Tax &amp; GST advisors, and HR professionals. Statutorily verified practitioners with transparent pricing and zero brokerage.
             </p>
 
             {/* Trust Highlights Strip */}
             <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-semibold text-slate-700">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span>100% Verified Registration</span>
+                <span>100% Verified Credentials</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Award className="h-4 w-4 text-[#C8942C]" />

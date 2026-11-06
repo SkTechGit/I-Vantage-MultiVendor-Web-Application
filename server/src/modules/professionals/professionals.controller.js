@@ -174,6 +174,105 @@ export const updateMyContent = async (req, res, next) => {
   }
 };
 
+export const uploadProfilePhoto = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No photo file provided." });
+    }
+    const updated = await service.uploadOwnProfilePhoto(userId, req.file);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Profile photo uploaded and updated successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeProfilePhoto = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const updated = await service.removeOwnProfilePhoto(userId);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Profile photo removed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadCoverPhoto = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No cover file provided." });
+    }
+    const updated = await service.uploadOwnCoverPhoto(userId, req.file);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Cover photo uploaded and updated successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeCoverPhoto = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const updated = await service.removeOwnCoverPhoto(userId);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Cover photo removed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProfileDocument = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No document file provided." });
+    }
+    const { title, kind, expiryDate } = req.body;
+    const updated = await service.uploadOwnProfileDocument(userId, req.file, {
+      title,
+      kind,
+      expiryDate,
+    });
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Compliance document uploaded successfully to Vault!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteProfileDocument = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { docId } = req.params;
+    const updated = await service.deleteOwnProfileDocument(userId, docId);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Document removed from Vault.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const requestIdentityChange = async (req, res, next) => {
   try {
     const userId = req.user._id || req.user.id;

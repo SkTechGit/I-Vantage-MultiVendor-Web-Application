@@ -43,7 +43,8 @@ interface CategoryOption {
 const DEFAULT_CATEGORIES: CategoryOption[] = [
   { _id: "chartered-accountant", name: "Chartered Accountants", label: "Chartered Accountant", slug: "chartered-accountant" },
   { _id: "tax-gst-consultant", name: "Tax & GST Consultants", label: "Tax & GST Consultant", slug: "tax-gst-consultant" },
-  { _id: "legal-consultant", name: "Legal Consultants", label: "Legal Consultant", slug: "legal-consultant" },
+  { _id: "legal-consultant", name: "Legal Consultants & Lawyers", label: "Legal Consultant", slug: "legal-consultant" },
+  { _id: "hr-professional", name: "HR Professionals & Advisors", label: "HR Professional", slug: "hr-professional" },
   { _id: "company-secretary", name: "Company Secretaries (CS)", label: "Company Secretary", slug: "company-secretary" },
   { _id: "financial-advisor", name: "Financial & Investment Advisors", label: "Financial Advisor", slug: "financial-advisor" },
 ];
@@ -104,9 +105,9 @@ export default function ProfessionalSignupPage() {
     }
 
     if (!email.trim()) {
-      errors.email = "Official email address is required.";
+      errors.email = "Email address is required.";
     } else if (!isValidEmail(email)) {
-      errors.email = "Please enter a valid official email (e.g. ca.rahul@firm.com).";
+      errors.email = "Please enter a valid email address (e.g. rahul@gmail.com).";
     }
 
     if (!phone.trim()) {
@@ -308,14 +309,14 @@ export default function ProfessionalSignupPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Official Work Email <span className="text-red-500">*</span>
+                  Email Address (Gmail / Work) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email"
                     required
-                    placeholder="e.g. rahul@firm.com"
+                    placeholder="e.g. rahul@gmail.com or rahul@firm.com"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -334,9 +335,13 @@ export default function ProfessionalSignupPage() {
                     }`}
                   />
                 </div>
-                {fieldErrors.email && (
+                {fieldErrors.email ? (
                   <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1">
                     <span>•</span> {fieldErrors.email}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    @gmail.com, Google Workspace, and personal/brand domains are all accepted.
                   </p>
                 )}
               </div>

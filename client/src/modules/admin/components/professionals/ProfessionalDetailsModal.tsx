@@ -359,7 +359,7 @@ export default function ProfessionalDetailsModal({
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      Work Email Address
+                      Email Address
                     </span>
                     <span className="block text-xs font-bold text-slate-800 truncate select-all">
                       {email || "No email on record"}

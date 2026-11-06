@@ -45,10 +45,10 @@ export default function ProfessionalLoginPage() {
 
     const cleanEmail = email.trim();
     if (!cleanEmail) {
-      setEmailError("Professional email is required.");
+      setEmailError("Email address is required.");
       isValid = false;
     } else if (!isValidEmail(cleanEmail)) {
-      setEmailError("Please enter a valid email address (e.g. ca.rahul@firm.com).");
+      setEmailError("Please enter a valid email address (e.g. rahul@gmail.com).");
       isValid = false;
     }
 
@@ -220,7 +220,7 @@ export default function ProfessionalLoginPage() {
             {/* Email */}
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-700">
-                Official Practitioner Email
+                Email Address (Gmail / Professional)
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -228,7 +228,7 @@ export default function ProfessionalLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. ca.rahul@firm.com"
+                  placeholder="e.g. rahul@gmail.com or ca.rahul@firm.com"
                   className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs text-slate-800 placeholder-slate-400 outline-none transition ${
                     emailError
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500"

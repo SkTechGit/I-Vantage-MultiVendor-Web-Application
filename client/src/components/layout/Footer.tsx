@@ -209,7 +209,7 @@ export default function Footer() {
                         disabled={isSubmitting}
                         value={newsletterEmail}
                         onChange={(e) => setNewsletterEmail(e.target.value)}
-                        placeholder="Enter corporate email..."
+                        placeholder="Enter your email address..."
                         className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-3.5 pr-22 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#1E5BFF] focus:bg-white focus:ring-2 focus:ring-[#1E5BFF]/10 disabled:opacity-60"
                       />
                       <button

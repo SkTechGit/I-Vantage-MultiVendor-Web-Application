@@ -26,6 +26,7 @@ import {
   sendProfessionalReviewSubmissionNotifications,
   sendProfessionalApprovalDecisionNotifications,
 } from "../../utils/email.js";
+import { uploadImage, deleteImage } from "../../utils/cloudinary.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
 
 /* -------------------------------------------------------------------------- */
@@ -521,6 +522,7 @@ export const updateOwnProfileContent = async (userId, contentData) => {
 
   // Update allowed content fields
   const allowedFields = [
+    "headline",
     "summary",
     "aboutMd",
     "city",
@@ -545,6 +547,42 @@ export const updateOwnProfileContent = async (userId, contentData) => {
     "contactPhone",
     "contactWhatsapp",
     "contactEmail",
+    "photoUrl",
+    "photoAlt",
+    "coverUrl",
+    "coverAlt",
+    "designation",
+    "enrollmentDate",
+    "copNumber",
+    "copValidity",
+    "firmRegistrationNumber",
+    "regionalCouncil",
+    "officeAddress",
+    "pincode",
+    "isRemoteFriendly",
+    "willingToTravel",
+    "bookingUrl",
+    "caConnectUrl",
+    "signatureUrl",
+    "feeModel",
+    "consultationFeeMaxInr",
+    "consultationDurationMinutes",
+    "freeFirstConsultation",
+    "gstApplicable",
+    "retainerScopeText",
+    "acceptedPaymentMethods",
+    "cancellationPolicyText",
+    "gstin",
+    "gstinStatus",
+    "panMasked",
+    "citrNumber",
+    "udinEnabled",
+    "aadhaarSeeded",
+    "pfEsicRegistration",
+    "shopEstLicense",
+    "udyamNumber",
+    "empanelments",
+    "documents",
   ];
 
   for (const field of allowedFields) {
@@ -567,6 +605,214 @@ export const updateOwnProfileContent = async (userId, contentData) => {
   });
 
   return profile;
+};
+
+/**
+ * Uploads professional profile photo (avatar) using Multer buffer -> Cloudinary
+ */
+export const uploadOwnProfilePhoto = async (userId, file) => {
+  if (!file) {
+    const error = new Error("No photo file provided.");
+    error.status = 400;
+    throw error;
+  }
+
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (profile.status === PROFILE_STATUS.SUSPENDED || profile.status === PROFILE_STATUS.ARCHIVED) {
+    const error = new Error("Your profile is currently suspended or archived. Edits are locked.");
+    error.status = 403;
+    throw error;
+  }
+
+  // Upload to Cloudinary under ivantage/professionals
+  const uploaded = await uploadImage(file, "ivantage/professionals");
+  if (!uploaded || !uploaded.secure_url) {
+    const error = new Error("Failed to upload image to cloud storage.");
+    error.status = 502;
+    throw error;
+  }
+
+  profile.photoUrl = uploaded.secure_url;
+  profile.photoAlt = profile.fullName ? `${profile.fullName} Profile Photo` : "Professional Profile Photo";
+  profile.version = (profile.version || 1) + 1;
+  profile.completeness = computeCompleteness(profile);
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.update_photo",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Removes professional profile photo
+ */
+export const removeOwnProfilePhoto = async (userId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  profile.photoUrl = "";
+  profile.photoAlt = "";
+  profile.version = (profile.version || 1) + 1;
+  profile.completeness = computeCompleteness(profile);
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.remove_photo",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Uploads professional cover banner photo using Multer buffer -> Cloudinary
+ */
+export const uploadOwnCoverPhoto = async (userId, file) => {
+  if (!file) {
+    const error = new Error("No cover file provided.");
+    error.status = 400;
+    throw error;
+  }
+
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (profile.status === PROFILE_STATUS.SUSPENDED || profile.status === PROFILE_STATUS.ARCHIVED) {
+    const error = new Error("Your profile is currently suspended or archived. Edits are locked.");
+    error.status = 403;
+    throw error;
+  }
+
+  const uploaded = await uploadImage(file, "ivantage/professionals/covers");
+  if (!uploaded || !uploaded.secure_url) {
+    const error = new Error("Failed to upload cover banner to cloud storage.");
+    error.status = 502;
+    throw error;
+  }
+
+  profile.coverUrl = uploaded.secure_url;
+  profile.version = (profile.version || 1) + 1;
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.update_cover",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Removes professional cover photo
+ */
+export const removeOwnCoverPhoto = async (userId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  profile.coverUrl = "";
+  profile.version = (profile.version || 1) + 1;
+  await profile.save();
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Uploads a statutory/compliance verification document to Vault
+ */
+export const uploadOwnProfileDocument = async (userId, file, { title, kind, expiryDate }) => {
+  if (!file) {
+    const error = new Error("No document file provided.");
+    error.status = 400;
+    throw error;
+  }
+
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  const uploaded = await uploadImage(file, "ivantage/professionals/documents");
+  if (!uploaded || !uploaded.secure_url) {
+    const error = new Error("Failed to upload document to cloud storage.");
+    error.status = 502;
+    throw error;
+  }
+
+  const newDoc = {
+    title: title || file.originalname || "Compliance Document",
+    kind: kind || "OTHER",
+    fileUrl: uploaded.secure_url,
+    publicId: uploaded.public_id || "",
+    verifiedStatus: "PENDING",
+    expiryDate: expiryDate || "",
+    uploadedAt: new Date(),
+  };
+
+  profile.documents.push(newDoc);
+  profile.completeness = computeCompleteness(profile);
+  profile.version = (profile.version || 1) + 1;
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.upload_document",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Deletes a document from Vault
+ */
+export const deleteOwnProfileDocument = async (userId, docId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  profile.documents = profile.documents.filter((d) => d._id.toString() !== docId.toString());
+  profile.completeness = computeCompleteness(profile);
+  profile.version = (profile.version || 1) + 1;
+  await profile.save();
+
+  return await getOwnProfile(userId);
 };
 
 export const requestIdentityRevision = async (userId, identityData) => {

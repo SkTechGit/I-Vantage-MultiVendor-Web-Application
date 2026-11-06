@@ -129,7 +129,7 @@ export default function DirectoryExplorer({
 
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>ICAI / Bar Council / MCA Verified Profiles</span>
+          <span>ICAI / Bar Council / Statutory &amp; HR Verified Profiles</span>
         </div>
       </div>
 
@@ -156,10 +156,10 @@ export default function DirectoryExplorer({
           <div className="space-y-2 text-center md:text-left max-w-xl">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#C8942C] bg-white/10 px-3 py-1 rounded-full border border-white/10">
               <Sparkles className="w-3.5 h-3.5" />
-              For CAs, Lawyers & Tax Consultants
+              For CAs, Lawyers, Tax &amp; HR Professionals
             </span>
             <h3 className="text-xl sm:text-2xl font-black tracking-tight">
-              Are you an authorized corporate professional?
+              Are you an authorized business or corporate advisor?
             </h3>
             <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
               Expand your advisory practice, receive direct qualified client enquiries, and host your consultations in premium I-Vantage boardrooms across India.

@@ -42,10 +42,10 @@ export const signupSchema = z
 
     email: z
       .string({
-        required_error: "Work email is required.",
+        required_error: "Email address is required.",
       })
       .trim()
-      .regex(EMAIL_REGEX, "Please enter a valid work email address (e.g. name@company.com).")
+      .regex(EMAIL_REGEX, "Please enter a valid email address (e.g. name@gmail.com or name@company.com).")
       .toLowerCase(),
 
     phone: z
@@ -87,7 +87,7 @@ export const registerSchema = z.object({
   email: z
     .string({ required_error: "Email address is required." })
     .trim()
-    .regex(EMAIL_REGEX, "Please enter a valid email address (e.g. name@company.com).")
+    .regex(EMAIL_REGEX, "Please enter a valid email address (e.g. name@gmail.com or name@company.com).")
     .toLowerCase(),
 
   phone: z
@@ -143,7 +143,7 @@ export const createInviteSchema = z.object({
       required_error: "Email is required.",
     })
     .trim()
-    .regex(EMAIL_REGEX, "Please enter a valid work email address (e.g. colleague@company.com).")
+    .regex(EMAIL_REGEX, "Please enter a valid email address (e.g. colleague@gmail.com or colleague@company.com).")
     .toLowerCase(),
 
   role: z

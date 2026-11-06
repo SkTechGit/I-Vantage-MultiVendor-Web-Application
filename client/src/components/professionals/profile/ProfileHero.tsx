@@ -170,24 +170,30 @@ export default function ProfileHero({ professional }: Props) {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0A1F66] tracking-tight">
                   {p.fullName}
                 </h1>
-                {p.qualification && (
+                {p.designation ? (
+                  <span className="text-sm sm:text-base font-bold text-[#1E5BFF] bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100">
+                    {p.designation}
+                  </span>
+                ) : p.qualification ? (
                   <span className="text-sm sm:text-base font-bold text-slate-500">
                     ({p.qualification})
                   </span>
-                )}
+                ) : null}
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-[#1E5BFF] mt-1 leading-snug">
+              <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-1 leading-snug">
                 {p.headline}
               </p>
             </div>
 
             {/* Registration Details & Trust Line */}
-            {p.registrationBody && (
-              <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100/90 border border-slate-200/70 px-3 py-1.5 text-xs text-slate-700">
+            {(p.registrationBody || p.registrationNumber || p.copNumber) && (
+              <div className="inline-flex flex-wrap items-center gap-2 rounded-xl bg-slate-100/90 border border-slate-200/70 px-3 py-1.5 text-xs text-slate-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
-                  <strong className="font-bold text-slate-800">{p.registrationBody}</strong>
+                  <strong className="font-bold text-slate-800">{p.registrationBody || "Statutory Body"}</strong>
                   {p.registrationNumber ? ` — Reg No. ${p.registrationNumber}` : ""}
+                  {p.copNumber ? ` • COP: ${p.copNumber}` : ""}
+                  {p.regionalCouncil ? ` (${p.regionalCouncil})` : ""}
                 </span>
               </div>
             )}

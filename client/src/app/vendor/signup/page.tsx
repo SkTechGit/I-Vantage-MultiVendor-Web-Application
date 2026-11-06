@@ -70,9 +70,9 @@ export default function VendorSignupPage() {
     }
 
     if (!email.trim()) {
-      errors.email = "Official email address is required.";
+      errors.email = "Email address is required.";
     } else if (!isValidEmail(email)) {
-      errors.email = "Please enter a valid official email address (e.g. partner@brand.com).";
+      errors.email = "Please enter a valid email address (e.g. partner@gmail.com).";
     }
 
     if (!phone.trim()) {
@@ -260,7 +260,7 @@ export default function VendorSignupPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Official Email <span className="text-red-500">*</span>
+                  Email Address (Gmail / Business) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -268,7 +268,7 @@ export default function VendorSignupPage() {
                     type="email"
                     required
                     autoComplete="email"
-                    placeholder="partner@brand.com"
+                    placeholder="e.g. partner@gmail.com or partner@brand.com"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);

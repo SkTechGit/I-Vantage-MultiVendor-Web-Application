@@ -424,12 +424,12 @@ export default function SignupForm() {
             error={errors.fullName?.message}
           />
 
-          {/* Work Email */}
+          {/* Email */}
           <Input
             id="email"
             type="email"
-            label={accountType === "vendor" ? "Business Email" : "Email Address"}
-            placeholder="name@company.com"
+            label={accountType === "vendor" ? "Business / Gmail Address" : "Email Address"}
+            placeholder="e.g. name@gmail.com or name@company.com"
             autoComplete="email"
             disabled={!!inviteData}
             {...register("email")}

@@ -74,7 +74,7 @@ export default function FilterBar({
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name, expertise, CA, legal, taxation..."
+            placeholder="Search by name, expertise, CA, lawyer, legal, tax, HR..."
             className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-slate-200/90 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#1E5BFF] focus:ring-2 focus:ring-[#1E5BFF]/10 shadow-2xs"
           />
           {searchInput && (

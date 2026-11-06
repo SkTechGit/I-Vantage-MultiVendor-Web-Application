@@ -43,13 +43,13 @@ export default function TeamInviteForm({
             htmlFor="inviteEmail"
             className="mb-1.5 block text-sm font-medium text-[#0A1F66]"
           >
-            Recipient Work Email
+            Recipient Email (Gmail or Work Email)
           </label>
           <input
             id="inviteEmail"
             type="email"
             required
-            placeholder="colleague@company.com"
+            placeholder="e.g. colleague@gmail.com or colleague@firm.com"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#1E5BFF] focus:ring-4 focus:ring-blue-100"
