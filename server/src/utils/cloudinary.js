@@ -1,11 +1,13 @@
 import cloudinary from "../config/cloudinary.config.js";
 import streamifier from "streamifier";
 
-export const uploadImage = (file, folder = "uploads") => {
+export const uploadImage = (file, folder = "uploads", options = {}) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
+        resource_type: "auto",
+        ...options,
       },
       (error, result) => {
         if (error) {

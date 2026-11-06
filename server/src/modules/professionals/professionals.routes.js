@@ -30,6 +30,8 @@ router.post("/me/profile/cover", proAuth, upload.single("cover"), controller.upl
 router.delete("/me/profile/cover", proAuth, controller.removeCoverPhoto);
 router.post("/me/profile/document", proAuth, upload.single("document"), controller.uploadProfileDocument);
 router.delete("/me/profile/document/:docId", proAuth, controller.deleteProfileDocument);
+router.post("/me/profile/portfolio", proAuth, upload.single("portfolio"), controller.uploadPortfolio);
+router.delete("/me/profile/portfolio", proAuth, controller.removePortfolio);
 router.post("/me/profile/identity", proAuth, controller.requestIdentityChange);
 router.post("/me/profile/submit", proAuth, controller.submitForReview);
 router.get("/me/enquiries", proAuth, controller.getMyEnquiries);

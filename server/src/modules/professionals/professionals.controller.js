@@ -273,6 +273,42 @@ export const deleteProfileDocument = async (req, res, next) => {
   }
 };
 
+export const uploadPortfolio = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No portfolio file provided." });
+    }
+    const { title, description, externalUrl } = req.body;
+    const updated = await service.uploadOwnPortfolio(userId, req.file, {
+      title,
+      description,
+      externalUrl,
+    });
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Practice portfolio uploaded successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removePortfolio = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const updated = await service.removeOwnPortfolio(userId);
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: "Portfolio removed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const requestIdentityChange = async (req, res, next) => {
   try {
     const userId = req.user._id || req.user.id;

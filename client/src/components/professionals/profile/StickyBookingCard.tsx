@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Sparkles,
   ArrowRight,
+  FileText,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa6";
 import type { ProfessionalProfileItem } from "@/lib/professionals.api";
@@ -145,6 +146,20 @@ export default function StickyBookingCard({ professional, onBookClick }: Props) 
             )}
           </div>
         )}
+
+        {/* Practice Portfolio Download (Optional) */}
+        {p.portfolioFileUrl && (
+          <a
+            href={p.portfolioFileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 hover:border-[#1E5BFF] bg-slate-50 hover:bg-blue-50/50 text-[#0A1F66] hover:text-[#1E5BFF] text-xs font-bold transition shadow-2xs"
+          >
+            <FileText className="w-3.5 h-3.5 text-[#1E5BFF]" />
+            <span>Download Practice Portfolio</span>
+          </a>
+        )}
+
         {/* Accepted Payment Methods Strip */}
         {Array.isArray(p.acceptedPaymentMethods) && p.acceptedPaymentMethods.length > 0 && (
           <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500 font-semibold">

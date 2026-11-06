@@ -26,6 +26,10 @@ import {
   Globe,
   Briefcase,
   Layers,
+  Paperclip,
+  Download,
+  Eye,
+  FolderUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { professionalsApi, ProfessionalProfileItem, ProfileDocumentItem } from "@/lib/professionals.api";
@@ -151,6 +155,19 @@ export default function ProfessionalProfileEditor() {
   const [newDocExpiry, setNewDocExpiry] = useState("");
   const docFileInputRef = useRef<HTMLInputElement>(null);
 
+  // ---------------------------------------------------------------------------
+  // 5. Portfolio & Practice Brochure (Optional)
+  // ---------------------------------------------------------------------------
+  const [portfolioFileUrl, setPortfolioFileUrl] = useState("");
+  const [portfolioFileName, setPortfolioFileName] = useState("");
+  const [portfolioFileSize, setPortfolioFileSize] = useState<number>(0);
+  const [portfolioTitle, setPortfolioTitle] = useState("");
+  const [portfolioDescription, setPortfolioDescription] = useState("");
+  const [portfolioExternalUrl, setPortfolioExternalUrl] = useState("");
+  const [portfolioUploadedAt, setPortfolioUploadedAt] = useState<string | null>(null);
+  const [isUploadingPortfolio, setIsUploadingPortfolio] = useState(false);
+  const portfolioFileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -235,6 +252,15 @@ export default function ProfessionalProfileEditor() {
 
           // Populate Documents
           setDocuments(Array.isArray(p.documents) ? p.documents : []);
+
+          // Populate Portfolio
+          setPortfolioFileUrl(p.portfolioFileUrl || "");
+          setPortfolioFileName(p.portfolioFileName || "");
+          setPortfolioFileSize(p.portfolioFileSize || 0);
+          setPortfolioTitle(p.portfolioTitle || "");
+          setPortfolioDescription(p.portfolioDescription || "");
+          setPortfolioExternalUrl(p.portfolioExternalUrl || "");
+          setPortfolioUploadedAt(p.portfolioUploadedAt || null);
         }
       } catch (err) {
         console.error("Failed to load profile:", err);
@@ -346,6 +372,14 @@ export default function ProfessionalProfileEditor() {
         shopEstLicense: shopEstLicense.trim(),
         udyamNumber: udyamNumber.trim(),
         empanelments: empanelments.split(",").map((s) => s.trim()).filter(Boolean),
+
+        // Portfolio & Practice Deck (Optional)
+        portfolioFileUrl: portfolioFileUrl.trim(),
+        portfolioFileName: portfolioFileName.trim(),
+        portfolioFileSize: Number(portfolioFileSize) || 0,
+        portfolioTitle: portfolioTitle.trim(),
+        portfolioDescription: portfolioDescription.trim(),
+        portfolioExternalUrl: portfolioExternalUrl.trim(),
       };
 
       const res = await professionalsApi.updateMyContent(payload);
@@ -413,6 +447,64 @@ export default function ProfessionalProfileEditor() {
       }
     } catch (err: any) {
       toast.error("Failed to delete document.", { id: toastId });
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Portfolio Upload / Removal (Optional)
+  // ---------------------------------------------------------------------------
+  const handleUploadPortfolioFile = async (file: File) => {
+    if (!file) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Portfolio file size must be less than 25MB.");
+      return;
+    }
+
+    setIsUploadingPortfolio(true);
+    const toastId = toast.loading("Uploading practice portfolio / presentation deck...");
+
+    try {
+      const res = await professionalsApi.uploadPortfolio(file, {
+        title: portfolioTitle.trim() || undefined,
+        description: portfolioDescription.trim() || undefined,
+        externalUrl: portfolioExternalUrl.trim() || undefined,
+      });
+
+      const updatedProfile = res?.data || res?.profile || res;
+      if (updatedProfile) {
+        broadcastProfile(updatedProfile);
+        setPortfolioFileUrl(updatedProfile.portfolioFileUrl || "");
+        setPortfolioFileName(updatedProfile.portfolioFileName || file.name);
+        setPortfolioFileSize(updatedProfile.portfolioFileSize || file.size);
+        setPortfolioUploadedAt(updatedProfile.portfolioUploadedAt || new Date().toISOString());
+        toast.success("Practice portfolio uploaded successfully!", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to upload portfolio.", { id: toastId });
+    } finally {
+      setIsUploadingPortfolio(false);
+      if (portfolioFileInputRef.current) portfolioFileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemovePortfolio = async () => {
+    if (!confirm("Are you sure you want to remove your uploaded portfolio?")) return;
+    const toastId = toast.loading("Removing practice portfolio...");
+
+    try {
+      const res = await professionalsApi.removePortfolio();
+      const updatedProfile = res?.data || res?.profile || res;
+      if (updatedProfile) {
+        broadcastProfile(updatedProfile);
+        setPortfolioFileUrl("");
+        setPortfolioFileName("");
+        setPortfolioFileSize(0);
+        setPortfolioUploadedAt(null);
+        toast.success("Portfolio removed.", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error("Failed to remove portfolio.", { id: toastId });
     }
   };
 
@@ -883,6 +975,170 @@ export default function ProfessionalProfileEditor() {
                   placeholder="https://caconnect.icai.org/..."
                   className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF]"
                 />
+              </div>
+            </div>
+
+            {/* ------------------------------------------------------------ */}
+            {/* Practice Portfolio & Firm Presentation Deck (Optional)        */}
+            {/* ------------------------------------------------------------ */}
+            <div className="mt-8 pt-6 border-t border-slate-200/80 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1E5BFF] flex items-center justify-center">
+                    <FolderUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#0A1F66]">
+                      Practice Portfolio &amp; Firm Presentation Deck
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Upload your firm overview, representative client case studies, or corporate capability deck.
+                    </p>
+                  </div>
+                </div>
+
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 w-fit">
+                  Optional
+                </span>
+              </div>
+
+              {/* Hidden Portfolio File Input */}
+              <input
+                type="file"
+                ref={portfolioFileInputRef}
+                accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUploadPortfolioFile(file);
+                }}
+              />
+
+              {/* Portfolio File Display Card OR Upload Trigger */}
+              {portfolioFileUrl ? (
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 border border-blue-200/90 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-[#1E5BFF] shadow-2xs shrink-0">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-[#0A1F66] truncate block">
+                            {portfolioFileName || "Practice_Portfolio.pdf"}
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                            Uploaded
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                          {portfolioFileSize > 0 && (
+                            <span>{(portfolioFileSize / (1024 * 1024)).toFixed(2)} MB</span>
+                          )}
+                          {portfolioFileSize > 0 && portfolioUploadedAt && <span>•</span>}
+                          {portfolioUploadedAt && (
+                            <span>Updated {new Date(portfolioUploadedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={portfolioFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-[#0A1F66] hover:text-[#1E5BFF] text-xs font-bold transition shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview / Download</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => portfolioFileInputRef.current?.click()}
+                        disabled={isUploadingPortfolio}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                      >
+                        {isUploadingPortfolio ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>Replace File</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePortfolio}
+                        title="Remove portfolio file"
+                        className="p-2 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition shadow-2xs cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Empty Upload Zone */
+                <div
+                  onClick={() => portfolioFileInputRef.current?.click()}
+                  className="border-2 border-dashed border-slate-200 hover:border-[#1E5BFF] rounded-2xl p-6 sm:p-8 text-center bg-slate-50/50 hover:bg-blue-50/30 transition-all cursor-pointer group"
+                >
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-white border border-slate-200/80 group-hover:border-blue-300 flex items-center justify-center text-slate-400 group-hover:text-[#1E5BFF] transition-all shadow-2xs mb-3">
+                    {isUploadingPortfolio ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-[#1E5BFF]" />
+                    ) : (
+                      <Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                    )}
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 block">
+                    {isUploadingPortfolio ? "Uploading Portfolio Document..." : "Click or drag & drop to upload Portfolio / Practice Deck"}
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Accepts PDF, PowerPoint (PPTX), Word (DOCX), or images up to 25MB (Optional)
+                  </span>
+                </div>
+              )}
+
+              {/* Optional Portfolio Metadata Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Portfolio / Deck Title <span className="text-slate-400 lowercase font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={portfolioTitle}
+                    onChange={(e) => setPortfolioTitle(e.target.value)}
+                    placeholder="e.g. 2026 Corporate Advisory & Audit Practice Overview"
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    External Portfolio / Case Studies URL <span className="text-slate-400 lowercase font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={portfolioExternalUrl}
+                    onChange={(e) => setPortfolioExternalUrl(e.target.value)}
+                    placeholder="https://drive.google.com/... or https://notion.site/..."
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Portfolio Summary / Highlights <span className="text-slate-400 lowercase font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={portfolioDescription}
+                    onChange={(e) => setPortfolioDescription(e.target.value)}
+                    placeholder="e.g. Highlights our representative M&A transaction diligence, GST appellate dispute wins, and corporate client outcomes."
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF]"
+                  />
+                </div>
               </div>
             </div>
           </div>

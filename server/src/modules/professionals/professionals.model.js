@@ -406,6 +406,15 @@ const professionalProfileSchema = new mongoose.Schema(
     udyamNumber: { type: String, trim: true, default: "" },
     empanelments: { type: [String], default: [] },
 
+    /* Portfolio & Practice Brochure (Optional) */
+    portfolioFileUrl: { type: String, trim: true, default: "" },
+    portfolioFileName: { type: String, trim: true, default: "" },
+    portfolioFileSize: { type: Number, default: 0 },
+    portfolioTitle: { type: String, trim: true, default: "" },
+    portfolioDescription: { type: String, trim: true, default: "" },
+    portfolioExternalUrl: { type: String, trim: true, default: "" },
+    portfolioUploadedAt: { type: Date, default: null },
+
     /* Lifecycle & Governance */
     status: {
       type: String,

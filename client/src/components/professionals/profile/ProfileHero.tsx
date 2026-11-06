@@ -15,6 +15,7 @@ import {
   Video,
   Building,
   Languages,
+  Download,
 } from "lucide-react";
 import { FaLinkedinIn } from "react-icons/fa6";
 import type { ProfessionalProfileItem } from "@/lib/professionals.api";
@@ -141,6 +142,18 @@ export default function ProfileHero({ professional }: Props) {
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:text-[#1E5BFF] hover:border-blue-300 shadow-2xs transition-colors"
                   >
                     <Globe className="w-3.5 h-3.5" />
+                  </a>
+                )}
+                {p.portfolioFileUrl && (
+                  <a
+                    href={p.portfolioFileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={p.portfolioTitle || "Download Practice Portfolio / Firm Deck"}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-blue-200 bg-blue-50/80 text-xs font-bold text-[#1E5BFF] hover:bg-blue-100 shadow-2xs transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Portfolio</span>
                   </a>
                 )}
                 <button

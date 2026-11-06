@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Building2, Users2, MapPin, ShieldCheck, FileCheck, CheckCircle2, Award, Landmark, Check } from "lucide-react";
+import { Building2, Users2, MapPin, ShieldCheck, FileCheck, CheckCircle2, Award, Landmark, Check, Download, ExternalLink, FileText } from "lucide-react";
 import type { ProfessionalProfileItem } from "@/lib/professionals.api";
 
 interface Props {
@@ -28,6 +28,57 @@ export default function ProfileAboutSection({ professional }: Props) {
       {p.aboutMd && (
         <div className="prose prose-slate max-w-none text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
           {p.aboutMd}
+        </div>
+      )}
+
+      {/* Practice Portfolio & Capability Deck (Optional Showcase) */}
+      {(p.portfolioFileUrl || p.portfolioExternalUrl) && (
+        <div className="rounded-2xl bg-white border border-[#DCE5F5] p-5 sm:p-6 shadow-2xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 text-[#1E5BFF] flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-black text-[#0A1F66]">
+                    {p.portfolioTitle || "Practice Portfolio & Firm Presentation Deck"}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#1E5BFF] border border-blue-100">
+                    Official Deck
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {p.portfolioDescription || "Detailed overview of statutory advisory engagements, representative transactions, and client results."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {p.portfolioFileUrl && (
+                <a
+                  href={p.portfolioFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A1F66] hover:bg-[#1E5BFF] text-white text-xs font-bold transition-all shadow-xs active:scale-95"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Deck</span>
+                </a>
+              )}
+              {p.portfolioExternalUrl && (
+                <a
+                  href={p.portfolioExternalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs active:scale-95"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Case Studies</span>
+                </a>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

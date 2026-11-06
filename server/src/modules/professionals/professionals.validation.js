@@ -160,6 +160,13 @@ export const contentUpdateSchema = z
     empanelments: z.array(z.string().max(100)).optional(),
     documents: z.array(z.any()).optional(),
     categoryId: z.string().optional(),
+    portfolioFileUrl: z.string().optional(),
+    portfolioFileName: z.string().max(200).optional(),
+    portfolioFileSize: z.number().optional(),
+    portfolioTitle: z.string().max(200).optional(),
+    portfolioDescription: z.string().max(1000).optional(),
+    portfolioExternalUrl: z.string().optional(),
+    portfolioUploadedAt: z.any().optional(),
     version: z.number().int().optional(),
   });
 

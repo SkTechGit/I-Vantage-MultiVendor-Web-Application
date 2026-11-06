@@ -584,6 +584,13 @@ export const updateOwnProfileContent = async (userId, contentData) => {
     "empanelments",
     "documents",
     "categoryId",
+    "portfolioFileUrl",
+    "portfolioFileName",
+    "portfolioFileSize",
+    "portfolioTitle",
+    "portfolioDescription",
+    "portfolioExternalUrl",
+    "portfolioUploadedAt",
   ];
 
   for (const field of allowedFields) {
@@ -812,6 +819,88 @@ export const deleteOwnProfileDocument = async (userId, docId) => {
   profile.completeness = computeCompleteness(profile);
   profile.version = (profile.version || 1) + 1;
   await profile.save();
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Uploads professional portfolio document / brochure (PDF/DOC/Image)
+ */
+export const uploadOwnPortfolio = async (userId, file, { title, description, externalUrl } = {}) => {
+  if (!file) {
+    const error = new Error("No portfolio file provided.");
+    error.status = 400;
+    throw error;
+  }
+
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (profile.status === PROFILE_STATUS.SUSPENDED || profile.status === PROFILE_STATUS.ARCHIVED) {
+    const error = new Error("Your profile is currently suspended or archived. Edits are locked.");
+    error.status = 403;
+    throw error;
+  }
+
+  const uploaded = await uploadImage(file, "ivantage/professionals/portfolios", { resource_type: "auto" });
+  if (!uploaded || !uploaded.secure_url) {
+    const error = new Error("Failed to upload portfolio to cloud storage.");
+    error.status = 502;
+    throw error;
+  }
+
+  profile.portfolioFileUrl = uploaded.secure_url;
+  profile.portfolioFileName = file.originalname || "Practice_Portfolio.pdf";
+  profile.portfolioFileSize = file.size || (uploaded.bytes || 0);
+  if (title !== undefined && title !== null) profile.portfolioTitle = String(title).trim();
+  if (description !== undefined && description !== null) profile.portfolioDescription = String(description).trim();
+  if (externalUrl !== undefined && externalUrl !== null) profile.portfolioExternalUrl = String(externalUrl).trim();
+  profile.portfolioUploadedAt = new Date();
+  profile.version = (profile.version || 1) + 1;
+  profile.completeness = computeCompleteness(profile);
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.upload_portfolio",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return await getOwnProfile(userId);
+};
+
+/**
+ * Removes professional portfolio file
+ */
+export const removeOwnPortfolio = async (userId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  profile.portfolioFileUrl = "";
+  profile.portfolioFileName = "";
+  profile.portfolioFileSize = 0;
+  profile.portfolioUploadedAt = null;
+  profile.version = (profile.version || 1) + 1;
+  profile.completeness = computeCompleteness(profile);
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: userId,
+    actorRole: "professional",
+    action: "professional.remove_portfolio",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
 
   return await getOwnProfile(userId);
 };

@@ -151,6 +151,15 @@ export interface ProfessionalProfileItem {
   udyamNumber?: string;
   empanelments?: string[];
 
+  /* Portfolio & Practice Brochure (Optional) */
+  portfolioFileUrl?: string;
+  portfolioFileName?: string;
+  portfolioFileSize?: number;
+  portfolioTitle?: string;
+  portfolioDescription?: string;
+  portfolioExternalUrl?: string;
+  portfolioUploadedAt?: string;
+
   status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "SUSPENDED" | "ARCHIVED";
   verificationStatus: "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
   verifiedAt?: string;
@@ -260,6 +269,23 @@ export const professionalsApi = {
 
   deleteDocument: async (docId: string) => {
     const { data } = await api.delete(`/professionals/me/profile/document/${docId}`);
+    return data;
+  },
+
+  uploadPortfolio: async (file: File, meta?: { title?: string; description?: string; externalUrl?: string }) => {
+    const formData = new FormData();
+    formData.append("portfolio", file);
+    if (meta?.title) formData.append("title", meta.title);
+    if (meta?.description) formData.append("description", meta.description);
+    if (meta?.externalUrl) formData.append("externalUrl", meta.externalUrl);
+    const { data } = await api.post("/professionals/me/profile/portfolio", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  removePortfolio: async () => {
+    const { data } = await api.delete("/professionals/me/profile/portfolio");
     return data;
   },
 
