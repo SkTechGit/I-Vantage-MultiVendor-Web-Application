@@ -70,6 +70,10 @@ export default function ProfessionalProfileEditor() {
   // 1. Profile & Bio Section Fields
   // ---------------------------------------------------------------------------
   const [fullName, setFullName] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [availableCategories, setAvailableCategories] = useState<
+    { _id: string; name: string; label?: string; slug: string }[]
+  >([]);
   const [designation, setDesignation] = useState("");
   const [headline, setHeadline] = useState("");
   const [qualification, setQualification] = useState("");
@@ -150,13 +154,25 @@ export default function ProfessionalProfileEditor() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await professionalsApi.getMyProfile();
+        const [res, catRes] = await Promise.all([
+          professionalsApi.getMyProfile(),
+          fetch("/api/v1/professionals/categories")
+            .then((r) => r.json())
+            .catch(() => null),
+        ]);
+
+        if (catRes?.data && Array.isArray(catRes.data)) {
+          setAvailableCategories(catRes.data);
+        }
+
         const p = res?.profile || res;
         if (p && (p._id || p.fullName)) {
           setProfile(p);
 
           // Populate Bio
           setFullName(p.fullName || "");
+          const catIdVal = p.categoryId?._id || p.categoryId;
+          if (catIdVal) setCategoryId(String(catIdVal));
           setDesignation(p.designation || "");
           setHeadline(p.headline || "");
           setQualification(p.qualification || "");
@@ -272,6 +288,7 @@ export default function ProfessionalProfileEditor() {
       const payload: any = {
         // Bio & Practice
         fullName: fullName.trim(),
+        categoryId: categoryId || undefined,
         designation: designation.trim(),
         headline: headline.trim(),
         qualification: qualification.trim(),
@@ -546,6 +563,25 @@ export default function ProfessionalProfileEditor() {
                   placeholder="e.g. FCA, DISA (ICAI), Partner"
                   className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF]"
                 />
+              </div>
+
+              {/* Primary Practice Domain / Category */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Primary Practice Domain <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 outline-none focus:border-[#1E5BFF] bg-white cursor-pointer font-medium"
+                >
+                  <option value="">Select Practice Domain</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat._id || cat.slug} value={cat._id || cat.slug}>
+                      {cat.label || cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Enrollment Date */}

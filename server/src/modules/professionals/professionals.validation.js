@@ -159,6 +159,7 @@ export const contentUpdateSchema = z
     udyamNumber: z.string().max(60).optional(),
     empanelments: z.array(z.string().max(100)).optional(),
     documents: z.array(z.any()).optional(),
+    categoryId: z.string().optional(),
     version: z.number().int().optional(),
   });
 

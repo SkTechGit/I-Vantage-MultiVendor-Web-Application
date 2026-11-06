@@ -22,6 +22,7 @@ import {
   Briefcase,
   GraduationCap,
   ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
 import Logo from "@/components/common/Logo";
 import PasswordStrengthMeter from "@/components/ui/PasswordStrengthMeter";
@@ -43,10 +44,16 @@ interface CategoryOption {
 const DEFAULT_CATEGORIES: CategoryOption[] = [
   { _id: "chartered-accountant", name: "Chartered Accountants", label: "Chartered Accountant", slug: "chartered-accountant" },
   { _id: "tax-gst-consultant", name: "Tax & GST Consultants", label: "Tax & GST Consultant", slug: "tax-gst-consultant" },
-  { _id: "legal-consultant", name: "Legal Consultants & Lawyers", label: "Legal Consultant", slug: "legal-consultant" },
+  { _id: "legal-consultant", name: "Legal Consultants & Advocates", label: "Legal Consultant", slug: "legal-consultant" },
   { _id: "hr-professional", name: "HR Professionals & Advisors", label: "HR Professional", slug: "hr-professional" },
-  { _id: "company-secretary", name: "Company Secretaries (CS)", label: "Company Secretary", slug: "company-secretary" },
-  { _id: "financial-advisor", name: "Financial & Investment Advisors", label: "Financial Advisor", slug: "financial-advisor" },
+  { _id: "company-secretary", name: "Company Secretaries (CS)", label: "Company Secretary (CS)", slug: "company-secretary" },
+  { _id: "cost-management-accountant", name: "Cost & Management Accountants (CMA)", label: "Cost & Management Accountant (CMA)", slug: "cost-management-accountant" },
+  { _id: "virtual-cfo-advisor", name: "Virtual CFOs & Financial Advisors", label: "Virtual CFO & Financial Advisor", slug: "virtual-cfo-advisor" },
+  { _id: "ip-trademark-attorney", name: "IP & Trademark Attorneys", label: "IP & Trademark Attorney", slug: "ip-trademark-attorney" },
+  { _id: "startup-valuation-expert", name: "Startup Valuation & M&A Specialists", label: "Startup Valuation & M&A Specialist", slug: "startup-valuation-expert" },
+  { _id: "insolvency-professional", name: "Insolvency Professionals (IBBI)", label: "Insolvency Professional (IBBI)", slug: "insolvency-professional" },
+  { _id: "labor-law-posh-consultant", name: "Labor Law & POSH Consultants", label: "Labor Law & POSH Consultant", slug: "labor-law-posh-consultant" },
+  { _id: "fema-foreign-trade-consultant", name: "FEMA & Foreign Trade Consultants", label: "FEMA & Foreign Trade Consultant", slug: "fema-foreign-trade-consultant" },
 ];
 
 export default function ProfessionalSignupPage() {
@@ -293,7 +300,7 @@ export default function ProfessionalSignupPage() {
                         });
                       }
                     }}
-                    className="w-full text-xs sm:text-sm pl-10 pr-8 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 outline-none transition focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 appearance-none cursor-pointer"
+                    className="w-full text-xs sm:text-sm pl-10 pr-9 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 outline-none transition focus:border-[#1E5BFF] focus:bg-white focus:ring-3 focus:ring-blue-100 appearance-none cursor-pointer"
                   >
                     {categories.map((c) => (
                       <option key={c._id || c.slug} value={c._id || c.slug}>
@@ -301,6 +308,7 @@ export default function ProfessionalSignupPage() {
                       </option>
                     ))}
                   </select>
+                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
               </div>
             </div>

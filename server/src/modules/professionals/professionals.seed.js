@@ -17,12 +17,26 @@ import {
 
 export const seedProfessionals = async () => {
   try {
-    // 1. Seed Categories if empty or missing
+    // 1. Seed / Upsert Categories
     const categoryMap = {};
     for (const catData of DEFAULT_PROFESSIONAL_CATEGORIES) {
       let cat = await ProfessionalCategory.findOne({ slug: catData.slug });
       if (!cat) {
         cat = await ProfessionalCategory.create(catData);
+      } else {
+        await ProfessionalCategory.updateOne(
+          { _id: cat._id },
+          {
+            $set: {
+              name: catData.name,
+              label: catData.label,
+              description: catData.description,
+              iconKey: catData.iconKey,
+              sortOrder: catData.sortOrder,
+              isActive: catData.isActive,
+            },
+          }
+        );
       }
       categoryMap[catData.slug] = cat._id;
     }

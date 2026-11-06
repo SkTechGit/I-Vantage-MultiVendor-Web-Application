@@ -583,6 +583,7 @@ export const updateOwnProfileContent = async (userId, contentData) => {
     "udyamNumber",
     "empanelments",
     "documents",
+    "categoryId",
   ];
 
   for (const field of allowedFields) {
