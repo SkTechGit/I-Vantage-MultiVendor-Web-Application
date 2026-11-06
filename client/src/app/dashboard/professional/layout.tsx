@@ -105,7 +105,7 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
     router.push("/professional/login");
   };
 
-  const completeness = profile?.completeness || 75;
+  const completeness = profile?.completeness !== undefined ? profile.completeness : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

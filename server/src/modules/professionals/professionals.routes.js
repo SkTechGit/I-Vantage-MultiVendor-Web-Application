@@ -23,6 +23,7 @@ router.get("/categories", controller.getCategories);
 /* -------------------------------------------------------------------------- */
 
 router.get("/me/profile", proAuth, controller.getMyProfile);
+router.get("/me/overview", proAuth, controller.getMyOverview);
 router.patch("/me/profile/content", proAuth, controller.updateMyContent);
 router.post("/me/profile/photo", proAuth, upload.single("photo"), controller.uploadProfilePhoto);
 router.delete("/me/profile/photo", proAuth, controller.removeProfilePhoto);
@@ -36,6 +37,7 @@ router.post("/me/profile/identity", proAuth, controller.requestIdentityChange);
 router.post("/me/profile/submit", proAuth, controller.submitForReview);
 router.get("/me/enquiries", proAuth, controller.getMyEnquiries);
 router.patch("/me/enquiries/:id", proAuth, controller.updateMyEnquiry);
+router.delete("/me/enquiries/:id", proAuth, controller.deleteMyEnquiry);
 
 /* -------------------------------------------------------------------------- */
 /*                                Admin Routes                                */
@@ -46,6 +48,7 @@ router.get("/admin/:id/details", adminAuth, controller.adminGetDetails);
 router.patch("/admin/:id/approve", adminAuth, controller.adminApprove);
 router.patch("/admin/:id/verify", adminAuth, controller.adminVerify);
 router.patch("/admin/:id/suspend", adminAuth, controller.adminSuspend);
+router.delete("/admin/:id", adminAuth, controller.adminDelete);
 router.get("/admin/revisions", adminAuth, controller.adminListRevisions);
 router.patch("/admin/revisions/:id/approve", adminAuth, controller.adminApproveRevision);
 router.patch("/admin/revisions/:id/reject", adminAuth, controller.adminRejectRevision);

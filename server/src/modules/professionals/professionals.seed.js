@@ -17,39 +17,35 @@ import {
 
 export const seedProfessionals = async () => {
   try {
-    // 1. Seed / Upsert Categories
+    // 1. Seed Categories ONLY IF collection is completely empty (first-time initialization)
+    const existingCatCount = await ProfessionalCategory.countDocuments();
     const categoryMap = {};
-    for (const catData of DEFAULT_PROFESSIONAL_CATEGORIES) {
-      let cat = await ProfessionalCategory.findOne({ slug: catData.slug });
-      if (!cat) {
-        cat = await ProfessionalCategory.create(catData);
-      } else {
-        await ProfessionalCategory.updateOne(
-          { _id: cat._id },
-          {
-            $set: {
-              name: catData.name,
-              label: catData.label,
-              description: catData.description,
-              iconKey: catData.iconKey,
-              sortOrder: catData.sortOrder,
-              isActive: catData.isActive,
-            },
-          }
-        );
+
+    if (existingCatCount === 0) {
+      for (const catData of DEFAULT_PROFESSIONAL_CATEGORIES) {
+        const cat = await ProfessionalCategory.create(catData);
+        categoryMap[catData.slug] = cat._id;
       }
-      categoryMap[catData.slug] = cat._id;
+    } else {
+      const allCats = await ProfessionalCategory.find().select("_id slug");
+      allCats.forEach((c) => {
+        categoryMap[c.slug] = c._id;
+      });
     }
 
-    // 2. Check if Rahul Sharma already exists
-    const existingRahul = await ProfessionalProfile.findOne({ slug: "rahul-sharma-ca" });
-    if (existingRahul) {
-      return; // Already seeded
+    // 2. Seed default profiles ONLY IF no professional profiles exist at all
+    const existingProfCount = await ProfessionalProfile.countDocuments();
+    if (existingProfCount > 0) {
+      return; // Do not touch or overwrite existing/deleted database profiles
     }
 
-    const caCatId = categoryMap["chartered-accountant"];
-    const taxCatId = categoryMap["tax-gst-consultant"];
-    const legalCatId = categoryMap["legal-consultant"];
+    const caCatId = categoryMap["chartered-accountant"] || (await ProfessionalCategory.findOne({ slug: "chartered-accountant" }))?._id;
+    const taxCatId = categoryMap["tax-gst-consultant"] || (await ProfessionalCategory.findOne({ slug: "tax-gst-consultant" }))?._id;
+    const legalCatId = categoryMap["legal-consultant"] || (await ProfessionalCategory.findOne({ slug: "legal-consultant" }))?._id;
+
+    if (!caCatId) {
+      return;
+    }
 
     // 3. Create Rahul Sharma Profile
     const rahul = await ProfessionalProfile.create({

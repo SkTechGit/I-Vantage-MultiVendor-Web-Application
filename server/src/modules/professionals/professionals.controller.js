@@ -356,6 +356,30 @@ export const updateMyEnquiry = async (req, res, next) => {
   }
 };
 
+export const deleteMyEnquiry = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const { id } = req.params;
+    const result = await service.deleteOwnEnquiry(userId, id);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyOverview = async (req, res, next) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const data = await service.getOwnOverviewStats(userId);
+    if (!data) {
+      return res.status(404).json({ success: false, message: "No professional profile linked to your account." });
+    }
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
 /* -------------------------------------------------------------------------- */
 /*                               Admin Operations                             */
 /* -------------------------------------------------------------------------- */
@@ -410,6 +434,17 @@ export const adminSuspend = async (req, res, next) => {
     const actorId = req.user._id || req.user.id;
     const result = await service.adminSuspendProfile(id, reason, actorId);
     res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const adminDelete = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const actorId = req.user._id || req.user.id;
+    const result = await service.adminDeleteProfessional(actorId, id);
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

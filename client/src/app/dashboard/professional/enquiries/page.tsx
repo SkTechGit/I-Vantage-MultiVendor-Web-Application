@@ -14,6 +14,7 @@ import {
   ChevronDown,
   User,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa6";
 import { professionalsApi } from "@/lib/professionals.api";
@@ -52,6 +53,17 @@ export default function ProfessionalEnquiriesInbox() {
       console.error("Failed to update status:", err);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteEnquiry = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this client enquiry from the database?")) return;
+    try {
+      await professionalsApi.deleteMyEnquiry(id);
+      setEnquiries((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error("Failed to delete enquiry:", err);
+      alert("Failed to delete enquiry from database.");
     }
   };
 
@@ -121,7 +133,7 @@ export default function ProfessionalEnquiriesInbox() {
                     </span>
                   </div>
 
-                  {/* Status Dropdown */}
+                  {/* Status Dropdown & Actions */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-500">Status:</span>
                     <select
@@ -136,6 +148,15 @@ export default function ProfessionalEnquiriesInbox() {
                       <option value="COMPLETED">Completed</option>
                       <option value="DECLINED">Declined</option>
                     </select>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteEnquiry(enq._id)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Delete Enquiry"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 

@@ -86,15 +86,15 @@ export default function ProfessionalProfileEditor() {
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [copNumber, setCopNumber] = useState("");
   const [copValidity, setCopValidity] = useState("");
-  const [yearsExperience, setYearsExperience] = useState<string>("5");
+  const [yearsExperience, setYearsExperience] = useState<string>("");
   const [summary, setSummary] = useState("");
   const [aboutMd, setAboutMd] = useState("");
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
-  const [languages, setLanguages] = useState("English, Hindi");
-  const [city, setCity] = useState("Gurugram");
-  const [state, setState] = useState("Haryana");
-  const [servesAreas, setServesAreas] = useState("Gurugram, Delhi, Noida, Pan-India");
+  const [languages, setLanguages] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [servesAreas, setServesAreas] = useState("");
   const [officeAddress, setOfficeAddress] = useState("");
   const [pincode, setPincode] = useState("");
   const [isRemoteFriendly, setIsRemoteFriendly] = useState(true);
@@ -108,39 +108,33 @@ export default function ProfessionalProfileEditor() {
   const [caConnectUrl, setCaConnectUrl] = useState("");
   const [bookingUrl, setBookingUrl] = useState("");
   const [consultationModes, setConsultationModes] = useState<string[]>(["ONLINE", "IN_PERSON"]);
-  const [consultationHours, setConsultationHours] = useState("Mon - Sat, 10:00 AM - 7:00 PM");
-  const [responseTimeText, setResponseTimeText] = useState("Within 2 business hours");
+  const [consultationHours, setConsultationHours] = useState("");
+  const [responseTimeText, setResponseTimeText] = useState("");
 
   // ---------------------------------------------------------------------------
   // 2. Fees & Advisory Engagement Fields
   // ---------------------------------------------------------------------------
   const [feeModel, setFeeModel] = useState<string>("RANGE");
-  const [consultationFeeInr, setConsultationFeeInr] = useState<string>("1500");
-  const [consultationFeeMaxInr, setConsultationFeeMaxInr] = useState<string>("3500");
+  const [consultationFeeInr, setConsultationFeeInr] = useState<string>("");
+  const [consultationFeeMaxInr, setConsultationFeeMaxInr] = useState<string>("");
   const [consultationDurationMinutes, setConsultationDurationMinutes] = useState<number>(30);
   const [freeFirstConsultation, setFreeFirstConsultation] = useState(false);
   const [gstApplicable, setGstApplicable] = useState(true);
   const [retainerScopeText, setRetainerScopeText] = useState("");
-  const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<string[]>([
-    "UPI",
-    "NEFT_RTGS",
-    "NET_BANKING",
-  ]);
-  const [cancellationPolicyText, setCancellationPolicyText] = useState(
-    "Consultations can be rescheduled or cancelled up to 4 hours in advance."
-  );
+  const [acceptedPaymentMethods, setAcceptedPaymentMethods] = useState<string[]>([]);
+  const [cancellationPolicyText, setCancellationPolicyText] = useState("");
 
   // ---------------------------------------------------------------------------
   // 3. Statutory & Compliance Registrations
   // ---------------------------------------------------------------------------
   const [firmRegistrationNumber, setFirmRegistrationNumber] = useState("");
-  const [regionalCouncil, setRegionalCouncil] = useState("NIRC");
+  const [regionalCouncil, setRegionalCouncil] = useState("");
   const [gstin, setGstin] = useState("");
   const [gstinStatus, setGstinStatus] = useState("ACTIVE");
   const [panMasked, setPanMasked] = useState("");
   const [citrNumber, setCitrNumber] = useState("");
-  const [udinEnabled, setUdinEnabled] = useState(true);
-  const [aadhaarSeeded, setAadhaarSeeded] = useState(true);
+  const [udinEnabled, setUdinEnabled] = useState(false);
+  const [aadhaarSeeded, setAadhaarSeeded] = useState(false);
   const [pfEsicRegistration, setPfEsicRegistration] = useState("");
   const [shopEstLicense, setShopEstLicense] = useState("");
   const [udyamNumber, setUdyamNumber] = useState("");
@@ -194,22 +188,22 @@ export default function ProfessionalProfileEditor() {
           setHeadline(p.headline || "");
           setQualification(p.qualification || "");
           setEnrollmentDate(p.enrollmentDate || "");
-          setRegistrationBody(p.registrationBody || "Institute of Chartered Accountants of India (ICAI)");
+          setRegistrationBody(p.registrationBody || "");
           setRegistrationNumber(p.registrationNumber || "");
           setCopNumber(p.copNumber || "");
           setCopValidity(p.copValidity || "");
-          setYearsExperience(p.yearsExperience ? String(p.yearsExperience) : "5");
+          setYearsExperience(p.yearsExperience !== undefined && p.yearsExperience !== null ? String(p.yearsExperience) : "");
           setSummary(p.summary || "");
           setAboutMd(p.aboutMd || "");
           setSelectedSpecializations(Array.isArray(p.specializations) ? p.specializations : []);
           setSelectedIndustries(Array.isArray(p.industries) ? p.industries : []);
-          setLanguages(Array.isArray(p.languages) ? p.languages.join(", ") : "English, Hindi");
-          setCity(p.city || "Gurugram");
-          setState(p.state || "Haryana");
-          setServesAreas(Array.isArray(p.servesAreas) ? p.servesAreas.join(", ") : "Gurugram, Delhi, Noida");
+          setLanguages(Array.isArray(p.languages) ? p.languages.join(", ") : "");
+          setCity(p.city || "");
+          setState(p.state || "");
+          setServesAreas(Array.isArray(p.servesAreas) ? p.servesAreas.join(", ") : "");
           setOfficeAddress(p.officeAddress || "");
           setPincode(p.pincode || "");
-          setIsRemoteFriendly(p.isRemoteFriendly !== false);
+          setIsRemoteFriendly(Boolean(p.isRemoteFriendly));
           setWillingToTravel(Boolean(p.willingToTravel));
           setContactMode(p.contactMode || "hub");
           setContactEmail(p.contactEmail || "");
@@ -219,32 +213,30 @@ export default function ProfessionalProfileEditor() {
           setLinkedinUrl(p.linkedinUrl || "");
           setCaConnectUrl(p.caConnectUrl || "");
           setBookingUrl(p.bookingUrl || "");
-          setConsultationModes(Array.isArray(p.consultationModes) && p.consultationModes.length ? p.consultationModes : ["ONLINE", "IN_PERSON"]);
-          setConsultationHours(p.consultationHours || "Mon - Sat, 10:00 AM - 7:00 PM");
-          setResponseTimeText(p.responseTimeText || "Within 2 business hours");
+          setConsultationModes(Array.isArray(p.consultationModes) ? p.consultationModes : []);
+          setConsultationHours(p.consultationHours || "");
+          setResponseTimeText(p.responseTimeText || "");
 
           // Populate Fees
           setFeeModel(p.feeModel || "RANGE");
-          setConsultationFeeInr(p.consultationFeeInr ? String(p.consultationFeeInr) : "1500");
-          setConsultationFeeMaxInr(p.consultationFeeMaxInr ? String(p.consultationFeeMaxInr) : "3500");
+          setConsultationFeeInr(p.consultationFeeInr !== undefined && p.consultationFeeInr !== null ? String(p.consultationFeeInr) : "");
+          setConsultationFeeMaxInr(p.consultationFeeMaxInr !== undefined && p.consultationFeeMaxInr !== null ? String(p.consultationFeeMaxInr) : "");
           setConsultationDurationMinutes(p.consultationDurationMinutes || 30);
           setFreeFirstConsultation(Boolean(p.freeFirstConsultation));
           setGstApplicable(p.gstApplicable !== false);
           setRetainerScopeText(p.retainerScopeText || "");
-          if (Array.isArray(p.acceptedPaymentMethods) && p.acceptedPaymentMethods.length) {
-            setAcceptedPaymentMethods(p.acceptedPaymentMethods);
-          }
-          setCancellationPolicyText(p.cancellationPolicyText || "Consultations can be rescheduled or cancelled up to 4 hours in advance.");
+          setAcceptedPaymentMethods(Array.isArray(p.acceptedPaymentMethods) ? p.acceptedPaymentMethods : []);
+          setCancellationPolicyText(p.cancellationPolicyText || "");
 
           // Populate Statutory
           setFirmRegistrationNumber(p.firmRegistrationNumber || "");
-          setRegionalCouncil(p.regionalCouncil || "NIRC");
+          setRegionalCouncil(p.regionalCouncil || "");
           setGstin(p.gstin || "");
           setGstinStatus(p.gstinStatus || "ACTIVE");
           setPanMasked(p.panMasked || "");
           setCitrNumber(p.citrNumber || "");
-          setUdinEnabled(p.udinEnabled !== false);
-          setAadhaarSeeded(p.aadhaarSeeded !== false);
+          setUdinEnabled(Boolean(p.udinEnabled));
+          setAadhaarSeeded(Boolean(p.aadhaarSeeded));
           setPfEsicRegistration(p.pfEsicRegistration || "");
           setShopEstLicense(p.shopEstLicense || "");
           setUdyamNumber(p.udyamNumber || "");
@@ -278,16 +270,39 @@ export default function ProfessionalProfileEditor() {
     }
   };
 
+  const [customSpecInput, setCustomSpecInput] = useState("");
+  const [customIndustryInput, setCustomIndustryInput] = useState("");
+
   const toggleSpecialization = (spec: string) => {
     setSelectedSpecializations((prev) =>
       prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
     );
   };
 
+  const handleAddCustomSpec = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const val = customSpecInput.trim();
+    if (!val) return;
+    if (!selectedSpecializations.includes(val)) {
+      setSelectedSpecializations((prev) => [...prev, val]);
+    }
+    setCustomSpecInput("");
+  };
+
   const toggleIndustry = (ind: string) => {
     setSelectedIndustries((prev) =>
       prev.includes(ind) ? prev.filter((i) => i !== ind) : [...prev, ind]
     );
+  };
+
+  const handleAddCustomIndustry = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const val = customIndustryInput.trim();
+    if (!val) return;
+    if (!selectedIndustries.includes(val)) {
+      setSelectedIndustries((prev) => [...prev, val]);
+    }
+    setCustomIndustryInput("");
   };
 
   const togglePaymentMethod = (method: string) => {
@@ -323,7 +338,7 @@ export default function ProfessionalProfileEditor() {
         registrationNumber: registrationNumber.trim(),
         copNumber: copNumber.trim(),
         copValidity: copValidity.trim(),
-        yearsExperience: Number(yearsExperience) || 0,
+        yearsExperience: yearsExperience !== "" && !isNaN(Number(yearsExperience)) ? Number(yearsExperience) : null,
         summary: summary.trim(),
         aboutMd: aboutMd.trim(),
         specializations: selectedSpecializations,
@@ -337,9 +352,9 @@ export default function ProfessionalProfileEditor() {
         isRemoteFriendly,
         willingToTravel,
         contactMode,
-        contactEmail: contactEmail.trim().toLowerCase(),
-        contactPhone: contactPhone.trim(),
-        contactWhatsapp: contactWhatsapp.trim(),
+        contactEmail: contactEmail.trim().toLowerCase() || null,
+        contactPhone: contactPhone.trim() || null,
+        contactWhatsapp: contactWhatsapp.trim() || null,
         websiteUrl: websiteUrl.trim() || null,
         linkedinUrl: linkedinUrl.trim() || null,
         caConnectUrl: caConnectUrl.trim() || null,
@@ -350,8 +365,8 @@ export default function ProfessionalProfileEditor() {
 
         // Fees
         feeModel,
-        consultationFeeInr: consultationFeeInr ? Number(consultationFeeInr) : undefined,
-        consultationFeeMaxInr: consultationFeeMaxInr ? Number(consultationFeeMaxInr) : undefined,
+        consultationFeeInr: consultationFeeInr !== "" && !isNaN(Number(consultationFeeInr)) ? Number(consultationFeeInr) : null,
+        consultationFeeMaxInr: consultationFeeMaxInr !== "" && !isNaN(Number(consultationFeeMaxInr)) ? Number(consultationFeeMaxInr) : null,
         consultationDurationMinutes,
         freeFirstConsultation,
         gstApplicable,
@@ -732,13 +747,18 @@ export default function ProfessionalProfileEditor() {
                 />
               </div>
 
-              {/* Specializations (Multi-Select Chips) */}
+              {/* Specializations (Multi-Select Chips + Custom Add) */}
               <div className="sm:col-span-2 lg:col-span-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Areas of Expertise / Specialization (Click to select)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {COMMON_SPECIALIZATIONS.map((spec) => {
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Areas of Expertise / Specialization (Click to select or add custom)
+                  </label>
+                  <span className="text-[11px] font-semibold text-[#1E5BFF]">
+                    {selectedSpecializations.length} Selected
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {Array.from(new Set([...COMMON_SPECIALIZATIONS, ...selectedSpecializations])).map((spec) => {
                     const isSelected = selectedSpecializations.includes(spec);
                     return (
                       <button
@@ -757,15 +777,43 @@ export default function ProfessionalProfileEditor() {
                     );
                   })}
                 </div>
+                {/* Custom Specialization Tag Input */}
+                <div className="flex items-center gap-2 max-w-md">
+                  <input
+                    type="text"
+                    value={customSpecInput}
+                    onChange={(e) => setCustomSpecInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustomSpec();
+                      }
+                    }}
+                    placeholder="Type custom specialization..."
+                    className="flex-1 text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-800 outline-none focus:border-[#1E5BFF]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddCustomSpec()}
+                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-[#1E5BFF] text-slate-700 transition-colors border border-slate-200"
+                  >
+                    + Add Custom Tag
+                  </button>
+                </div>
               </div>
 
-              {/* Industries Served (Multi-Select Chips) */}
+              {/* Industries Served (Multi-Select Chips + Custom Add) */}
               <div className="sm:col-span-2 lg:col-span-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Industries Served
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {COMMON_INDUSTRIES.map((ind) => {
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Industries Served
+                  </label>
+                  <span className="text-[11px] font-semibold text-[#1E5BFF]">
+                    {selectedIndustries.length} Selected
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {Array.from(new Set([...COMMON_INDUSTRIES, ...selectedIndustries])).map((ind) => {
                     const isSelected = selectedIndustries.includes(ind);
                     return (
                       <button
@@ -783,6 +831,29 @@ export default function ProfessionalProfileEditor() {
                       </button>
                     );
                   })}
+                </div>
+                {/* Custom Industry Tag Input */}
+                <div className="flex items-center gap-2 max-w-md">
+                  <input
+                    type="text"
+                    value={customIndustryInput}
+                    onChange={(e) => setCustomIndustryInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustomIndustry();
+                      }
+                    }}
+                    placeholder="Type custom industry..."
+                    className="flex-1 text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-800 outline-none focus:border-[#1E5BFF]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddCustomIndustry()}
+                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-[#1E5BFF] text-slate-700 transition-colors border border-slate-200"
+                  >
+                    + Add Custom Industry
+                  </button>
                 </div>
               </div>
 

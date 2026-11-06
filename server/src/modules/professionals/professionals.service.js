@@ -522,6 +522,10 @@ export const updateOwnProfileContent = async (userId, contentData) => {
 
   // Update allowed content fields
   const allowedFields = [
+    "fullName",
+    "qualification",
+    "registrationBody",
+    "registrationNumber",
     "headline",
     "summary",
     "aboutMd",
@@ -597,6 +601,10 @@ export const updateOwnProfileContent = async (userId, contentData) => {
     if (contentData[field] !== undefined) {
       profile[field] = contentData[field];
     }
+  }
+
+  if (contentData.fullName && contentData.fullName.trim()) {
+    User.findByIdAndUpdate(userId, { name: contentData.fullName.trim() }).exec().catch(() => {});
   }
 
   profile.version = (profile.version || 1) + 1;
@@ -1021,6 +1029,70 @@ export const updateOwnEnquiryStatus = async (userId, enquiryId, newStatus, note)
   return enquiry;
 };
 
+/**
+ * Permanently deletes an enquiry for this professional from database
+ */
+export const deleteOwnEnquiry = async (userId, enquiryId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null });
+  if (!profile) throw new Error("Professional profile not found.");
+
+  const enquiry = await ProfessionalEnquiry.findOne({
+    _id: enquiryId,
+    professionalId: profile._id,
+  });
+
+  if (!enquiry) {
+    const error = new Error("Enquiry not found or access denied.");
+    error.status = 404;
+    throw error;
+  }
+
+  await ProfessionalEnquiry.deleteOne({ _id: enquiryId });
+  await ProfessionalEnquiryEvent.deleteMany({ enquiryId });
+
+  return { success: true, message: "Enquiry deleted successfully." };
+};
+
+/**
+ * Fetches real-time, dynamic overview metrics and recent leads from database
+ */
+export const getOwnOverviewStats = async (userId) => {
+  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null }).populate(
+    "categoryId",
+    "name label slug iconKey"
+  );
+  if (!profile) return null;
+
+  const [enquiriesCount, articlesCount] = await Promise.all([
+    ProfessionalEnquiry.countDocuments({ professionalId: profile._id }),
+    ProfessionalArticle.countDocuments({ professionalId: profile._id, deletedAt: null }),
+  ]);
+
+  const activeServicesCount = Array.isArray(profile.services)
+    ? profile.services.filter((s) => s.isActive !== false).length
+    : 0;
+
+  const completeness = computeCompleteness(profile);
+
+  // Latest 5 enquiries
+  const recentEnquiries = await ProfessionalEnquiry.find({ professionalId: profile._id })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .lean();
+
+  return {
+    profile,
+    stats: {
+      enquiriesCount,
+      articlesCount,
+      activeServicesCount,
+      totalServicesCount: Array.isArray(profile.services) ? profile.services.length : 0,
+      completeness,
+    },
+    recentEnquiries,
+  };
+};
+
 /* -------------------------------------------------------------------------- */
 /*                               Admin Operations                             */
 /* -------------------------------------------------------------------------- */
@@ -1139,6 +1211,29 @@ export const adminSuspendProfile = async (id, reason, actorId) => {
   }).catch((err) => console.error("Professional suspend email error:", err.message));
 
   return profile;
+};
+
+export const adminDeleteProfessional = async (adminUserId, profileId) => {
+  const profile = await ProfessionalProfile.findById(profileId);
+  if (!profile) {
+    const error = new Error("Professional profile not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  profile.deletedAt = new Date();
+  profile.status = PROFILE_STATUS.ARCHIVED;
+  await profile.save();
+
+  await ProfessionalAuditLog.create({
+    actorId: adminUserId,
+    actorRole: "super_admin",
+    action: "admin.delete_professional",
+    entityType: "ProfessionalProfile",
+    entityId: profile._id.toString(),
+  });
+
+  return { success: true, message: `Professional profile for '${profile.fullName}' was deleted successfully.` };
 };
 
 export const adminApproveRevision = async (revisionId, actorId) => {

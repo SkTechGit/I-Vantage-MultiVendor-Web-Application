@@ -227,6 +227,11 @@ export const professionalsApi = {
     return data.data;
   },
 
+  getMyOverview: async () => {
+    const { data } = await api.get("/professionals/me/overview");
+    return data.data;
+  },
+
   uploadPhoto: async (file: File) => {
     const formData = new FormData();
     formData.append("photo", file);
@@ -312,5 +317,10 @@ export const professionalsApi = {
   updateMyEnquiry: async (id: string, payload: { status: string; note?: string }) => {
     const { data } = await api.patch(`/professionals/me/enquiries/${id}`, payload);
     return data.data;
+  },
+
+  deleteMyEnquiry: async (id: string) => {
+    const { data } = await api.delete(`/professionals/me/enquiries/${id}`);
+    return data;
   },
 };
