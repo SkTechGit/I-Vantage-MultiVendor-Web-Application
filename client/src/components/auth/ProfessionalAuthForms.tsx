@@ -1,12 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, AlertCircle, Loader2, Award } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Loader2, Award, Briefcase, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { marketplaceApi } from '@/lib/marketplace.api';
 import { useAuth } from '@/context/AuthContext';
 import { soundEngine } from '@/lib/soundEngine';
+
+interface CategoryOption {
+  _id: string;
+  name: string;
+  label?: string;
+  slug: string;
+}
+
+const DEFAULT_CATEGORIES: CategoryOption[] = [
+  { _id: 'chartered-accountant', name: 'Chartered Accountants', label: 'Chartered Accountant', slug: 'chartered-accountant' },
+  { _id: 'tax-gst-consultant', name: 'Tax & GST Consultants', label: 'Tax & GST Consultant', slug: 'tax-gst-consultant' },
+  { _id: 'legal-consultant', name: 'Legal Consultants & Advocates', label: 'Legal Consultant', slug: 'legal-consultant' },
+  { _id: 'hr-professional', name: 'HR Professionals & Advisors', label: 'HR Professional', slug: 'hr-professional' },
+  { _id: 'company-secretary', name: 'Company Secretaries (CS)', label: 'Company Secretary (CS)', slug: 'company-secretary' },
+  { _id: 'cost-management-accountant', name: 'Cost & Management Accountants (CMA)', label: 'Cost & Management Accountant (CMA)', slug: 'cost-management-accountant' },
+  { _id: 'virtual-cfo-advisor', name: 'Virtual CFOs & Financial Advisors', label: 'Virtual CFO & Financial Advisor', slug: 'virtual-cfo-advisor' },
+  { _id: 'ip-trademark-attorney', name: 'IP & Trademark Attorneys', label: 'IP & Trademark Attorney', slug: 'ip-trademark-attorney' },
+  { _id: 'startup-valuation-expert', name: 'Startup Valuation & M&A Specialists', label: 'Startup Valuation & M&A Specialist', slug: 'startup-valuation-expert' },
+  { _id: 'insolvency-professional', name: 'Insolvency Professionals (IBBI)', label: 'Insolvency Professional (IBBI)', slug: 'insolvency-professional' },
+  { _id: 'labor-law-posh-consultant', name: 'Labor Law & POSH Consultants', label: 'Labor Law & POSH Consultant', slug: 'labor-law-posh-consultant' },
+  { _id: 'fema-foreign-trade-consultant', name: 'FEMA & Foreign Trade Consultants', label: 'FEMA & Foreign Trade Consultant', slug: 'fema-foreign-trade-consultant' },
+];
 
 interface ProfessionalSignInFormProps {
   onSwitchToSignUp: () => void;
@@ -214,12 +236,25 @@ export function ProfessionalSignUpForm({ onSwitchToSignIn, onSuccess }: Professi
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [categoryId, setCategoryId] = useState('chartered-accountant');
+  const [categories, setCategories] = useState<CategoryOption[]>(DEFAULT_CATEGORIES);
   const [qualification, setQualification] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreedConsent, setAgreedConsent] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/professionals/categories')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+          setCategories(data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +290,7 @@ export function ProfessionalSignUpForm({ onSwitchToSignIn, onSuccess }: Professi
         name: cleanName,
         email: cleanEmail,
         phone: cleanPhone || undefined,
+        categoryId: categoryId || undefined,
         qualification: qualification.trim() || undefined,
         password,
         role: 'professional',
@@ -342,6 +378,34 @@ export function ProfessionalSignUpForm({ onSwitchToSignIn, onSuccess }: Professi
             placeholder="partner@legalpractice.com"
             className="auth-input"
           />
+        </div>
+      </div>
+
+      {/* Practice Domain Field */}
+      <div className="auth-field">
+        <label htmlFor="pro-category" className="auth-label">
+          PRACTICE DOMAIN <span className="text-red-500">*</span>
+        </label>
+        <div className="auth-input-wrapper relative">
+          <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <select
+            id="pro-category"
+            name="categoryId"
+            value={categoryId}
+            onChange={(e) => {
+              soundEngine.playToggle();
+              setCategoryId(e.target.value);
+            }}
+            className="auth-input pl-10 pr-9 bg-white cursor-pointer appearance-none text-slate-900 font-medium"
+            required
+          >
+            {categories.map((c) => (
+              <option key={c._id || c.slug} value={c._id || c.slug}>
+                {c.label || c.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
         </div>
       </div>
 

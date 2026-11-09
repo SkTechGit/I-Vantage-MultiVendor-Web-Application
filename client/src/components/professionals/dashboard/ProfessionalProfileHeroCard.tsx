@@ -175,7 +175,7 @@ export default function ProfessionalProfileHeroCard({
   const completeness = profile.completeness || 75;
 
   return (
-    <div className="relative rounded-3xl bg-white border border-[#DCE5F5] shadow-xs overflow-hidden transition-all duration-300">
+    <div className="relative rounded-3xl bg-white border border-[#DCE5F5] shadow-sm overflow-hidden transition-all duration-300">
       {/* Hidden File Inputs */}
       <input
         type="file"
@@ -201,7 +201,7 @@ export default function ProfessionalProfileHeroCard({
       {/* ---------------------------------------------------------------------- */}
       {/* 1. Cover Photo Banner Section                                          */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="relative h-44 sm:h-52 md:h-60 w-full overflow-hidden group/cover">
+      <div className="relative h-44 sm:h-52 md:h-60 lg:h-64 w-full overflow-hidden group/cover">
         {profile.coverUrl ? (
           <Image
             src={profile.coverUrl}
@@ -212,22 +212,22 @@ export default function ProfessionalProfileHeroCard({
             className="object-cover transition-transform duration-500 group-hover/cover:scale-105"
           />
         ) : (
-          /* Ultra-Luxurious Gradient Banner */
-          <div className="w-full h-full relative bg-gradient-to-br from-[#071330] via-[#0A1F66] to-[#153A9E]">
-            {/* Subtle mesh glow patterns */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(30,91,255,0.35),transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(56,189,248,0.25),transparent_50%)]" />
-            <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:32px_32px]" />
+          /* Ultra-Luxurious Royal Sapphire Mesh Banner */
+          <div className="w-full h-full relative bg-gradient-to-r from-[#06112E] via-[#0A1F66] to-[#123888] overflow-hidden">
+            {/* Ambient Radial Lights for Depth */}
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/25 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 left-10 w-80 h-80 bg-indigo-500/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] opacity-[0.08] [background-size:24px_24px] pointer-events-none" />
           </div>
         )}
 
-        {/* Ambient Dark Scrim for visual contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+        {/* Ambient Dark Gradient Scrim for Controls Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/25 pointer-events-none" />
 
         {/* Top Floating Badge & Cover Controls */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[11px] font-bold text-white shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+        <div className="absolute top-3.5 sm:top-4 left-3.5 sm:left-5 right-3.5 sm:right-5 flex items-center justify-between z-10">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-slate-900/40 backdrop-blur-md border border-white/20 text-[11px] font-bold text-white shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
             <span>Professional Verified Portal</span>
           </div>
 
@@ -237,7 +237,7 @@ export default function ProfessionalProfileHeroCard({
                 type="button"
                 onClick={handleRemoveCover}
                 title="Remove cover photo"
-                className="p-2 rounded-xl bg-black/45 hover:bg-rose-600/80 backdrop-blur-md border border-white/20 text-white transition-all cursor-pointer shadow-xs"
+                className="p-2 rounded-xl bg-black/45 hover:bg-rose-600/90 backdrop-blur-md border border-white/20 text-white transition-all cursor-pointer shadow-xs active:scale-95"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -263,17 +263,19 @@ export default function ProfessionalProfileHeroCard({
       </div>
 
       {/* ---------------------------------------------------------------------- */}
-      {/* 2. Avatar & Professional Details Row                                  */}
+      {/* 2. Avatar & Professional Details Section (Crystal Clear on White)     */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="px-5 sm:px-8 pb-6 sm:pb-7">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 -mt-16 sm:-mt-20 relative z-20">
+      <div className="px-4 sm:px-7 lg:px-8 pb-6 sm:pb-7">
+        
+        {/* Main Row: Avatar + Details on Left, Action CTAs on Right */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 relative z-20">
           
-          {/* Left: Avatar with Interactive Camera Overlay */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6">
+          {/* Left Block: Floating Avatar + Professional Identity */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             
-            {/* The Luxury Avatar Circle */}
+            {/* The Luxury Avatar Circle (Floats gracefully over banner edge) */}
             <div
-              className={`relative group/avatar cursor-pointer select-none rounded-full transition-transform duration-200 active:scale-95 ${
+              className={`relative -mt-16 sm:-mt-20 md:-mt-22 shrink-0 group/avatar cursor-pointer select-none rounded-full transition-transform duration-200 active:scale-95 ${
                 isDraggingPhoto ? "ring-4 ring-[#1E5BFF] scale-105" : ""
               }`}
               onClick={() => photoInputRef.current?.click()}
@@ -290,7 +292,7 @@ export default function ProfessionalProfileHeroCard({
               }}
               title="Click or drag an image here to update profile photo"
             >
-              <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-white border-[4px] sm:border-[5px] border-white shadow-[0_12px_32px_rgba(10,31,102,0.18)] ring-1 ring-slate-200/80">
+              <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-white border-[4px] sm:border-[5px] border-white shadow-[0_12px_36px_rgba(10,31,102,0.20)] ring-1 ring-slate-200/80">
                 {profile.photoUrl ? (
                   <Image
                     src={profile.photoUrl}
@@ -357,84 +359,92 @@ export default function ProfessionalProfileHeroCard({
               )}
             </div>
 
-            {/* Name, Online Dot & Verified Badge */}
-            <div className="text-center sm:text-left space-y-1.5 pb-1">
-              <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#0A1F66] tracking-tight">
+            {/* Professional Identity: Placed 100% on White Background with Zero Overlap */}
+            <div className="text-center sm:text-left space-y-1.5 pt-2 sm:pt-3">
+              
+              {/* Row 1: Full Name + Active Beacon + Verified Badge */}
+              <div className="flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3 flex-wrap">
+                <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-black text-[#0A1F66] tracking-tight leading-tight">
                   {profile.fullName}
                 </h2>
 
-                {/* Online Indicator Green Dot (matching reference screenshot) */}
-                <span
-                  className="relative flex h-3 w-3 shrink-0"
-                  title="Active on i-VANTAGE network"
+                {/* Glowing Online / Active Dot Beacon with Pulsing Ping */}
+                <div
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/90 shadow-2xs transition-all hover:bg-emerald-100/70"
+                  title="Active Practitioner on i-VANTAGE Network"
                 >
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white" />
-                </span>
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
+                  </span>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">
+                    Active
+                  </span>
+                </div>
 
-                {/* Verified Tick Badge (matching the red arrow from reference screenshot) */}
+                {/* Official Verified Badge */}
                 {profile.verificationStatus === "VERIFIED" ? (
                   <div
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-bold shadow-2xs"
-                    title="Credentials officially audited & verified by i-VANTAGE Compliance Team"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-300 text-emerald-800 text-xs font-black shadow-2xs"
+                    title="Credentials officially audited & Bar Council / ICAI verified"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100 shrink-0" />
                     <span>Verified</span>
                   </div>
                 ) : (
                   <div
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold shadow-2xs"
                     title="Identity verification in progress"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                    <span>In Review</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Verification In Progress</span>
                   </div>
                 )}
               </div>
 
-              {/* Tagline & Headline */}
+              {/* Row 2: Professional Headline */}
               <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-xl line-clamp-2">
                 {profile.headline || "Complete your headline and practice narrative below."}
               </p>
 
-              {/* Category, City, Experience Badges */}
+              {/* Row 3: Category, Location, Experience Badges */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 text-xs text-slate-500 font-semibold">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#1E5BFF] border border-blue-200/80 font-bold">
-                  <Award className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-[#1E5BFF] border border-blue-200/90 font-bold">
+                  <Award className="w-3.5 h-3.5" />
                   <span>{categoryName}</span>
                 </span>
 
                 {profile.city && (
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <MapPin className="w-3 h-3 text-slate-400" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
                     <span>{profile.city}{profile.state ? `, ${profile.state}` : ""}</span>
                   </span>
                 )}
 
                 {profile.yearsExperience ? (
-                  <span className="text-slate-500">
-                    • {profile.yearsExperience}+ Years Exp
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80">
+                    {profile.yearsExperience}+ Years Practice
                   </span>
                 ) : null}
               </div>
+
             </div>
 
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center justify-center sm:justify-end gap-2.5 pt-2 md:pt-0">
+          <div className="grid grid-cols-2 sm:flex sm:items-center justify-center sm:justify-end gap-2.5 pt-3 lg:pt-0 w-full sm:w-auto">
             {/* Quick Upload Photo Action */}
             <button
               type="button"
               onClick={() => photoInputRef.current?.click()}
               disabled={isUploadingPhoto}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#1E5BFF] text-xs font-bold border border-slate-200/90 hover:border-blue-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#1E5BFF] text-xs font-bold border border-slate-200 hover:border-blue-200 transition-all cursor-pointer shadow-2xs active:scale-95"
             >
               {isUploadingPhoto ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <UploadCloud className="w-3.5 h-3.5" />
+                <UploadCloud className="w-3.5 h-3.5 text-[#1E5BFF]" />
               )}
               <span>{profile.photoUrl ? "Update Photo" : "Upload Photo"}</span>
             </button>
@@ -444,7 +454,7 @@ export default function ProfessionalProfileHeroCard({
               <Link
                 href={`/professionals/${profile.slug}`}
                 target="_blank"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A1F66] hover:bg-[#1E5BFF] text-white text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-95"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A1F66] hover:bg-[#1E5BFF] text-white text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-95"
               >
                 <span>View Public Profile</span>
                 <ExternalLink className="w-3.5 h-3.5" />
