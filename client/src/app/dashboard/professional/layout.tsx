@@ -35,8 +35,10 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
   const [profile, setProfile] = useState<ProfessionalProfileItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const loadProfile = async () => {
       try {
         const res = await professionalsApi.getMyProfile().catch(() => null);
@@ -143,8 +145,11 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
 
             {/* User Pill */}
             <div className="flex items-center gap-2">
-              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#0A1F66] text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-100 shrink-0">
-                {profile?.photoUrl ? (
+              <div
+                suppressHydrationWarning
+                className="relative w-8 h-8 rounded-full overflow-hidden bg-[#0A1F66] text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-100 shrink-0"
+              >
+                {isMounted && profile?.photoUrl ? (
                   <Image
                     src={profile.photoUrl}
                     alt={profile.fullName}
@@ -152,14 +157,17 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
                     sizes="32px"
                     className="object-cover"
                   />
-                ) : (profile?.fullName || user?.fullName || user?.name) ? (
-                  (profile?.fullName || user?.fullName || user?.name || "P").charAt(0)
+                ) : isMounted && (profile?.fullName || user?.fullName || user?.name) ? (
+                  (profile?.fullName || user?.fullName || user?.name || "P").charAt(0).toUpperCase()
                 ) : (
                   <User className="w-4 h-4" />
                 )}
               </div>
-              <span className="hidden md:inline-block text-xs font-bold text-slate-800">
-                {profile?.fullName || user?.fullName || user?.name || "Professional"}
+              <span
+                suppressHydrationWarning
+                className="hidden md:inline-block text-xs font-bold text-slate-800"
+              >
+                {isMounted ? (profile?.fullName || user?.fullName || user?.name || "Professional") : "Professional"}
               </span>
             </div>
 
@@ -189,7 +197,7 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
                   className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-xs ring-1 ring-slate-200 shrink-0 group block"
                   title="Edit Profile Photo"
                 >
-                  {profile?.photoUrl ? (
+                  {isMounted && profile?.photoUrl ? (
                     <Image
                       src={profile.photoUrl}
                       alt={profile.fullName}
@@ -198,23 +206,32 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
                       className="object-cover group-hover:scale-105 transition-transform"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#0A1F66] to-[#1E5BFF] text-white flex items-center justify-center font-black text-sm">
-                      {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "P"}
+                    <div
+                      suppressHydrationWarning
+                      className="w-full h-full bg-gradient-to-br from-[#0A1F66] to-[#1E5BFF] text-white flex items-center justify-center font-black text-sm"
+                    >
+                      {isMounted && (profile?.fullName || user?.fullName) ? (profile?.fullName || user?.fullName || "P").charAt(0).toUpperCase() : "P"}
                     </div>
                   )}
                 </Link>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-black text-slate-900 truncate">
-                      {profile?.fullName || "Professional"}
+                    <p
+                      suppressHydrationWarning
+                      className="text-xs font-black text-slate-900 truncate"
+                    >
+                      {isMounted ? (profile?.fullName || user?.fullName || "Professional") : "Professional"}
                     </p>
-                    {profile?.verificationStatus === "VERIFIED" && (
+                    {isMounted && profile?.verificationStatus === "VERIFIED" && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500 truncate">
-                    {profile?.headline || "Verified Member"}
+                  <p
+                    suppressHydrationWarning
+                    className="text-[11px] text-slate-500 truncate"
+                  >
+                    {isMounted ? (profile?.headline || "Verified Member") : "Verified Member"}
                   </p>
                   <Link
                     href="/dashboard/professional/profile"

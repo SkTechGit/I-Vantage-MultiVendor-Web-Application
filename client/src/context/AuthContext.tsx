@@ -63,26 +63,7 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }) {
-  const [user, setUserState] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const key = getStorageKey();
-      const saved =
-        localStorage.getItem(key) ||
-        (key !== "iv_user" ? null : localStorage.getItem("iv_user"));
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
-          return {
-            ...parsed,
-            fullName: parsed.fullName || parsed.name,
-            name: parsed.name || parsed.fullName,
-          };
-        }
-      }
-    } catch {}
-    return null;
-  });
+  const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const setUser = (newUser: User | null) => {
@@ -158,6 +139,26 @@ export function AuthProvider({
 
   useEffect(() => {
     let ignore = false;
+
+    // 1. Safely hydrate saved user from localStorage on client mount (avoids SSR hydration mismatch)
+    try {
+      const key = getStorageKey();
+      const saved =
+        localStorage.getItem(key) ||
+        (key !== "iv_user" ? null : localStorage.getItem("iv_user"));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          setUserState({
+            ...parsed,
+            fullName: parsed.fullName || parsed.name,
+            name: parsed.name || parsed.fullName,
+          });
+        }
+      }
+    } catch {}
+
+    // 2. Fetch fresh user session from backend
     getCurrentUser()
       .then((response) => {
         if (ignore) return;

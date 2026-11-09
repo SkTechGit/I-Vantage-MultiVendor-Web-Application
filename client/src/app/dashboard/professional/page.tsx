@@ -125,7 +125,7 @@ export default function ProfessionalDashboardOverview() {
             )}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+          <h1 suppressHydrationWarning className="text-2xl sm:text-3xl font-black tracking-tight">
             Welcome back, {p?.fullName || user?.fullName || user?.name || "Professional"}
           </h1>
           <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
