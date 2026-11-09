@@ -40,8 +40,10 @@ export default function ProfessionalDashboardOverview() {
   });
   const [recentEnquiries, setRecentEnquiries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const fetchData = async () => {
       try {
         const overviewRes = await professionalsApi.getMyOverview().catch(() => null);
@@ -126,7 +128,7 @@ export default function ProfessionalDashboardOverview() {
           </div>
 
           <h1 suppressHydrationWarning className="text-2xl sm:text-3xl font-black tracking-tight">
-            Welcome back, {p?.fullName || user?.fullName || user?.name || "Professional"}
+            Welcome back, {isMounted ? (p?.fullName || user?.fullName || user?.name || "Professional") : "Professional"}
           </h1>
           <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
             Manage your public profile, update practice fees, publish legal &amp; taxation articles, and respond to corporate client consultation inquiries in real-time.

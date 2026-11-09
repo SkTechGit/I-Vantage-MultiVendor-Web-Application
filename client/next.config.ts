@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
     "*.local",
   ],
   images: {
+    unoptimized: process.env.NODE_ENV !== "production",
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {

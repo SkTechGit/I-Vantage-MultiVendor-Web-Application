@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   LayoutDashboard,
   UserCheck,
@@ -23,6 +23,43 @@ import {
 import Logo from "@/components/common/Logo";
 import { professionalsApi, ProfessionalProfileItem } from "@/lib/professionals.api";
 import { useAuth } from "@/context/AuthContext";
+
+const DynamicHeaderUserPill = dynamic(
+  () =>
+    import("@/components/dashboard/ProfessionalHeaderUser").then(
+      (mod) => mod.ProfessionalHeaderUserPill
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse ring-2 ring-blue-100 shrink-0" />
+        <div className="hidden md:block w-20 h-4 bg-slate-200 rounded animate-pulse" />
+      </div>
+    ),
+  }
+);
+
+const DynamicSidebarUserCard = dynamic(
+  () =>
+    import("@/components/dashboard/ProfessionalHeaderUser").then(
+      (mod) => mod.ProfessionalSidebarUserCard
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-slate-200 animate-pulse shrink-0" />
+          <div className="space-y-2 flex-1">
+            <div className="w-24 h-3.5 bg-slate-200 rounded animate-pulse" />
+            <div className="w-16 h-3 bg-slate-100 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface Props {
   children: React.ReactNode;
@@ -144,32 +181,7 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
             )}
 
             {/* User Pill */}
-            <div className="flex items-center gap-2">
-              <div
-                suppressHydrationWarning
-                className="relative w-8 h-8 rounded-full overflow-hidden bg-[#0A1F66] text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-100 shrink-0"
-              >
-                {isMounted && profile?.photoUrl ? (
-                  <Image
-                    src={profile.photoUrl}
-                    alt={profile.fullName}
-                    fill
-                    sizes="32px"
-                    className="object-cover"
-                  />
-                ) : isMounted && (profile?.fullName || user?.fullName || user?.name) ? (
-                  (profile?.fullName || user?.fullName || user?.name || "P").charAt(0).toUpperCase()
-                ) : (
-                  <User className="w-4 h-4" />
-                )}
-              </div>
-              <span
-                suppressHydrationWarning
-                className="hidden md:inline-block text-xs font-bold text-slate-800"
-              >
-                {isMounted ? (profile?.fullName || user?.fullName || user?.name || "Professional") : "Professional"}
-              </span>
-            </div>
+            <DynamicHeaderUserPill profile={profile} user={user} />
 
             <button
               type="button"
@@ -190,58 +202,7 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
           {/* Sidebar (Span 3) */}
           <aside className={`md:col-span-3 space-y-4 ${mobileMenuOpen ? "block" : "hidden md:block"}`}>
             {/* Professional Quick Avatar Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-2xs">
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/dashboard/professional/profile"
-                  className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-xs ring-1 ring-slate-200 shrink-0 group block"
-                  title="Edit Profile Photo"
-                >
-                  {isMounted && profile?.photoUrl ? (
-                    <Image
-                      src={profile.photoUrl}
-                      alt={profile.fullName}
-                      fill
-                      sizes="48px"
-                      className="object-cover group-hover:scale-105 transition-transform"
-                    />
-                  ) : (
-                    <div
-                      suppressHydrationWarning
-                      className="w-full h-full bg-gradient-to-br from-[#0A1F66] to-[#1E5BFF] text-white flex items-center justify-center font-black text-sm"
-                    >
-                      {isMounted && (profile?.fullName || user?.fullName) ? (profile?.fullName || user?.fullName || "P").charAt(0).toUpperCase() : "P"}
-                    </div>
-                  )}
-                </Link>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p
-                      suppressHydrationWarning
-                      className="text-xs font-black text-slate-900 truncate"
-                    >
-                      {isMounted ? (profile?.fullName || user?.fullName || "Professional") : "Professional"}
-                    </p>
-                    {isMounted && profile?.verificationStatus === "VERIFIED" && (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    )}
-                  </div>
-                  <p
-                    suppressHydrationWarning
-                    className="text-[11px] text-slate-500 truncate"
-                  >
-                    {isMounted ? (profile?.headline || "Verified Member") : "Verified Member"}
-                  </p>
-                  <Link
-                    href="/dashboard/professional/profile"
-                    className="text-[10px] font-bold text-[#1E5BFF] hover:underline inline-block mt-0.5"
-                  >
-                    Edit Photo &amp; Bio →
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <DynamicSidebarUserCard profile={profile} user={user} />
 
             {/* Profile Status Card */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">

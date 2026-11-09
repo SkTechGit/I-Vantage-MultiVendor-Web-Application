@@ -485,7 +485,7 @@ export const submitConsultationEnquiry = async (slug, input, meta = {}) => {
 /*                       Professional Self-Service (/me)                      */
 /* -------------------------------------------------------------------------- */
 
-export const getOwnProfile = async (userId) => {
+export const getOwnProfile = async (userId, reqUser = null) => {
   let profile = await ProfessionalProfile.findOne({
     $or: [{ userId }, { _id: userId }],
     deletedAt: null,
@@ -493,7 +493,14 @@ export const getOwnProfile = async (userId) => {
 
   // Fallback: Check if linked by contactEmail or provision for authenticated user/admin
   if (!profile) {
-    const userDoc = (await Auth.findById(userId)) || (await User.findById(userId));
+    let userDoc = null;
+    if (userId) {
+      userDoc = (await Auth.findById(userId)) || (await User.findById(userId));
+    }
+    if (!userDoc && reqUser) {
+      userDoc = reqUser;
+    }
+
     if (userDoc?.email) {
       const normalizedEmail = userDoc.email.toLowerCase().trim();
       profile = await ProfessionalProfile.findOne({
@@ -501,7 +508,7 @@ export const getOwnProfile = async (userId) => {
         deletedAt: null,
       }).populate("categoryId", "name label slug iconKey");
 
-      if (profile && !profile.userId) {
+      if (profile && !profile.userId && userDoc._id) {
         profile.userId = userDoc._id;
         await profile.save();
       }
@@ -526,14 +533,14 @@ export const getOwnProfile = async (userId) => {
       const slug = await generateUniqueSlug(fullName.trim(), categoryLabel);
 
       profile = await ProfessionalProfile.create({
-        userId: userDoc._id,
+        userId: userDoc._id || userId,
         categoryId: category._id,
         slug,
         fullName: fullName.trim(),
         headline: `${categoryLabel} & Business Advisor`,
         summary: `Empaneled advisor providing client consultation and strategic advisory on i-VANTAGE.`,
         city: "Gurugram",
-        contactEmail: userDoc.email.toLowerCase().trim(),
+        contactEmail: userDoc.email ? userDoc.email.toLowerCase().trim() : undefined,
         contactPhone: userDoc.phone || null,
         status: PROFILE_STATUS.PUBLISHED,
         verificationStatus: VERIFICATION_STATUS.VERIFIED,
@@ -1111,8 +1118,8 @@ export const deleteOwnEnquiry = async (userId, enquiryId) => {
 /**
  * Fetches real-time, dynamic overview metrics and recent leads from database
  */
-export const getOwnOverviewStats = async (userId) => {
-  const ownProfileData = await getOwnProfile(userId);
+export const getOwnOverviewStats = async (userId, reqUser = null) => {
+  const ownProfileData = await getOwnProfile(userId, reqUser);
   if (!ownProfileData) return null;
 
   const profile = await ProfessionalProfile.findById(ownProfileData._id).populate(

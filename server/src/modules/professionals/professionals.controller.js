@@ -150,7 +150,7 @@ export const submitEnquiry = async (req, res, next) => {
 export const getMyProfile = async (req, res, next) => {
   try {
     const userId = req.user._id || req.user.id;
-    const profile = await service.getOwnProfile(userId);
+    const profile = await service.getOwnProfile(userId, req.user);
     if (!profile) {
       return res.status(404).json({ success: false, message: "No professional profile linked to your account." });
     }
@@ -370,7 +370,7 @@ export const deleteMyEnquiry = async (req, res, next) => {
 export const getMyOverview = async (req, res, next) => {
   try {
     const userId = req.user._id || req.user.id;
-    const data = await service.getOwnOverviewStats(userId);
+    const data = await service.getOwnOverviewStats(userId, req.user);
     if (!data) {
       return res.status(404).json({ success: false, message: "No professional profile linked to your account." });
     }
