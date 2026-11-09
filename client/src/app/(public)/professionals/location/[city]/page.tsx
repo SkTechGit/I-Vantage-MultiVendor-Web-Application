@@ -3,7 +3,7 @@ import Link from "next/link";
 import Container from "@/components/common/Container";
 import DirectoryExplorer from "@/components/professionals/listing/DirectoryExplorer";
 import { professionalsApi } from "@/lib/professionals.api";
-import { ChevronRight, MapPin, ShieldCheck, Award, Building2 } from "lucide-react";
+import { ChevronRight, MapPin, ShieldCheck, Award, Building2, Globe2, Sparkles } from "lucide-react";
 
 export const revalidate = 60;
 
@@ -19,11 +19,17 @@ const POPULAR_HUBS = [
   { name: "Mumbai", slug: "mumbai" },
   { name: "Hyderabad", slug: "hyderabad" },
   { name: "Pune", slug: "pune" },
+  { name: "Ahmedabad", slug: "ahmedabad" },
+  { name: "Chennai", slug: "chennai" },
+  { name: "Kolkata", slug: "kolkata" },
 ];
 
 function formatCityName(raw: string): string {
-  const decoded = decodeURIComponent(raw).trim();
-  return decoded.charAt(0).toUpperCase() + decoded.slice(1).toLowerCase();
+  const decoded = decodeURIComponent(raw).replace(/[-_]+/g, " ").trim();
+  return decoded
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -75,6 +81,7 @@ export default async function LocationProfessionalsPage({ params }: Props) {
   let categories: any[] = [];
   let initialProfessionals: any[] = [];
   let initialTotal = 0;
+  let isFallbackOnline = false;
   let facets = { cities: ["Gurugram", "Delhi", "Noida", "Bengaluru", "Mumbai"] };
 
   try {
@@ -85,10 +92,20 @@ export default async function LocationProfessionalsPage({ params }: Props) {
     ]);
 
     categories = catRes || [];
-    if (listRes && listRes.data) {
+    if (listRes && listRes.data && listRes.data.length > 0) {
       initialProfessionals = listRes.data;
       initialTotal = listRes.total || listRes.data.length;
+    } else {
+      // Graceful fallback: If no local practitioners are registered yet in this city,
+      // load verified practitioners offering Pan-India online consultation for clients in this city!
+      const onlineFallbackRes = await professionalsApi.list({ limit: 12, mode: "ONLINE" }).catch(() => null);
+      if (onlineFallbackRes && onlineFallbackRes.data && onlineFallbackRes.data.length > 0) {
+        initialProfessionals = onlineFallbackRes.data;
+        initialTotal = onlineFallbackRes.total || onlineFallbackRes.data.length;
+        isFallbackOnline = true;
+      }
     }
+
     if (facetRes) {
       facets = facetRes;
     }
@@ -155,7 +172,7 @@ export default async function LocationProfessionalsPage({ params }: Props) {
         <Container>
           {/* Breadcrumbs */}
           <nav aria-label="Breadcrumb" className="mb-4">
-            <ol className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <ol className="flex items-center gap-1.5 text-xs text-slate-500 font-medium flex-wrap">
               <li>
                 <Link href="/" className="hover:text-[#1E5BFF] transition-colors">
                   Home
@@ -211,11 +228,27 @@ export default async function LocationProfessionalsPage({ params }: Props) {
 
       {/* Main Content Area */}
       <Container className="mt-8">
+        {isFallbackOnline && (
+          <div className="mb-6 rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-blue-50/90 p-4 sm:p-5 flex items-start gap-3.5 text-slate-700 shadow-2xs">
+            <Globe2 className="w-5 h-5 text-[#1E5BFF] shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm space-y-1">
+              <div className="font-bold text-[#0A1F66] flex items-center gap-2">
+                <span>Pan-India Verified Advisors Available for Remote &amp; Virtual Consultation in {cityName}</span>
+                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1E5BFF] text-white">Online Active</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed text-xs">
+                While local physical practitioners are onboarding in {cityName}, the empaneled Chartered Accountants and Corporate Advocates below serve clients in {cityName} via virtual boardroom consultations, online GST &amp; ROC filings, and pan-India compliance advisory.
+              </p>
+            </div>
+          </div>
+        )}
+
         <DirectoryExplorer
           initialProfessionals={initialProfessionals}
           initialTotal={initialTotal}
           categories={categories}
           facets={facets}
+          defaultCity={isFallbackOnline ? "" : cityName}
         />
       </Container>
     </div>

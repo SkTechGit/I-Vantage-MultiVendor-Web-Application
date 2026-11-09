@@ -16,6 +16,7 @@ interface Props {
   categories: ProfessionalCategoryItem[];
   facets?: any;
   defaultCategorySlug?: string;
+  defaultCity?: string;
 }
 
 export default function DirectoryExplorer({
@@ -24,6 +25,7 @@ export default function DirectoryExplorer({
   categories,
   facets,
   defaultCategorySlug = "",
+  defaultCity = "",
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,7 +33,7 @@ export default function DirectoryExplorer({
   const [filters, setFilters] = useState<FilterState>({
     q: searchParams.get("q") || "",
     category: defaultCategorySlug || searchParams.get("category") || "",
-    city: searchParams.get("city") || "",
+    city: searchParams.get("city") || defaultCity || "",
     mode: searchParams.get("mode") || "",
     sort: searchParams.get("sort") || "recommended",
   });

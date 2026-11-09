@@ -158,9 +158,27 @@ export const listPublishedProfessionals = async ({
     }
   }
 
-  // City filter
+  // City filter (smart matching across city, state, servesAreas, and common aliases)
   if (city && city !== "all") {
-    filter.city = { $regex: new RegExp(`^${city.trim()}$`, "i") };
+    const cleanCity = city.trim().replace(/[-_]+/g, " ");
+    const cityTerms = [cleanCity];
+    if (/gurugram|gurgaon/i.test(cleanCity)) {
+      cityTerms.push("Gurugram", "Gurgaon");
+    } else if (/delhi/i.test(cleanCity)) {
+      cityTerms.push("Delhi", "New Delhi", "NCR");
+    } else if (/bengaluru|bangalore/i.test(cleanCity)) {
+      cityTerms.push("Bengaluru", "Bangalore");
+    } else if (/mumbai|bombay/i.test(cleanCity)) {
+      cityTerms.push("Mumbai", "Bombay");
+    }
+
+    const regexPattern = cityTerms.join("|");
+    filter.$or = [
+      { city: { $regex: new RegExp(regexPattern, "i") } },
+      { state: { $regex: new RegExp(regexPattern, "i") } },
+      { servesAreas: { $regex: new RegExp(regexPattern, "i") } },
+      { "location.address": { $regex: new RegExp(regexPattern, "i") } },
+    ];
   }
 
   // Consultation mode filter

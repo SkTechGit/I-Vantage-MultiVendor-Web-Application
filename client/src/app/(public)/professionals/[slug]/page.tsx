@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ProfileHero from "@/components/professionals/profile/ProfileHero";
 import ProfileDetailView from "@/components/professionals/profile/ProfileDetailView";
 import { professionalsApi, ProfessionalProfileItem } from "@/lib/professionals.api";
@@ -13,6 +13,10 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug).trim();
+
+  if (decodedSlug === "location" || decodedSlug === "category") {
+    return { title: "Verified Professionals Directory | i-VANTAGE" };
+  }
 
   try {
     const p = await professionalsApi.getBySlug(decodedSlug);
@@ -76,6 +80,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProfessionalProfilePage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug).trim();
+
+  if (decodedSlug === "location" || decodedSlug === "category") {
+    redirect("/professionals");
+  }
 
   let professional: ProfessionalProfileItem | null = null;
   let relatedProfessionals: ProfessionalProfileItem[] = [];
