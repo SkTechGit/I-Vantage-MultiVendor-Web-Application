@@ -28,7 +28,7 @@ export default function ProfessionalEnquiriesInbox() {
   const fetchEnquiries = async (status?: string) => {
     setIsLoading(true);
     try {
-      const res = await professionalsApi.getMyEnquiries(status === "ALL" ? undefined : status);
+      const res = await professionalsApi.getMyEnquiries(status === "ALL" ? undefined : status).catch(() => []);
       const list = Array.isArray(res) ? res : res?.data || [];
       setEnquiries(list);
     } catch (err) {

@@ -166,7 +166,7 @@ export default function ProfessionalProfileEditor() {
     const fetchProfile = async () => {
       try {
         const [res, catRes] = await Promise.all([
-          professionalsApi.getMyProfile(),
+          professionalsApi.getMyProfile().catch(() => null),
           fetch("/api/v1/professionals/categories")
             .then((r) => r.json())
             .catch(() => null),

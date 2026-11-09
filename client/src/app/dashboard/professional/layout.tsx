@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/common/Logo";
 import { professionalsApi, ProfessionalProfileItem } from "@/lib/professionals.api";
+import { useAuth } from "@/context/AuthContext";
 
 interface Props {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ interface Props {
 export default function ProfessionalDashboardLayout({ children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, logoutUser } = useAuth();
   const [profile, setProfile] = useState<ProfessionalProfileItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -37,13 +39,13 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const res = await professionalsApi.getMyProfile();
-        const p = res?.profile || res;
+        const res = await professionalsApi.getMyProfile().catch(() => null);
+        const p = res?.profile || res?.data || res;
         if (p && (p._id || p.fullName)) {
           setProfile(p);
         }
-      } catch (err) {
-        console.error("Failed to load professional self profile:", err);
+      } catch {
+        // Fallback handled gracefully
       } finally {
         setIsLoading(false);
       }
@@ -92,17 +94,18 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/v1/auth/logout?portal=professional", {
-        method: "POST",
-        headers: { "x-portal": "professional" },
-      });
+      await logoutUser();
     } catch {
       // ignore
     }
     try {
       localStorage.removeItem("iv_pro_user");
     } catch {}
-    router.push("/professional/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/professional/login";
+    } else {
+      router.push("/professional/login");
+    }
   };
 
   const completeness = profile?.completeness !== undefined ? profile.completeness : 0;
@@ -149,14 +152,14 @@ export default function ProfessionalDashboardLayout({ children }: Props) {
                     sizes="32px"
                     className="object-cover"
                   />
-                ) : profile?.fullName ? (
-                  profile.fullName.charAt(0)
+                ) : (profile?.fullName || user?.fullName || user?.name) ? (
+                  (profile?.fullName || user?.fullName || user?.name || "P").charAt(0)
                 ) : (
                   <User className="w-4 h-4" />
                 )}
               </div>
               <span className="hidden md:inline-block text-xs font-bold text-slate-800">
-                {profile?.fullName || "Professional"}
+                {profile?.fullName || user?.fullName || user?.name || "Professional"}
               </span>
             </div>
 

@@ -47,6 +47,14 @@ const getStorageKey = () => {
   const path = window.location.pathname;
   if (path.startsWith("/admin")) return "iv_admin_user";
   if (path.startsWith("/vendor")) return "iv_vendor_user";
+  if (
+    !path.startsWith("/professionals") &&
+    (path.startsWith("/dashboard/professional") ||
+      path === "/professional" ||
+      path.startsWith("/professional/"))
+  ) {
+    return "iv_pro_user";
+  }
   return "iv_user";
 };
 
@@ -133,7 +141,16 @@ export function AuthProvider({
   const logoutUser = async () => {
     try {
       const path = typeof window !== "undefined" ? window.location.pathname : "";
-      const portal = path.startsWith("/admin") ? "admin" : path.startsWith("/vendor") ? "vendor" : "all";
+      const portal = path.startsWith("/admin")
+        ? "admin"
+        : path.startsWith("/vendor")
+        ? "vendor"
+        : !path.startsWith("/professionals") &&
+          (path.startsWith("/dashboard/professional") ||
+            path === "/professional" ||
+            path.startsWith("/professional/"))
+        ? "professional"
+        : "all";
       await logout(portal);
     } catch {}
     setUser(null);
@@ -165,8 +182,17 @@ export function AuthProvider({
         }
       });
 
+    const handleAutoSignout = () => {
+      setUserState(null);
+    };
+
+    window.addEventListener("portal-auto-signed-out", handleAutoSignout);
+    window.addEventListener("auth-logout", handleAutoSignout);
+
     return () => {
       ignore = true;
+      window.removeEventListener("portal-auto-signed-out", handleAutoSignout);
+      window.removeEventListener("auth-logout", handleAutoSignout);
     };
   }, []);
 

@@ -20,8 +20,10 @@ import {
   Eye,
 } from "lucide-react";
 import { professionalsApi, ProfessionalProfileItem } from "@/lib/professionals.api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfessionalDashboardOverview() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<ProfessionalProfileItem | null>(null);
   const [stats, setStats] = useState<{
     enquiriesCount: number;
@@ -54,8 +56,8 @@ export default function ProfessionalDashboardOverview() {
           }
         } else {
           // Fallback to getMyProfile
-          const profRes = await professionalsApi.getMyProfile();
-          const p = profRes?.profile || profRes;
+          const profRes = await professionalsApi.getMyProfile().catch(() => null);
+          const p = profRes?.profile || profRes?.data || profRes;
           if (p && (p._id || p.fullName)) {
             setProfile(p);
             setStats({
@@ -124,7 +126,7 @@ export default function ProfessionalDashboardOverview() {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Welcome back, {p?.fullName || "Professional"}
+            Welcome back, {p?.fullName || user?.fullName || user?.name || "Professional"}
           </h1>
           <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
             Manage your public profile, update practice fees, publish legal &amp; taxation articles, and respond to corporate client consultation inquiries in real-time.

@@ -486,10 +486,65 @@ export const submitConsultationEnquiry = async (slug, input, meta = {}) => {
 /* -------------------------------------------------------------------------- */
 
 export const getOwnProfile = async (userId) => {
-  const profile = await ProfessionalProfile.findOne({
-    userId,
+  let profile = await ProfessionalProfile.findOne({
+    $or: [{ userId }, { _id: userId }],
     deletedAt: null,
   }).populate("categoryId", "name label slug iconKey");
+
+  // Fallback: Check if linked by contactEmail or provision for authenticated user/admin
+  if (!profile) {
+    const userDoc = (await Auth.findById(userId)) || (await User.findById(userId));
+    if (userDoc?.email) {
+      const normalizedEmail = userDoc.email.toLowerCase().trim();
+      profile = await ProfessionalProfile.findOne({
+        contactEmail: normalizedEmail,
+        deletedAt: null,
+      }).populate("categoryId", "name label slug iconKey");
+
+      if (profile && !profile.userId) {
+        profile.userId = userDoc._id;
+        await profile.save();
+      }
+    }
+
+    if (!profile && userDoc) {
+      let category = await ProfessionalCategory.findOne({ isActive: true }).sort({ sortOrder: 1 });
+      if (!category) {
+        category = await ProfessionalCategory.findOne({});
+      }
+      if (!category) {
+        category = await ProfessionalCategory.create({
+          slug: "consulting-advisory",
+          name: "Consulting & Advisory",
+          label: "Consulting & Advisory",
+          description: "General consulting and business advisory services",
+          isActive: true,
+        });
+      }
+      const fullName = userDoc.fullName || userDoc.name || "Professional";
+      const categoryLabel = category?.label || category?.name || "Verified Professional";
+      const slug = await generateUniqueSlug(fullName.trim(), categoryLabel);
+
+      profile = await ProfessionalProfile.create({
+        userId: userDoc._id,
+        categoryId: category._id,
+        slug,
+        fullName: fullName.trim(),
+        headline: `${categoryLabel} & Business Advisor`,
+        summary: `Empaneled advisor providing client consultation and strategic advisory on i-VANTAGE.`,
+        city: "Gurugram",
+        contactEmail: userDoc.email.toLowerCase().trim(),
+        contactPhone: userDoc.phone || null,
+        status: PROFILE_STATUS.PUBLISHED,
+        verificationStatus: VERIFICATION_STATUS.VERIFIED,
+        verifiedAt: new Date(),
+        processSteps: DEFAULT_PROCESS_STEPS,
+        completeness: 75,
+      });
+
+      profile = await ProfessionalProfile.findById(profile._id).populate("categoryId", "name label slug iconKey");
+    }
+  }
 
   if (!profile) return null;
 
@@ -1057,7 +1112,10 @@ export const deleteOwnEnquiry = async (userId, enquiryId) => {
  * Fetches real-time, dynamic overview metrics and recent leads from database
  */
 export const getOwnOverviewStats = async (userId) => {
-  const profile = await ProfessionalProfile.findOne({ userId, deletedAt: null }).populate(
+  const ownProfileData = await getOwnProfile(userId);
+  if (!ownProfileData) return null;
+
+  const profile = await ProfessionalProfile.findById(ownProfileData._id).populate(
     "categoryId",
     "name label slug iconKey"
   );

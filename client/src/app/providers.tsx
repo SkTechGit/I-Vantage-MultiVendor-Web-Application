@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { RealtimeProvider } from "@/context/RealtimeContext";
+import DashboardAutoSignoutProvider from "@/components/auth/DashboardAutoSignoutProvider";
 
 export default function Providers({
   children,
@@ -12,14 +13,16 @@ export default function Providers({
 }) {
   return (
     <AuthProvider>
-      <RealtimeProvider>
-        {children}
+      <DashboardAutoSignoutProvider>
+        <RealtimeProvider>
+          {children}
 
-        <Toaster
-          richColors
-          position="top-right"
-        />
-      </RealtimeProvider>
+          <Toaster
+            richColors
+            position="top-right"
+          />
+        </RealtimeProvider>
+      </DashboardAutoSignoutProvider>
     </AuthProvider>
   );
 }

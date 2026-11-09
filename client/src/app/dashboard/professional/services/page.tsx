@@ -35,8 +35,8 @@ export default function ProfessionalServicesManager() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await professionalsApi.getMyProfile();
-        const p = res?.profile || res;
+        const res = await professionalsApi.getMyProfile().catch(() => null);
+        const p = res?.profile || res?.data || res;
         if (p && (p._id || p.fullName)) {
           setProfile(p);
           setServices(Array.isArray(p.services) ? p.services : []);

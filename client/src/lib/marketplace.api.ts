@@ -39,8 +39,17 @@ export const marketplaceApi = {
   logout: async (portal?: string) => {
     let resolvedPortal = portal;
     if (!resolvedPortal && typeof window !== "undefined") {
-      if (window.location.pathname.startsWith("/admin")) resolvedPortal = "admin";
-      else if (window.location.pathname.startsWith("/vendor")) resolvedPortal = "vendor";
+      const path = window.location.pathname;
+      if (path.startsWith("/admin")) resolvedPortal = "admin";
+      else if (path.startsWith("/vendor")) resolvedPortal = "vendor";
+      else if (
+        !path.startsWith("/professionals") &&
+        (path.startsWith("/dashboard/professional") ||
+          path === "/professional" ||
+          path.startsWith("/professional/"))
+      ) {
+        resolvedPortal = "professional";
+      }
     }
     const query = resolvedPortal ? `?portal=${encodeURIComponent(resolvedPortal)}` : "";
     const { data } = await api.post(`/auth/logout${query}`, { portal: resolvedPortal });

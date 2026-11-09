@@ -18,24 +18,88 @@ function decodeJwtPayload(token: string): { role?: string; id?: string } | null 
   }
 }
 
+type DashboardPortal = "admin" | "vendor" | "professional" | null;
+
+function getDashboardFromReferer(referer: string | null): DashboardPortal {
+  if (!referer) return null;
+  try {
+    const url = new URL(referer);
+    const path = url.pathname;
+    if (
+      path === "/dashboard/professional" ||
+      path.startsWith("/dashboard/professional/")
+    ) {
+      return "professional";
+    }
+    if (
+      path === "/admin" ||
+      (path.startsWith("/admin/") &&
+        path !== "/admin/login" &&
+        path !== "/admin/signup")
+    ) {
+      return "admin";
+    }
+    if (
+      path === "/vendor" ||
+      (path.startsWith("/vendor/") &&
+        path !== "/vendor/login" &&
+        path !== "/vendor/signup")
+    ) {
+      return "vendor";
+    }
+  } catch {}
+  return null;
+}
+
+function clearDashboardCookies(response: NextResponse, portal: DashboardPortal) {
+  const namesToClear: string[] = [
+    "accessToken",
+    "refreshToken",
+  ];
+
+  if (portal === "admin") {
+    namesToClear.push("iv_admin_token", "iv_admin_refresh");
+  } else if (portal === "vendor") {
+    namesToClear.push("iv_vendor_token", "iv_vendor_refresh");
+  } else if (portal === "professional") {
+    namesToClear.push("iv_pro_token", "iv_pro_refresh");
+  } else {
+    namesToClear.push(
+      "iv_admin_token",
+      "iv_admin_refresh",
+      "iv_vendor_token",
+      "iv_vendor_refresh",
+      "iv_pro_token",
+      "iv_pro_refresh"
+    );
+  }
+
+  for (const name of namesToClear) {
+    response.cookies.delete(name);
+    response.cookies.set({
+      name,
+      value: "",
+      path: "/",
+      expires: new Date(0),
+      maxAge: 0,
+    });
+  }
+
+  // Prevent caching of exit transition response
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Explicit bypass for public professionals directory & consumer pages
-  if (pathname.startsWith("/professionals")) {
+  // 1. Bypass API endpoints and Next.js internal static assets
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico")
+  ) {
     return NextResponse.next();
   }
-
-  const isAuthPage =
-    pathname === "/login" ||
-    pathname === "/admin/login" ||
-    pathname === "/admin/signup" ||
-    pathname === "/signup" ||
-    pathname === "/vendor/login" ||
-    pathname === "/vendor/signup" ||
-    pathname === "/professional/login" ||
-    pathname === "/professional/signup" ||
-    pathname === "/professional/register";
 
   const isAdminRoute =
     pathname === "/admin" ||
@@ -53,8 +117,39 @@ export function middleware(request: NextRequest) {
     pathname === "/dashboard/professional" ||
     pathname.startsWith("/dashboard/professional/");
 
-  // Multi-portal cookie resolution:
-  // On admin routes, check iv_admin_token first; on vendor routes, check iv_vendor_token; on professional routes, check iv_pro_token.
+  // 2. Auto-Signout Detection on Dashboard Exit
+  // If the request came from an active dashboard (via referer) to any non-dashboard page,
+  // immediately invalidate portal cookies so the user is auto-signed out.
+  const isPrefetch =
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("x-middleware-prefetch") === "1" ||
+    request.headers.get("next-router-prefetch") === "1";
+
+  if (!isPrefetch) {
+    const referer = request.headers.get("referer");
+    const refererPortal = getDashboardFromReferer(referer);
+
+    if (refererPortal) {
+      const isTargetingSamePortal =
+        (refererPortal === "admin" && isAdminRoute) ||
+        (refererPortal === "vendor" && isVendorRoute) ||
+        (refererPortal === "professional" && isProfessionalRoute);
+
+      if (!isTargetingSamePortal) {
+        // Exited dashboard! Clear auth cookies immediately
+        const response = NextResponse.next();
+        clearDashboardCookies(response, refererPortal);
+        return response;
+      }
+    }
+  }
+
+  // 3. Explicit bypass for public professionals directory & consumer pages
+  if (pathname.startsWith("/professionals")) {
+    return NextResponse.next();
+  }
+
+  // 4. Multi-portal cookie resolution:
   let accessToken: string | undefined;
   let refreshToken: string | undefined;
 
@@ -62,11 +157,23 @@ export function middleware(request: NextRequest) {
     accessToken = request.cookies.get("iv_admin_token")?.value || request.cookies.get("accessToken")?.value;
     refreshToken = request.cookies.get("iv_admin_refresh")?.value || request.cookies.get("refreshToken")?.value;
   } else if (isVendorRoute) {
-    accessToken = request.cookies.get("iv_vendor_token")?.value || request.cookies.get("accessToken")?.value;
-    refreshToken = request.cookies.get("iv_vendor_refresh")?.value || request.cookies.get("refreshToken")?.value;
+    accessToken =
+      request.cookies.get("iv_vendor_token")?.value ||
+      request.cookies.get("iv_admin_token")?.value ||
+      request.cookies.get("accessToken")?.value;
+    refreshToken =
+      request.cookies.get("iv_vendor_refresh")?.value ||
+      request.cookies.get("iv_admin_refresh")?.value ||
+      request.cookies.get("refreshToken")?.value;
   } else if (isProfessionalRoute) {
-    accessToken = request.cookies.get("iv_pro_token")?.value || request.cookies.get("accessToken")?.value;
-    refreshToken = request.cookies.get("iv_pro_refresh")?.value || request.cookies.get("refreshToken")?.value;
+    accessToken =
+      request.cookies.get("iv_pro_token")?.value ||
+      request.cookies.get("iv_admin_token")?.value ||
+      request.cookies.get("accessToken")?.value;
+    refreshToken =
+      request.cookies.get("iv_pro_refresh")?.value ||
+      request.cookies.get("iv_admin_refresh")?.value ||
+      request.cookies.get("refreshToken")?.value;
   } else {
     accessToken =
       request.cookies.get("accessToken")?.value ||
@@ -90,7 +197,7 @@ export function middleware(request: NextRequest) {
   const isVendor = rawRole === "vendor";
   const isProfessional = rawRole === "professional" || isSuperAdmin;
 
-  // 1. Unauthenticated checks
+  // 5. Unauthenticated checks for protected dashboard routes
   if (!hasToken) {
     if (isAdminRoute) {
       const loginUrl = new URL("/admin/login", request.url);
@@ -109,14 +216,9 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Authenticated role checks
+  // 6. Authenticated role checks
   if (hasToken) {
-    // Note: Do NOT auto-redirect away from auth pages (login/signup),
-    // allowing users to freely switch accounts or log into different roles.
-
-    // Role-based route protection for internal consoles:
     if (isAdminRoute && !isSuperAdmin) {
-      // Non-superadmin trying to access enterprise admin console
       const adminLogin = new URL("/admin/login", request.url);
       adminLogin.searchParams.set("from", pathname);
       return NextResponse.redirect(adminLogin);
@@ -127,7 +229,6 @@ export function middleware(request: NextRequest) {
     }
 
     if (isVendorRoute && !isVendor) {
-      // Non-vendor (including SuperAdmin or regular user) trying to access vendor portal
       const vendorLogin = new URL("/vendor/login", request.url);
       vendorLogin.searchParams.set("from", pathname);
       return NextResponse.redirect(vendorLogin);
@@ -140,21 +241,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // 7. For active dashboard responses, add strict no-store headers to prevent back-button cache exposure
+  const response = NextResponse.next();
+  if (isAdminRoute || isVendorRoute || isProfessionalRoute) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/vendor/:path*",
-    "/dashboard/professional/:path*",
-    "/login",
-    "/signup",
-    "/vendor/login",
-    "/vendor/signup",
-    "/professional/login",
-    "/professional/signup",
-    "/professional/register",
-    "/professional/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf)$).*)",
   ],
 };

@@ -26,22 +26,31 @@ export const setAuthCookie = (res, token, role = null, portal = null) => {
   const isVendor = portal === "vendor" || role === "vendor";
   const isPro = portal === "professional" || role === "professional";
 
+  let cookieSet = false;
+
+  if (isPro) {
+    res.cookie(SCOPED_COOKIES.PRO_ACCESS, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+    cookieSet = true;
+  }
+  if (isVendor) {
+    res.cookie(SCOPED_COOKIES.VENDOR_ACCESS, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+    cookieSet = true;
+  }
   if (isSuperAdmin) {
     res.cookie(SCOPED_COOKIES.ADMIN_ACCESS, token, {
       ...options,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
-  } else if (isVendor) {
-    res.cookie(SCOPED_COOKIES.VENDOR_ACCESS, token, {
-      ...options,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    });
-  } else if (isPro) {
-    res.cookie(SCOPED_COOKIES.PRO_ACCESS, token, {
-      ...options,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    });
-  } else {
+    cookieSet = true;
+  }
+
+  if (!cookieSet) {
     // Only set generic cookie for public/customer users without portal scope
     res.cookie(AUTH_COOKIE.ACCESS_NAME, token, {
       ...options,
@@ -56,22 +65,31 @@ export const setRefreshTokenCookie = (res, token, role = null, portal = null) =>
   const isVendor = portal === "vendor" || role === "vendor";
   const isPro = portal === "professional" || role === "professional";
 
+  let cookieSet = false;
+
+  if (isPro) {
+    res.cookie(SCOPED_COOKIES.PRO_REFRESH, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    });
+    cookieSet = true;
+  }
+  if (isVendor) {
+    res.cookie(SCOPED_COOKIES.VENDOR_REFRESH, token, {
+      ...options,
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    });
+    cookieSet = true;
+  }
   if (isSuperAdmin) {
     res.cookie(SCOPED_COOKIES.ADMIN_REFRESH, token, {
       ...options,
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
-  } else if (isVendor) {
-    res.cookie(SCOPED_COOKIES.VENDOR_REFRESH, token, {
-      ...options,
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-    });
-  } else if (isPro) {
-    res.cookie(SCOPED_COOKIES.PRO_REFRESH, token, {
-      ...options,
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-    });
-  } else {
+    cookieSet = true;
+  }
+
+  if (!cookieSet) {
     // Only set generic refresh cookie for public/customer users without portal scope
     res.cookie(AUTH_COOKIE.REFRESH_NAME, token, {
       ...options,
@@ -85,27 +103,44 @@ export const setAuthCookies = (res, accessToken, refreshToken, role = null, port
   if (refreshToken) setRefreshTokenCookie(res, refreshToken, role, portal);
 };
 
-export const clearAuthCookies = (res, portal = "all") => {
+const clearSingleCookie = (res, name) => {
   const options = getBaseCookieOptions();
+  res.clearCookie(name, options);
+  if (options.domain) {
+    // Also clear host-only cookie variant to ensure cross-domain/local cleanup
+    const { domain, ...hostOpts } = options;
+    res.clearCookie(name, hostOpts);
+  }
+};
+
+export const clearAuthCookies = (res, portal = "all") => {
   if (portal === "admin") {
-    res.clearCookie(SCOPED_COOKIES.ADMIN_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.ADMIN_REFRESH, options);
+    clearSingleCookie(res, SCOPED_COOKIES.ADMIN_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.ADMIN_REFRESH);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_REFRESH);
   } else if (portal === "vendor") {
-    res.clearCookie(SCOPED_COOKIES.VENDOR_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.VENDOR_REFRESH, options);
+    clearSingleCookie(res, SCOPED_COOKIES.VENDOR_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.VENDOR_REFRESH);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_REFRESH);
   } else if (portal === "professional") {
-    res.clearCookie(SCOPED_COOKIES.PRO_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.PRO_REFRESH, options);
+    clearSingleCookie(res, SCOPED_COOKIES.PRO_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.PRO_REFRESH);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_REFRESH);
   } else {
     // portal === "all" or general clear
-    res.clearCookie(SCOPED_COOKIES.ADMIN_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.ADMIN_REFRESH, options);
-    res.clearCookie(SCOPED_COOKIES.VENDOR_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.VENDOR_REFRESH, options);
-    res.clearCookie(SCOPED_COOKIES.PRO_ACCESS, options);
-    res.clearCookie(SCOPED_COOKIES.PRO_REFRESH, options);
-    res.clearCookie(AUTH_COOKIE.ACCESS_NAME, options);
-    res.clearCookie(AUTH_COOKIE.REFRESH_NAME, options);
+    clearSingleCookie(res, SCOPED_COOKIES.ADMIN_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.ADMIN_REFRESH);
+    clearSingleCookie(res, SCOPED_COOKIES.VENDOR_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.VENDOR_REFRESH);
+    clearSingleCookie(res, SCOPED_COOKIES.PRO_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.PRO_REFRESH);
+    clearSingleCookie(res, AUTH_COOKIE.ACCESS_NAME);
+    clearSingleCookie(res, AUTH_COOKIE.REFRESH_NAME);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_ACCESS);
+    clearSingleCookie(res, SCOPED_COOKIES.GLOBAL_REFRESH);
   }
 };
 
