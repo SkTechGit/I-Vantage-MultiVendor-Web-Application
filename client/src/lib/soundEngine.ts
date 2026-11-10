@@ -11,16 +11,26 @@ import { useSyncExternalStore } from 'react';
 export type HapticPattern = 'warp' | 'tap' | 'select' | 'advance' | 'back' | 'celebrate' | 'error' | 'menu' | 'toggle' | 'pop';
 
 const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
-  warp: [18, 32, 40, 32, 65],
-  tap: [12],
-  select: [18],
-  advance: [12, 22, 14],
-  back: [22],
-  celebrate: [35, 45, 35, 45, 75],
-  error: [25, 45, 25],
-  menu: [14, 25, 18],
-  toggle: [15],
-  pop: [8, 16],
+  // Strong signature tactile feedback for confirms / launches
+  warp: [45, 35, 65, 35, 95],
+  // Solid, crisp click (38ms delivers peak resonance on modern phone vibration motors)
+  tap: [38],
+  // Satisfying selection thump
+  select: [48],
+  // Forward advance step
+  advance: [35, 30, 55],
+  // Solid navigation back pulse
+  back: [55],
+  // Rich celebratory burst
+  celebrate: [65, 45, 65, 45, 120],
+  // Strong, unmistakable error buzz
+  error: [70, 45, 70, 45, 95],
+  // Menu toggle pulse
+  menu: [40, 25, 45],
+  // Distinctive switch toggle double-thump
+  toggle: [32, 25, 48],
+  // Snappy pop
+  pop: [25, 20, 35],
 };
 
 const STORAGE_KEY = 'ivantage_haptics_muted';
@@ -91,7 +101,7 @@ class SoundEngine {
 
     if (pattern === 'tap') {
       const now = Date.now();
-      if (now - this.lastTapHapticAt < 100) return;
+      if (now - this.lastTapHapticAt < 60) return;
       this.lastTapHapticAt = now;
     }
 
