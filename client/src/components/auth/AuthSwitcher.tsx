@@ -2,6 +2,7 @@
 
 import React, { type ReactNode, useEffect, useRef } from 'react';
 import { ShieldCheck, ArrowLeft, User, Building2, Award } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { soundEngine } from '@/lib/soundEngine';
 import './AuthSwitcher.css';
 
@@ -136,8 +137,99 @@ export function AuthSwitcher({
           </div>
         </div>
 
-        {/* Two-Column Stage */}
-        <div className="auth-stage">
+        {/* ------------------------------------------------------------------ */}
+        {/* Mobile View: High-Performance Framer Motion Animated Form Stage    */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="auth-mobile-container sm:hidden">
+          {/* Framer Motion Animated Pill Mode Toggle */}
+          {signupAllowed && (
+            <div className="auth-mobile-tabs" role="tablist" aria-label="Authentication Mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'signin'}
+                onClick={() => {
+                  if (mode !== 'signin') {
+                    soundEngine.playToggle();
+                    onModeChange('signin');
+                  }
+                }}
+                className={`auth-mobile-tab ${mode === 'signin' ? 'is-active' : ''}`}
+              >
+                <span className="relative z-10">Sign In</span>
+                {mode === 'signin' && (
+                  <motion.div
+                    layoutId="authMobileActivePill"
+                    className="auth-mobile-tab-pill"
+                    transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                  />
+                )}
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'signup'}
+                onClick={() => {
+                  if (mode !== 'signup') {
+                    soundEngine.playToggle();
+                    onModeChange('signup');
+                  }
+                }}
+                className={`auth-mobile-tab ${mode === 'signup' ? 'is-active' : ''}`}
+              >
+                <span className="relative z-10">
+                  {audience === 'professional' ? 'Join Network' : 'Create Account'}
+                </span>
+                {mode === 'signup' && (
+                  <motion.div
+                    layoutId="authMobileActivePill"
+                    className="auth-mobile-tab-pill"
+                    transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                  />
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Animated Form Transition Container */}
+          <div className="auth-mobile-stage">
+            <AnimatePresence mode="wait" initial={false}>
+              {mode === 'signin' ? (
+                <motion.div
+                  key="mobile-signin"
+                  initial={{ opacity: 0, x: -16, filter: 'blur(1px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: 16, filter: 'blur(1px)' }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="auth-mobile-pane"
+                >
+                  {signInForm}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="mobile-signup"
+                  initial={{ opacity: 0, x: 16, filter: 'blur(1px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -16, filter: 'blur(1px)' }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="auth-mobile-pane"
+                >
+                  {signupAllowed ? (
+                    signUpForm
+                  ) : (
+                    <AdminInvitationNotice onReturnToSignIn={() => onModeChange('signin')} />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* Desktop / Tablet View: Two-Column Split Stage & Sliding Blade      */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="auth-stage auth-stage--desktop hidden sm:grid">
           {/* Left Pane: Sign-in (Fixed in Column 1) */}
           <div
             className={`auth-pane auth-pane--signin ${mode === 'signin' ? 'is-active' : ''}`}

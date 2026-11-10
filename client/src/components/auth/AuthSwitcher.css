@@ -565,8 +565,87 @@
   }
 }
 
+/* ==========================================================================
+   MOBILE FRAMER MOTION & RESPONSIVE RULES
+   ========================================================================== */
+.auth-mobile-container {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .auth-mobile-container {
+    display: none !important;
+  }
+  .auth-stage--desktop {
+    display: grid !important;
+  }
+}
+
 /* Mobile Screens (<= 640px) */
 @media (max-width: 640px) {
+  .auth-stage--desktop {
+    display: none !important;
+  }
+
+  .auth-mobile-container {
+    display: block !important;
+    width: 100%;
+  }
+
+  .auth-mobile-tabs {
+    display: flex;
+    position: relative;
+    background: #F1F5F9;
+    border: 1px solid var(--brand-border-blue);
+    border-radius: 9999px;
+    padding: 3px;
+    margin: 10px 12px 2px 12px;
+  }
+
+  .auth-mobile-tab {
+    flex: 1 1 0;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 10px;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    color: #64748B;
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    user-select: none;
+  }
+
+  .auth-mobile-tab.is-active {
+    color: #FFFFFF;
+  }
+
+  .auth-mobile-tab-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--brand-navy);
+    box-shadow: 0 2px 8px rgba(10, 31, 102, 0.25);
+    z-index: 1;
+  }
+
+  .auth-mobile-stage {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .auth-mobile-pane {
+    width: 100%;
+    padding: 14px 14px 20px 14px;
+    background: #FFFFFF;
+  }
+
   .auth-wrapper {
     width: 100%;
     max-width: 100%;
