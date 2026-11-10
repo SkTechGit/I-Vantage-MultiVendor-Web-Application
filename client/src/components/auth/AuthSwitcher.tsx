@@ -138,10 +138,60 @@ export function AuthSwitcher({
         </div>
 
         {/* ------------------------------------------------------------------ */}
-        {/* Mobile View: High-Performance Framer Motion Animated Form Stage    */}
+        {/* Mobile View: High-Performance Full-Width Sliding Track Stage       */}
         {/* ------------------------------------------------------------------ */}
         <div className="auth-mobile-container sm:hidden">
-          {/* Framer Motion Animated Pill Mode Toggle */}
+          {/* Mobile Branded Header Blade with Signature Dark Navy Gradient */}
+          <div className="auth-mobile-blade">
+            <div className="auth-mobile-blade__glow" />
+            <div className="auth-mobile-blade__top">
+              <span className="auth-mobile-blade__brand">{brandName}</span>
+              <span className="auth-mobile-blade__badge">
+                {audience === 'admin'
+                  ? 'ADMIN CONSOLE'
+                  : audience === 'professional'
+                  ? 'PRACTICE CONSOLE'
+                  : 'CLIENT HUB'}
+              </span>
+            </div>
+
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="auth-mobile-blade__content"
+            >
+              <h2 className="auth-mobile-blade__heading">
+                {audience === 'admin'
+                  ? mode === 'signin'
+                    ? 'Admin Console.'
+                    : 'Invitation Only.'
+                  : audience === 'professional'
+                  ? mode === 'signin'
+                    ? 'Welcome back.'
+                    : 'Verified Practice.'
+                  : mode === 'signin'
+                  ? 'Welcome back.'
+                  : 'Start the first page.'}
+              </h2>
+              <p className="auth-mobile-blade__sub">
+                {audience === 'admin'
+                  ? mode === 'signin'
+                    ? 'Secure access for authorized enterprise administrators.'
+                    : 'Administrative roles are provisioned directly by system security.'
+                  : audience === 'professional'
+                  ? mode === 'signin'
+                    ? 'Direct access to corporate clients, briefs, and retainers.'
+                    : "Join India's premier CA, legal, and compliance network."
+                  : mode === 'signin'
+                  ? 'Your account, your workspace, all in one place.'
+                  : 'One account for every board, every draft and every device you own.'}
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Framer Motion Animated Mode Toggle Pills */}
           {signupAllowed && (
             <div className="auth-mobile-tabs" role="tablist" aria-label="Authentication Mode">
               <button
@@ -150,7 +200,7 @@ export function AuthSwitcher({
                 aria-selected={mode === 'signin'}
                 onClick={() => {
                   if (mode !== 'signin') {
-                    soundEngine.playToggle();
+                    soundEngine.triggerHaptic('toggle');
                     onModeChange('signin');
                   }
                 }}
@@ -172,7 +222,7 @@ export function AuthSwitcher({
                 aria-selected={mode === 'signup'}
                 onClick={() => {
                   if (mode !== 'signup') {
-                    soundEngine.playToggle();
+                    soundEngine.triggerHaptic('toggle');
                     onModeChange('signup');
                   }
                 }}
@@ -192,37 +242,45 @@ export function AuthSwitcher({
             </div>
           )}
 
-          {/* Animated Form Transition Container */}
-          <div className="auth-mobile-stage">
-            <AnimatePresence mode="wait" initial={false}>
-              {mode === 'signin' ? (
-                <motion.div
-                  key="mobile-signin"
-                  initial={{ opacity: 0, x: -16, filter: 'blur(1px)' }}
-                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, x: 16, filter: 'blur(1px)' }}
-                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                  className="auth-mobile-pane"
-                >
+          {/* True Full-Width Continuous Horizontal Sliding Stage */}
+          <div className="auth-mobile-slider-viewport">
+            <motion.div
+              className="auth-mobile-slider-track"
+              initial={false}
+              animate={{ x: mode === 'signin' ? '0%' : '-50%' }}
+              transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 30,
+                mass: 0.85,
+              }}
+            >
+              {/* Slide 1: Sign-in Form (100% Mobile Viewport Width) */}
+              <div
+                className="auth-mobile-slide"
+                aria-hidden={mode !== 'signin'}
+                {...(mode !== 'signin' ? { inert: true } : {})}
+              >
+                <div className="auth-mobile-pane">
                   {signInForm}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="mobile-signup"
-                  initial={{ opacity: 0, x: 16, filter: 'blur(1px)' }}
-                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, x: -16, filter: 'blur(1px)' }}
-                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                  className="auth-mobile-pane"
-                >
+                </div>
+              </div>
+
+              {/* Slide 2: Sign-up Form (100% Mobile Viewport Width) */}
+              <div
+                className="auth-mobile-slide"
+                aria-hidden={mode !== 'signup'}
+                {...(mode !== 'signup' ? { inert: true } : {})}
+              >
+                <div className="auth-mobile-pane">
                   {signupAllowed ? (
                     signUpForm
                   ) : (
                     <AdminInvitationNotice onReturnToSignIn={() => onModeChange('signin')} />
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
 
