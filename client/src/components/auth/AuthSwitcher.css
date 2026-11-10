@@ -567,94 +567,190 @@
 
 /* Mobile Screens (<= 640px) */
 @media (max-width: 640px) {
+  .auth-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .auth-portal-selector {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .auth-portal-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 3px;
+    background: #F1F5F9;
+  }
+
+  .auth-portal-tab {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 7px 4px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .auth-portal-tab svg {
+    width: 12px;
+    height: 12px;
+    shrink: 0;
+  }
+
+  .auth-portal-tab span {
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
   .auth-card {
     border-radius: 18px;
     width: 100%;
+    margin: 0;
+    box-shadow: 0 4px 20px rgba(10, 31, 102, 0.08);
   }
 
+  .auth-card__header {
+    padding: 10px 14px;
+  }
+
+  .auth-card__title {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Single Full-Width Stage on Mobile Phones */
   .auth-stage {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    min-height: clamp(340px, 54vh, 420px);
+    display: block;
+    min-height: auto;
+    overflow: visible;
   }
 
+  /* Hide the 50% split blade on phone so form gets 100% width */
   .auth-blade {
-    display: flex !important;
-    width: 50%;
-    padding: clamp(14px, 3.5vw, 24px) clamp(10px, 2vw, 16px);
-    padding-left: clamp(20px, 4.8vw, 32px);
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%);
+    display: none !important;
   }
 
+  /* Full-width, accessible form pane */
   .auth-pane {
+    width: 100% !important;
+    display: none !important;
+    padding: 18px 16px 22px 16px;
+    background: #FFFFFF;
+  }
+
+  /* Active pane takes 100% full width */
+  .auth-card:not(.is-signup) .auth-pane--signin {
     display: flex !important;
-    padding: clamp(12px, 2.8vw, 20px) clamp(10px, 2.5vw, 16px);
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  .auth-card.is-signup .auth-blade {
-    transform: translateX(-100%);
-    clip-path: polygon(0 0, 93% 0, 100% 100%, 0 100%);
-    padding-left: clamp(10px, 2vw, 16px);
-    padding-right: clamp(20px, 4.8vw, 32px);
-  }
-
-  .auth-blade__brand {
-    margin-bottom: 0.4rem;
-  }
-
-  .auth-blade h2 {
-    font-size: clamp(1.15rem, 4vw, 1.45rem);
-    line-height: 1.16;
-    letter-spacing: -0.03em;
-    margin: 0 0 0.45rem 0;
-  }
-
-  .auth-blade p {
-    font-size: clamp(0.7rem, 2.1vw, 0.8rem);
-    line-height: 1.45;
-    max-width: 22ch;
+  .auth-card.is-signup .auth-pane--signup {
+    display: flex !important;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .auth-form {
-    gap: 0.4rem;
+    gap: 0.7rem;
+    width: 100%;
+  }
+
+  .auth-form__header {
+    margin-bottom: 0.35rem;
   }
 
   .auth-form__title {
-    font-size: clamp(1.15rem, 3.6vw, 1.4rem);
+    font-size: 1.35rem;
+    line-height: 1.2;
   }
 
   .auth-form__subtitle {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: #64748B;
+  }
+
+  .auth-field {
+    gap: 0.28rem;
+  }
+
+  .auth-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
   }
 
   .auth-input {
-    padding: 0.38rem 0.55rem;
-    font-size: 0.76rem;
-    border-radius: 8px;
+    min-height: 42px;
+    padding: 0.55rem 0.8rem;
+    font-size: 16px; /* Prevents auto-zoom on iOS Safari */
+    border-radius: 10px;
   }
 
-  .auth-button-submit {
-    padding: 0.48rem 0.8rem;
-    font-size: 0.78rem;
-    border-radius: 8px;
+  .auth-input--with-icon {
+    padding-right: 2.6rem;
+  }
+
+  .auth-input-icon {
+    right: 0.75rem;
+    width: 32px;
+    height: 32px;
   }
 
   .auth-options {
-    font-size: 0.68rem;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.76rem;
+    padding: 2px 0;
+  }
+
+  .auth-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+
+  .auth-link {
+    font-size: 0.76rem;
+  }
+
+  .auth-button-submit {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    border-radius: 10px;
+    margin-top: 0.25rem;
   }
 
   .auth-demo-bar {
-    padding: 0.25rem 0.4rem;
-    font-size: 0.64rem;
-    border-radius: 6px;
+    flex-wrap: wrap;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.7rem;
+    border-radius: 8px;
+    gap: 6px;
   }
 
   .auth-demo-btn {
-    padding: 0.1rem 0.35rem;
-    font-size: 0.62rem;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 6px;
   }
 
   .auth-switch-footer {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
+    margin-top: 0.35rem;
+    padding-bottom: 2px;
+  }
+
+  .auth-switch-button {
+    font-size: 0.78rem;
+    margin-left: 0.3rem;
   }
 }

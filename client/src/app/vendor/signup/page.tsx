@@ -46,7 +46,7 @@ function VendorSignupContent() {
   };
 
   return (
-    <div className="relative h-[100dvh] max-h-[100dvh] bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-center items-center px-3 sm:px-4 py-2 sm:py-3 overflow-hidden selection:bg-[#1E5BFF]/15 selection:text-[#0A1F66]">
+    <div className="relative min-h-[100dvh] md:h-[100dvh] md:max-h-[100dvh] bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-start md:justify-center items-center px-3 sm:px-4 py-4 md:py-3 overflow-y-auto md:overflow-hidden selection:bg-[#1E5BFF]/15 selection:text-[#0A1F66]">
       {/* Background ambient branding glows */}
       <div className="absolute top-1/4 -left-20 w-[450px] h-[450px] bg-[#1E5BFF]/5 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-[#D99000]/5 rounded-full blur-[120px] pointer-events-none" />
