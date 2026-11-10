@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import {
   isValidIndianPhone,
@@ -18,6 +18,13 @@ import {
   ShieldCheck,
   Tag,
 } from "lucide-react";
+import { soundEngine } from "@/lib/soundEngine";
+
+declare global {
+  interface Window {
+    dataLayer: Record<string, unknown>[];
+  }
+}
 
 interface ListingEnquiryFormProps {
   listingId: string;
@@ -37,17 +44,14 @@ export default function ListingEnquiryForm({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // When selectedPlan changes, update prefilled message if message hasn't been edited manually
-  useEffect(() => {
-    if (selectedPlan && !message) {
-      setMessage(`Interested in touring ${listingTitle} for "${selectedPlan}". Please share details and availability.`);
-    }
-  }, [selectedPlan, listingTitle]);
+  const defaultMessage = selectedPlan
+    ? `Interested in touring ${listingTitle} for "${selectedPlan}". Please share details and availability.`
+    : "";
+  const messageValue = message ?? defaultMessage;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,21 +63,25 @@ export default function ListingEnquiryForm({
 
     if (!cleanName || cleanName.length < 2) {
       setErrorMsg("Please enter your full name (minimum 2 characters).");
+      soundEngine.playError();
       return;
     }
 
     if (!cleanPhone) {
       setErrorMsg(VALIDATION_MESSAGES.PHONE_REQUIRED);
+      soundEngine.playError();
       return;
     }
 
     if (!isValidIndianPhone(cleanPhone)) {
       setErrorMsg(VALIDATION_MESSAGES.PHONE_INVALID);
+      soundEngine.playError();
       return;
     }
 
     if (cleanEmail && !isValidEmail(cleanEmail)) {
       setErrorMsg(VALIDATION_MESSAGES.EMAIL_INVALID);
+      soundEngine.playError();
       return;
     }
 
@@ -81,7 +89,7 @@ export default function ListingEnquiryForm({
 
     try {
       const planDetail = selectedPlan ? ` [Plan: ${selectedPlan}${planPrice ? ` - ₹${Number(planPrice).toLocaleString("en-IN")}/${planUnit}` : ""}]` : "";
-      const leadMsg = (message.trim() || `Interested in touring ${listingTitle}`) + planDetail;
+      const leadMsg = (messageValue.trim() || `Interested in touring ${listingTitle}`) + planDetail;
 
       await marketplaceApi.submitLead({
         listingId,
@@ -94,9 +102,24 @@ export default function ListingEnquiryForm({
         source: "listing_enquiry",
       });
 
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "lead_form_submit",
+        form_name: "listing-enquiry-form",
+        listing_id: listingId,
+        listing_title: listingTitle,
+        plan_name: selectedPlan,
+      });
+
       setSubmitted(true);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to submit enquiry. Please try again.");
+      soundEngine.playSuccess();
+    } catch (err: unknown) {
+      soundEngine.playError();
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit enquiry. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -122,11 +145,12 @@ export default function ListingEnquiryForm({
         <button
           type="button"
           onClick={() => {
+            soundEngine.playClick();
             setSubmitted(false);
             setName("");
             setPhone("");
             setEmail("");
-            setMessage("");
+            setMessage(null);
           }}
           className="text-xs font-bold text-[#1E5BFF] hover:underline pt-2 block mx-auto"
         >
@@ -171,7 +195,11 @@ export default function ListingEnquiryForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3" suppressHydrationWarning>
+      <form
+        onSubmit={handleSubmit}
+        className="listing-enquiry-form space-y-3"
+        suppressHydrationWarning
+      >
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Your Full Name *
@@ -236,7 +264,7 @@ export default function ListingEnquiryForm({
             rows={2}
             suppressHydrationWarning
             placeholder="e.g. Looking for a 6-seater cabin starting next month..."
-            value={message}
+            value={messageValue}
             onChange={(e) => setMessage(e.target.value)}
             className="w-full text-xs p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#1E5BFF] transition-all resize-none"
           />

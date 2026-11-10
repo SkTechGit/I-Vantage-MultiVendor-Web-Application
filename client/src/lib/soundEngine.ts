@@ -1,9 +1,11 @@
+import { useSyncExternalStore } from 'react';
+
 /**
- * i-VANTAGE Technologies - Haptic Vibration Engine
+ * i-VANTAGE Technologies - Haptics & Vibration Engine
  *
- * Implements mobile Web Vibration API haptics for an executive,
- * tactile, and responsive UX across all interactions.
- * All sound synthesis permanently removed as per user preference.
+ * Implements mobile Web Vibration API haptics strictly for mobile viewports.
+ * ZERO sound synthesis or audio playback is produced anywhere in the application.
+ * All tactile vibrations are restricted strictly to mobile viewports (<= 820px).
  */
 
 export type HapticPattern = 'warp' | 'tap' | 'select' | 'advance' | 'back' | 'celebrate' | 'error' | 'menu' | 'toggle' | 'pop';
@@ -21,10 +23,11 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
   pop: [8, 16],
 };
 
-const STORAGE_KEY = 'ivantage_sound_muted';
+const STORAGE_KEY = 'ivantage_haptics_muted';
 
 class SoundEngine {
   private isMuted: boolean = false;
+  private lastTapHapticAt = 0;
   private listeners: Set<(muted: boolean) => void> = new Set();
 
   constructor() {
@@ -66,10 +69,32 @@ class SoundEngine {
   }
 
   /**
-   * Mobile Web Vibration Haptic Trigger
+   * Helper to verify if user is strictly in mobile view (<= 820px viewport)
+   */
+  public isMobileView(): boolean {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.innerWidth <= 820 ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 820px)').matches)
+    );
+  }
+
+  /**
+   * Mobile Web Vibration Haptic Trigger (Strictly Mobile Viewport Only, No Sounds)
    */
   public triggerHaptic(pattern: HapticPattern | number[]) {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+    
+    // Strict mobile view gate: Never vibrate on laptop / desktop screen sizes
+    if (!this.isMobileView()) return;
+    if (this.isMuted) return;
+
+    if (pattern === 'tap') {
+      const now = Date.now();
+      if (now - this.lastTapHapticAt < 100) return;
+      this.lastTapHapticAt = now;
+    }
+
     try {
       if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
         const vibrationData = typeof pattern === 'string' ? HAPTIC_PATTERNS[pattern] : pattern;
@@ -81,63 +106,63 @@ class SoundEngine {
   }
 
   /**
-   * Signature Warp Transition (Haptic vibration only)
+   * Signature Warp Transition (Haptic vibration only on mobile)
    */
   public playZoom() {
     this.triggerHaptic('warp');
   }
 
   /**
-   * Tactile Micro-Click (Haptic vibration only)
+   * Tactile Micro-Click (Haptic vibration only on mobile)
    */
   public playClick() {
     this.triggerHaptic('tap');
   }
 
   /**
-   * Option Selection Pop (Haptic vibration only)
+   * Option Selection Pop (Haptic vibration only on mobile)
    */
   public playToggle() {
     this.triggerHaptic('select');
   }
 
   /**
-   * Question Advance (Haptic vibration only)
+   * Question Advance (Haptic vibration only on mobile)
    */
   public playAdvance() {
     this.triggerHaptic('advance');
   }
 
   /**
-   * Navigation Back (Haptic vibration only)
+   * Navigation Back (Haptic vibration only on mobile)
    */
   public playBack() {
     this.triggerHaptic('back');
   }
 
   /**
-   * Celebration on Score Reveal (Haptic vibration only)
+   * Celebration on Score Reveal (Haptic vibration only on mobile)
    */
   public playCelebration() {
     this.triggerHaptic('celebrate');
   }
 
   /**
-   * Hover effect (No-op, silent)
+   * Desktop Hover (100% Silent, 0 vibration)
    */
   public playHover() {
-    // Pure silence, no vibration on desktop hover
+    // Pure silence, no haptic on desktop hover
   }
 
   /**
-   * Success / Confirmation (Haptic vibration only)
+   * Success / Confirmation (Haptic vibration only on mobile)
    */
   public playSuccess() {
     this.triggerHaptic('warp');
   }
 
   /**
-   * Error Notification (Haptic vibration only)
+   * Error Notification (Haptic vibration only on mobile)
    */
   public playError() {
     this.triggerHaptic('error');
@@ -146,22 +171,17 @@ class SoundEngine {
 
 // Global Singleton Instance
 export const soundEngine = new SoundEngine();
+export const hapticEngine = soundEngine;
 
 /**
  * React Hook for state management
  */
-import { useState, useEffect } from 'react';
-
 export function useSoundState() {
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsMuted(soundEngine.getMuted());
-    const unsubscribe = soundEngine.subscribe((muted) => {
-      setIsMuted(muted);
-    });
-    return unsubscribe;
-  }, []);
+  const isMuted = useSyncExternalStore(
+    (listener) => soundEngine.subscribe(listener),
+    () => soundEngine.getMuted(),
+    () => false
+  );
 
   return {
     isMuted,
