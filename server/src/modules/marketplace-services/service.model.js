@@ -17,6 +17,11 @@ const marketplaceServiceSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    unit: {
+      type: String,
+      enum: ["month", "hour", "day", "per-month", "per-hour", "per-day", "per-seat"],
+      default: "month",
+    },
     description: {
       type: String,
       trim: true,

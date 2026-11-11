@@ -352,7 +352,25 @@ export default function CreateListingForm() {
                   return (
                     <div
                       key={cat._id}
-                      onClick={() => setCategoryId(cat._id)}
+                      onClick={() => {
+                        setCategoryId(cat._id);
+                        const catLower = (cat.name || "").toLowerCase();
+                        if (
+                          catLower.includes("meeting") ||
+                          catLower.includes("conference") ||
+                          catLower.includes("confference")
+                        ) {
+                          setPricingUnit("per-hour");
+                        } else if (
+                          catLower.includes("day pass") ||
+                          catLower.includes("daypass") ||
+                          catLower.includes("event")
+                        ) {
+                          setPricingUnit("per-day");
+                        } else {
+                          setPricingUnit("per-month");
+                        }
+                      }}
                       className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                         isSelected
                           ? "border-[#1E5BFF] bg-blue-50/50 shadow-md ring-2 ring-blue-100"

@@ -1,6 +1,49 @@
 import MarketplaceService from "./service.model.js";
 
 /**
+ * Infer billing unit dynamically per platform rules:
+ * - Coworking / Dedicated Desk / Private Cabin -> month
+ * - Meeting Room / Conference Room -> hour (or day if Full-Day)
+ * - Day Pass / Event Pass -> day
+ */
+export const inferServiceUnit = (name = "", categoryName = "", fallback = "month") => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("hourly") || lower.includes("per-hour") || lower.includes("/hour") || lower.includes("/hr")) {
+    return "hour";
+  }
+  if (lower.includes("full-day") || lower.includes("full day") || lower.includes("meeting room day") || lower.includes("daily") || lower.includes("per-day") || lower.includes("/day")) {
+    return "day";
+  }
+  if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
+    return "month";
+  }
+
+  // 1. Meeting Room -> per hour
+  if (lower.includes("meeting")) return "hour";
+  // 2. Conference Room -> per hour
+  if (lower.includes("conference") || lower.includes("confference") || lower.includes("boardroom")) return "hour";
+  // 3. Day Pass -> per day
+  if (lower.includes("day pass") || lower.includes("daypass") || lower.includes("day paas")) return "day";
+  // 4. Event Pass -> per day
+  if (lower.includes("event")) return "day";
+  // 5. Coworking Price -> per month
+  if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
+  // 6. Dedicated Seat / Desk -> per month
+  if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
+  // 7. Private Cabin -> per month
+  if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
+
+  const catLower = String(categoryName || "").toLowerCase();
+  if (catLower.includes("meeting")) return "hour";
+  if (catLower.includes("conference") || catLower.includes("confference")) return "hour";
+  if (catLower.includes("day pass") || catLower.includes("daypass")) return "day";
+  if (catLower.includes("event")) return "day";
+  if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
+
+  return fallback;
+};
+
+/**
  * Vendor: GET own services + global services
  */
 export const getVendorServices = async (req, res, next) => {
@@ -24,11 +67,14 @@ export const getVendorServices = async (req, res, next) => {
  */
 export const createVendorService = async (req, res, next) => {
   try {
-    const { name, size, price, description } = req.body;
+    const { name, size, price, unit, description } = req.body;
+    const finalUnit = unit || inferServiceUnit(name);
+
     const service = await MarketplaceService.create({
       name,
       size,
       price,
+      unit: finalUnit,
       description,
       isGlobal: false,
       vendorId: req.user._id,
@@ -53,6 +99,10 @@ export const updateVendorService = async (req, res, next) => {
     const service = await MarketplaceService.findOne({ _id: id, vendorId: req.user._id });
     if (!service) {
       return res.status(404).json({ success: false, message: "Service not found or unauthorized." });
+    }
+
+    if (req.body.name && !req.body.unit && !service.unit) {
+      req.body.unit = inferServiceUnit(req.body.name);
     }
 
     Object.assign(service, req.body);
@@ -108,8 +158,10 @@ export const getAdminServices = async (req, res, next) => {
  */
 export const createAdminService = async (req, res, next) => {
   try {
+    const finalUnit = req.body.unit || inferServiceUnit(req.body.name);
     const service = await MarketplaceService.create({
       ...req.body,
+      unit: finalUnit,
       createdBy: req.user._id,
     });
 

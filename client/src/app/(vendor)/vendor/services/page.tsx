@@ -19,10 +19,51 @@ interface ServiceItem {
   name: string;
   size: string;
   price: number;
+  unit?: string;
   description?: string;
   isGlobal: boolean;
   isActive: boolean;
 }
+
+export const inferServiceUnit = (name = "", fallback = "month") => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("hourly") || lower.includes("per-hour") || lower.includes("/hour") || lower.includes("/hr")) {
+    return "hour";
+  }
+  if (
+    lower.includes("full-day") ||
+    lower.includes("full day") ||
+    lower.includes("meeting room day") ||
+    lower.includes("day pass") ||
+    lower.includes("daypass") ||
+    lower.includes("day paas") ||
+    lower.includes("daily") ||
+    lower.includes("per-day") ||
+    lower.includes("/day")
+  ) {
+    return "day";
+  }
+  if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
+    return "month";
+  }
+
+  // 1. Meeting Room -> per hour
+  if (lower.includes("meeting")) return "hour";
+  // 2. Conference Room -> per hour
+  if (lower.includes("conference") || lower.includes("confference") || lower.includes("boardroom")) return "hour";
+  // 3. Day Pass -> per day
+  if (lower.includes("day pass") || lower.includes("daypass") || lower.includes("day paas") || lower.includes("day")) return "day";
+  // 4. Event Pass -> per day
+  if (lower.includes("event")) return "day";
+  // 5. Coworking Price -> per month
+  if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
+  // 6. Dedicated Seat / Desk -> per month
+  if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
+  // 7. Private Cabin -> per month
+  if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
+
+  return fallback;
+};
 
 export default function VendorServicesPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -34,6 +75,8 @@ export default function VendorServicesPage() {
   const [name, setName] = useState("");
   const [size, setSize] = useState("");
   const [price, setPrice] = useState("");
+  const [unit, setUnit] = useState("month");
+  const [userOverrodeUnit, setUserOverrodeUnit] = useState(false);
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -76,6 +119,8 @@ export default function VendorServicesPage() {
     setName("");
     setSize("");
     setPrice("");
+    setUnit("month");
+    setUserOverrodeUnit(false);
     setDescription("");
     setErrorMsg(null);
     setShowModal(true);
@@ -86,6 +131,8 @@ export default function VendorServicesPage() {
     setName(service.name);
     setSize(service.size);
     setPrice(String(service.price));
+    setUnit(service.unit?.replace("per-", "") || inferServiceUnit(service.name));
+    setUserOverrodeUnit(true);
     setDescription(service.description || "");
     setErrorMsg(null);
     setShowModal(true);
@@ -107,6 +154,7 @@ export default function VendorServicesPage() {
           name: name.trim(),
           size: size.trim(),
           price: Number(price),
+          unit,
           description: description.trim() || undefined,
         });
       } else {
@@ -114,6 +162,7 @@ export default function VendorServicesPage() {
           name: name.trim(),
           size: size.trim(),
           price: Number(price),
+          unit,
           description: description.trim() || undefined,
         });
       }
@@ -208,9 +257,14 @@ export default function VendorServicesPage() {
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs text-slate-400 font-medium">Standard Price:</span>
-                  <span className="text-lg font-extrabold text-[#0A1F66]">
-                    ₹{svc.price.toLocaleString("en-IN")}
-                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-extrabold text-[#0A1F66]">
+                      ₹{svc.price.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">
+                      /{svc.unit?.replace("per-", "") || inferServiceUnit(svc.name)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -255,12 +309,52 @@ export default function VendorServicesPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Dedicated 8-Seater Suite"
+                  placeholder="e.g. Dedicated 8-Seater Suite, Conference Room, Day Pass"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setName(val);
+                    if (!userOverrodeUnit) {
+                      setUnit(inferServiceUnit(val));
+                    }
+                  }}
                   className="w-full text-sm px-3.5 py-2 border rounded-xl outline-none"
                   required
                 />
+              </div>
+
+              {/* Dynamic Billing Unit Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Billing Cycle / Unit *</span>
+                  <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                    Auto-selected: /{unit}
+                  </span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "month", label: "Per Month", sub: "Coworking / Cabin" },
+                    { id: "hour", label: "Per Hour", sub: "Meeting / Conference" },
+                    { id: "day", label: "Per Day", sub: "Day / Event Pass" },
+                  ].map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setUnit(u.id);
+                        setUserOverrodeUnit(true);
+                      }}
+                      className={`py-2 px-2.5 rounded-xl border text-left transition text-xs ${
+                        unit === u.id
+                          ? "border-[#1E5BFF] bg-blue-50 text-[#0A1F66] font-bold ring-1 ring-[#1E5BFF]"
+                          : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                      }`}
+                    >
+                      <div className="font-bold">{u.label}</div>
+                      <div className="text-[9px] text-slate-400">{u.sub}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

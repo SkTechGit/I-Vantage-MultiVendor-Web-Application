@@ -18,6 +18,53 @@ import ListingEnquiryModal, {
   EnquiryListingTarget,
 } from "./ListingEnquiryModal";
 
+export const inferServiceUnit = (name = "", categoryName = "", fallback = "month") => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("hourly") || lower.includes("per-hour") || lower.includes("/hour") || lower.includes("/hr")) {
+    return "hour";
+  }
+  if (
+    lower.includes("full-day") ||
+    lower.includes("full day") ||
+    lower.includes("meeting room day") ||
+    lower.includes("day pass") ||
+    lower.includes("daypass") ||
+    lower.includes("day paas") ||
+    lower.includes("daily") ||
+    lower.includes("per-day") ||
+    lower.includes("/day")
+  ) {
+    return "day";
+  }
+  if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
+    return "month";
+  }
+
+  // 1. Meeting Room -> per hour
+  if (lower.includes("meeting")) return "hour";
+  // 2. Conference Room -> per hour
+  if (lower.includes("conference") || lower.includes("confference") || lower.includes("boardroom")) return "hour";
+  // 3. Day Pass -> per day
+  if (lower.includes("day pass") || lower.includes("daypass") || lower.includes("day paas") || lower.includes("day")) return "day";
+  // 4. Event Pass -> per day
+  if (lower.includes("event")) return "day";
+  // 5. Coworking Price -> per month
+  if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
+  // 6. Dedicated Seat / Desk -> per month
+  if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
+  // 7. Private Cabin -> per month
+  if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
+
+  const catLower = String(categoryName || "").toLowerCase();
+  if (catLower.includes("meeting")) return "hour";
+  if (catLower.includes("conference") || catLower.includes("confference")) return "hour";
+  if (catLower.includes("day pass") || catLower.includes("daypass")) return "day";
+  if (catLower.includes("event")) return "day";
+  if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
+
+  return fallback;
+};
+
 export interface MarketplaceListingItem {
   _id: string;
   title: string;
@@ -156,7 +203,7 @@ export default function MarketplaceListingCards({
                     <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-xs font-black px-2.5 py-1 rounded-lg shadow-sm border border-slate-200/60">
                       ₹{item.pricing?.basePrice?.toLocaleString("en-IN")}{" "}
                       <span className="text-[10px] font-medium text-slate-500">
-                        /{item.pricing?.unit?.replace("per-", "") || "month"}
+                        /{item.pricing?.unit?.replace("per-", "") || inferServiceUnit(item.title, item.categoryId?.name, "month")}
                       </span>
                     </div>
 

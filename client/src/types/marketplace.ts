@@ -34,6 +34,7 @@ export interface Service {
   name: string;
   size: string; // free text on purpose — "size" means different things per category
   price: number;
+  unit?: string;
   description?: string;
   isGlobal: boolean; // true = SuperAdmin-created, visible to all vendors
   vendorId?: string; // set only when isGlobal is false

@@ -9,9 +9,50 @@ interface ServiceItem {
   name: string;
   size: string;
   price: number;
+  unit?: string;
   description?: string;
   isGlobal: boolean;
 }
+
+export const inferServiceUnit = (name = "", fallback = "month") => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("hourly") || lower.includes("per-hour") || lower.includes("/hour") || lower.includes("/hr")) {
+    return "hour";
+  }
+  if (
+    lower.includes("full-day") ||
+    lower.includes("full day") ||
+    lower.includes("meeting room day") ||
+    lower.includes("day pass") ||
+    lower.includes("daypass") ||
+    lower.includes("day paas") ||
+    lower.includes("daily") ||
+    lower.includes("per-day") ||
+    lower.includes("/day")
+  ) {
+    return "day";
+  }
+  if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
+    return "month";
+  }
+
+  // 1. Meeting Room -> per hour
+  if (lower.includes("meeting")) return "hour";
+  // 2. Conference Room -> per hour
+  if (lower.includes("conference") || lower.includes("confference") || lower.includes("boardroom")) return "hour";
+  // 3. Day Pass -> per day
+  if (lower.includes("day pass") || lower.includes("daypass") || lower.includes("day paas") || lower.includes("day")) return "day";
+  // 4. Event Pass -> per day
+  if (lower.includes("event")) return "day";
+  // 5. Coworking Price -> per month
+  if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
+  // 6. Dedicated Seat / Desk -> per month
+  if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
+  // 7. Private Cabin -> per month
+  if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
+
+  return fallback;
+};
 
 interface ServiceSelectorProps {
   selectedServiceIds: string[];
@@ -30,6 +71,8 @@ export default function ServiceSelector({
   const [newServiceName, setNewServiceName] = useState("");
   const [newServiceSize, setNewServiceSize] = useState("");
   const [newServicePrice, setNewServicePrice] = useState("");
+  const [newServiceUnit, setNewServiceUnit] = useState<string>("month");
+  const [userOverrodeUnit, setUserOverrodeUnit] = useState(false);
   const [newServiceDesc, setNewServiceDesc] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -87,6 +130,7 @@ export default function ServiceSelector({
         name: newServiceName.trim(),
         size: newServiceSize.trim(),
         price: Number(newServicePrice),
+        unit: newServiceUnit,
         description: newServiceDesc.trim() || undefined,
       });
 
@@ -98,6 +142,8 @@ export default function ServiceSelector({
       setNewServiceName("");
       setNewServiceSize("");
       setNewServicePrice("");
+      setNewServiceUnit("month");
+      setUserOverrodeUnit(false);
       setNewServiceDesc("");
       setShowCreateModal(false);
     } catch (err: any) {
@@ -179,7 +225,10 @@ export default function ServiceSelector({
                       Size: {svc.size}
                     </span>
                     <span className="font-bold text-[#1E5BFF]">
-                      ₹{svc.price.toLocaleString("en-IN")}
+                      ₹{svc.price.toLocaleString("en-IN")}{" "}
+                      <span className="text-[10px] font-medium text-slate-500">
+                        /{svc.unit?.replace("per-", "") || inferServiceUnit(svc.name)}
+                      </span>
                     </span>
                   </div>
                   {svc.description && (
@@ -228,9 +277,15 @@ export default function ServiceSelector({
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Executive Private Suite"
+                  placeholder="e.g. Executive Private Suite, Conference Room, Day Pass"
                   value={newServiceName}
-                  onChange={(e) => setNewServiceName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewServiceName(val);
+                    if (!userOverrodeUnit) {
+                      setNewServiceUnit(inferServiceUnit(val));
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -240,6 +295,40 @@ export default function ServiceSelector({
                   className="w-full text-sm px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1E5BFF] outline-none"
                   required
                 />
+              </div>
+
+              {/* Dynamic Billing Unit Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Billing Cycle / Unit *</span>
+                  <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                    Auto-selected: /{newServiceUnit}
+                  </span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "month", label: "Per Month", sub: "Coworking / Cabin" },
+                    { id: "hour", label: "Per Hour", sub: "Meeting / Conference" },
+                    { id: "day", label: "Per Day", sub: "Day / Event Pass" },
+                  ].map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setNewServiceUnit(u.id);
+                        setUserOverrodeUnit(true);
+                      }}
+                      className={`py-2 px-2.5 rounded-lg border text-left transition text-xs ${
+                        newServiceUnit === u.id
+                          ? "border-[#1E5BFF] bg-blue-50 text-[#0A1F66] font-bold ring-1 ring-[#1E5BFF]"
+                          : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                      }`}
+                    >
+                      <div className="font-bold">{u.label}</div>
+                      <div className="text-[9px] text-slate-400">{u.sub}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

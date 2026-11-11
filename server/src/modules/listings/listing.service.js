@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Listing from "./listing.model.js";
 import Service from "../marketplace-services/service.model.js";
+import { inferServiceUnit } from "../marketplace-services/service.controller.js";
 import AuditLog from "../auth/audit-log.model.js";
 import realtimeHub from "../realtime/realtime.hub.js";
 import slugify from "slugify";
@@ -29,6 +30,16 @@ export const toPublicListingDTO = (listing) => {
     };
   });
 
+  const formattedServices = (l.serviceIds || []).map((s) => {
+    if (!s || typeof s !== "object") return s;
+    const sObj = s.toObject ? s.toObject() : s;
+    const unit = sObj.unit || inferServiceUnit(sObj.name, l.categoryId?.name);
+    return {
+      ...sObj,
+      unit,
+    };
+  });
+
   return {
     _id: l._id?.toString(),
     id: l._id?.toString(),
@@ -40,8 +51,8 @@ export const toPublicListingDTO = (listing) => {
     location: l.location,
     pricing: l.pricing,
     capacity: l.capacity,
-    services: l.serviceIds || [],
-    serviceIds: l.serviceIds || [],
+    services: formattedServices,
+    serviceIds: formattedServices,
     amenities: l.amenityIds || [],
     amenityIds: l.amenityIds || [],
     customAmenities: l.customAmenities || [],
@@ -65,6 +76,17 @@ export const toVendorListingDTO = (listing) => {
   if (!listing) return null;
   const l = listing.toObject ? listing.toObject() : listing;
   const idStr = l._id?.toString() || l.id?.toString();
+
+  const formattedServices = (l.serviceIds || []).map((s) => {
+    if (!s || typeof s !== "object") return s;
+    const sObj = s.toObject ? s.toObject() : s;
+    const unit = sObj.unit || inferServiceUnit(sObj.name, l.categoryId?.name);
+    return {
+      ...sObj,
+      unit,
+    };
+  });
+
   return {
     _id: idStr,
     id: idStr,
@@ -76,7 +98,7 @@ export const toVendorListingDTO = (listing) => {
     location: l.location,
     pricing: l.pricing,
     capacity: l.capacity,
-    serviceIds: l.serviceIds || [],
+    serviceIds: formattedServices,
     amenityIds: l.amenityIds || [],
     customAmenities: l.customAmenities || [],
     media: l.media || [],
@@ -191,7 +213,7 @@ export const getPublicListingBySlug = async (slug) => {
   const listing = await Listing.findOne(query)
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
-    .populate("serviceIds", "name size price description isGlobal")
+    .populate("serviceIds", "name size price unit description isGlobal")
     .populate("media.mediaId", "secureUrl width height format");
 
   if (!listing) return null;
@@ -629,7 +651,7 @@ export const getVendorListingById = async (listingId, vendorId) => {
   const listing = await Listing.findOne({ _id: listingId, vendorId })
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
-    .populate("serviceIds", "name size price description isGlobal")
+    .populate("serviceIds", "name size price unit description isGlobal")
     .populate("media.mediaId", "secureUrl width height format");
 
   if (!listing) {
@@ -646,7 +668,7 @@ export const getAdminListingById = async (listingId) => {
     .populate("vendorId", "fullName name email businessName phone")
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
-    .populate("serviceIds", "name size price description isGlobal")
+    .populate("serviceIds", "name size price unit description isGlobal")
     .populate("media.mediaId", "secureUrl width height format");
 
   if (!listing) {

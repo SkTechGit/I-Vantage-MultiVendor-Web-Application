@@ -236,7 +236,7 @@ export default function ListingEnquiryModal({
                     <span className="text-sm font-black text-[#1E5BFF]">
                       ₹{listing.price.toLocaleString("en-IN")}
                       <span className="text-[10px] text-slate-500 font-normal">
-                        /{listing.unit?.replace("per-", "") || "mo"}
+                        /{listing.unit?.replace("per-", "") || "month"}
                       </span>
                     </span>
                   </div>

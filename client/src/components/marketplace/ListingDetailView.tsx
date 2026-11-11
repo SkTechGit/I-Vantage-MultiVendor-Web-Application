@@ -39,6 +39,53 @@ import {
   Maximize2,
 } from "lucide-react";
 
+export const inferServiceUnit = (name = "", categoryName = "", fallback = "month") => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("hourly") || lower.includes("per-hour") || lower.includes("/hour") || lower.includes("/hr")) {
+    return "hour";
+  }
+  if (
+    lower.includes("full-day") ||
+    lower.includes("full day") ||
+    lower.includes("meeting room day") ||
+    lower.includes("day pass") ||
+    lower.includes("daypass") ||
+    lower.includes("day paas") ||
+    lower.includes("daily") ||
+    lower.includes("per-day") ||
+    lower.includes("/day")
+  ) {
+    return "day";
+  }
+  if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
+    return "month";
+  }
+
+  // 1. Meeting Room -> per hour
+  if (lower.includes("meeting")) return "hour";
+  // 2. Conference Room -> per hour
+  if (lower.includes("conference") || lower.includes("confference") || lower.includes("boardroom")) return "hour";
+  // 3. Day Pass -> per day
+  if (lower.includes("day pass") || lower.includes("daypass") || lower.includes("day paas") || lower.includes("day")) return "day";
+  // 4. Event Pass -> per day
+  if (lower.includes("event")) return "day";
+  // 5. Coworking Price -> per month
+  if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
+  // 6. Dedicated Seat / Desk -> per month
+  if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
+  // 7. Private Cabin -> per month
+  if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
+
+  const catLower = String(categoryName || "").toLowerCase();
+  if (catLower.includes("meeting")) return "hour";
+  if (catLower.includes("conference") || catLower.includes("confference")) return "hour";
+  if (catLower.includes("day pass") || catLower.includes("daypass")) return "day";
+  if (catLower.includes("event")) return "day";
+  if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
+
+  return fallback;
+};
+
 interface ListingDetailViewProps {
   listing: any;
   city?: string;
@@ -114,6 +161,9 @@ export default function ListingDetailView({
         const sPrice = Number(svc.price) || basePrice;
         const sOrig = Math.round(sPrice * 1.25);
         const imagesPool = fullGallery.length > 0 ? fullGallery : fallbackGallery;
+        const resolvedUnit = svc.unit
+          ? svc.unit.replace("per-", "")
+          : inferServiceUnit(svc.name, categoryName, baseUnit);
 
         return {
           id: svc._id || `svc-${idx}`,
@@ -123,7 +173,7 @@ export default function ListingDetailView({
           image: imagesPool[idx % imagesPool.length],
           price: sPrice,
           originalPrice: sOrig,
-          unit: "month",
+          unit: resolvedUnit,
           discountCode: "IVANTAGE10",
           features: [
             "Ergonomic seating & desk",
@@ -136,8 +186,117 @@ export default function ListingDetailView({
       });
     }
 
-    // Default High-Converting Seating Plans (Open Desk, Dedicated Desk, Private Cabin, Meeting Room)
-    const openDeskPrice = Math.max(699, Math.round(basePrice * 0.1));
+    const catLower = (categoryName || "").toLowerCase();
+
+    // Default High-Converting Seating Plans adapted dynamically by category
+    if (catLower.includes("conference") || catLower.includes("confference") || catLower.includes("meeting")) {
+      const hourlyPrice = baseUnit === "hour" ? basePrice : 1000;
+      const halfDayPrice = Math.round(hourlyPrice * 3.5);
+      const fullDayPrice = Math.round(hourlyPrice * 6.5);
+      return [
+        {
+          id: "hourly-meeting",
+          name: "Hourly On-Demand Access",
+          subtitle: "Executive conference suite for pitches & syncs",
+          capacityLabel: `${item.capacity || 8}-Seater AV Suite`,
+          image: fullGallery[0] || primaryImage,
+          price: hourlyPrice,
+          originalPrice: Math.round(hourlyPrice * 1.25),
+          unit: "hour",
+          discountCode: "MEET15",
+          features: [
+            "4K Ultra-HD display screen & HDMI",
+            "High-speed conference Wi-Fi",
+            "Polycom conference mic & soundbar",
+            "Unlimited tea, coffee & hospitality",
+          ],
+          isPopular: true,
+          statusLabel: "Hourly On-Demand",
+        },
+        {
+          id: "half-day-meeting",
+          name: "Half-Day Booking (4 Hours)",
+          subtitle: "Dedicated slot for team planning & workshops",
+          capacityLabel: `${item.capacity || 8}-Seater AV Suite`,
+          image: fullGallery[1 % fullGallery.length] || primaryImage,
+          price: halfDayPrice,
+          originalPrice: Math.round(halfDayPrice * 1.2),
+          unit: "day",
+          discountCode: "IVANTAGE10",
+          features: [
+            "4 uninterrupted hours reserved",
+            "Magnetic whiteboard & markers",
+            "High-speed 1Gbps dedicated LAN",
+            "Beverage hospitality service",
+          ],
+          statusLabel: "Popular Choice",
+        },
+        {
+          id: "full-day-meeting",
+          name: "Full-Day Corporate Booking",
+          subtitle: "All-day exclusive access with premium support",
+          capacityLabel: `${item.capacity || 8}-Seater AV Suite`,
+          image: fullGallery[2 % fullGallery.length] || primaryImage,
+          price: fullDayPrice,
+          originalPrice: Math.round(fullDayPrice * 1.25),
+          unit: "day",
+          discountCode: "IVANTAGE15",
+          features: [
+            "Full business day 9 AM - 8 PM",
+            "Dedicated AV technical assistant",
+            "Unlimited artisan tea & snacks setup",
+            "100% DG power backup guaranteed",
+          ],
+          statusLabel: "Full-Day Saver",
+        },
+      ];
+    }
+
+    if (catLower.includes("day pass") || catLower.includes("daypass")) {
+      const dayPrice = baseUnit === "day" ? basePrice : 499;
+      return [
+        {
+          id: "single-day-pass",
+          name: "Single Day Flexi Pass",
+          subtitle: "Instant plug-and-play access for the day",
+          capacityLabel: "1 Flexi Seat",
+          image: fullGallery[0] || primaryImage,
+          price: dayPrice,
+          originalPrice: Math.round(dayPrice * 1.25),
+          unit: "day",
+          discountCode: "IVANTAGE10",
+          features: [
+            "Plug & play hot desk",
+            "High-speed dual-band Wi-Fi",
+            "Unlimited tea, coffee & RO water",
+            "Access to common lounge & cafeteria",
+          ],
+          isPopular: true,
+          statusLabel: "Instant Access Today",
+        },
+        {
+          id: "weekly-pass",
+          name: "5-Day Weekly Pass",
+          subtitle: "Flexible passes valid across any 5 days",
+          capacityLabel: "1 Flexi Seat",
+          image: fullGallery[1 % fullGallery.length] || primaryImage,
+          price: Math.round(dayPrice * 4.2),
+          originalPrice: Math.round(dayPrice * 5),
+          unit: "day",
+          discountCode: "IVANTAGE15",
+          features: [
+            "Valid for 30 days from purchase",
+            "Use across any 5 work days",
+            "High-speed 1Gbps internet access",
+            "Complimentary 1 hr meeting room access",
+          ],
+          statusLabel: "Save 16%",
+        },
+      ];
+    }
+
+    // Default Coworking / Dedicated Desk / Private Cabin
+    const openDeskPrice = Math.max(4999, Math.round(basePrice * 0.75));
     const dedicatedPrice = basePrice;
     const cabinPrice = Math.round(basePrice * 2.8);
     const meetingRoomPrice = 1200;
@@ -145,21 +304,21 @@ export default function ListingDetailView({
     return [
       {
         id: "open-desk",
-        name: "Open Flexi Desk",
+        name: "Open Flexi Coworking Seat",
         subtitle: "Hot desk in collaborative open workspace",
         capacityLabel: "1 Person / Hot Desk",
         image: fullGallery[2 % fullGallery.length] || primaryImage,
         price: openDeskPrice,
-        originalPrice: Math.round(openDeskPrice * 1.3),
-        unit: "day",
-        discountCode: "IVANTAGE50",
+        originalPrice: Math.round(openDeskPrice * 1.2),
+        unit: "month",
+        discountCode: "IVANTAGE10",
         features: [
           "Plug & play hot desk",
           "High-speed dual-band Wi-Fi",
           "Unlimited tea, coffee & RO water",
           "Access to common lounge & cafeteria",
         ],
-        statusLabel: "Instant Access Today",
+        statusLabel: "Flexible Monthly",
       },
       {
         id: "dedicated-desk",
@@ -169,7 +328,7 @@ export default function ListingDetailView({
         image: fullGallery[0] || primaryImage,
         price: dedicatedPrice,
         originalPrice: Math.round(dedicatedPrice * 1.25),
-        unit: baseUnit,
+        unit: "month",
         discountCode: "IVANTAGE10",
         features: [
           "Dedicated fixed workstation",
@@ -217,7 +376,7 @@ export default function ListingDetailView({
         statusLabel: "Hourly On-Demand",
       },
     ];
-  }, [item, basePrice, baseUnit, fullGallery, primaryImage]);
+  }, [item, basePrice, baseUnit, categoryName, fullGallery, primaryImage]);
 
   // Selected seating option state
   const [selectedPlanId, setSelectedPlanId] = useState<string>(

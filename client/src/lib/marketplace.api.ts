@@ -134,6 +134,7 @@ export const marketplaceApi = {
     name: string;
     size: string;
     price: number;
+    unit?: string;
     description?: string;
   }) => {
     const { data } = await api.post("/vendor/services", payload);
