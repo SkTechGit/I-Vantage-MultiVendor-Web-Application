@@ -133,7 +133,7 @@ export default function CoworkingLocationsSection() {
   const availableLocations = React.useMemo(() => {
     const areaMap = new Map<string, number>();
     spaces.forEach((s) => {
-      const mainArea = s.area.split(",")[0].trim();
+      const mainArea = s.area.split(/[,/]/)[0].trim();
       if (mainArea) {
         areaMap.set(mainArea, (areaMap.get(mainArea) || 0) + 1);
       }
@@ -300,7 +300,7 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Location Segmented Controls */}
-        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
+        <div className="flex items-center justify-start sm:justify-center flex-nowrap sm:flex-wrap gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible px-3 sm:px-2 pb-3 mb-4 scrollbar-none max-w-5xl mx-auto">
           {availableLocations.map((loc) => {
             const isActive = selectedLocation === loc.id;
             return (
@@ -334,7 +334,7 @@ export default function CoworkingLocationsSection() {
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-8 scrollbar-none">
+        <div className="flex items-center justify-start sm:justify-center flex-nowrap sm:flex-wrap gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible px-3 sm:px-2 pb-3 mb-8 scrollbar-none max-w-4xl mx-auto">
           {availableCategories.map((cat) => {
             const isActive = selectedCategory === cat.id;
             return (
