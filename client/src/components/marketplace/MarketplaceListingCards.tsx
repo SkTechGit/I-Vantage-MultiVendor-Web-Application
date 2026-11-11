@@ -190,13 +190,13 @@ export default function MarketplaceListingCards({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 group-hover:opacity-90 z-1 pointer-events-none" />
 
                     {/* Category Floating Pill Badge */}
-                    <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm border border-slate-200/60">
+                    <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm border border-slate-200/60 shrink-0 whitespace-nowrap">
                       {item.categoryId?.name || "Workspace"}
                     </div>
 
                     {/* Verified Partner Badge */}
-                    <div className="absolute top-3 right-3 z-10 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-                      <ShieldCheck className="w-3 h-3" /> Verified
+                    <div className="absolute top-3 right-3 z-10 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap">
+                      <ShieldCheck className="w-3 h-3 shrink-0" /> Verified
                     </div>
 
                     {/* Dynamic Base Price Badge */}
@@ -221,10 +221,10 @@ export default function MarketplaceListingCards({
                   {/* Details */}
                   <div className="p-5 space-y-2">
                     {/* Category Badge In Details Body */}
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A1F66] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/60">
-                        <Building2 className="w-3 h-3 text-[#1E5BFF]" />
-                        <span>{item.categoryId?.name || "Coworking Space"}</span>
+                    <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A1F66] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/60 shrink-0 whitespace-nowrap">
+                        <Building2 className="w-3 h-3 text-[#1E5BFF] shrink-0" />
+                        <span className="whitespace-nowrap">{item.categoryId?.name || "Coworking Space"}</span>
                       </span>
                     </div>
 

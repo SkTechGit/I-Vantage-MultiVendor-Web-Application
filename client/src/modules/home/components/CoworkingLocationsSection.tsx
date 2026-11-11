@@ -465,17 +465,17 @@ export default function CoworkingLocationsSection() {
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 transition-opacity duration-300 group-hover:opacity-90 z-1 pointer-events-none" />
 
                       {/* Top Badges (z-10 so they are 100% visible) */}
-                      <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
+                      <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10 gap-1">
                         {/* Category Floating Pill Badge */}
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-sm border border-slate-200/60 flex items-center gap-1 uppercase tracking-wider">
-                          <Building2 className="w-3 h-3 text-[#1E5BFF]" />
-                          <span className="truncate max-w-[90px] sm:max-w-none">{item.category}</span>
+                        <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-sm border border-slate-200/60 flex items-center gap-1 uppercase tracking-wider shrink-0 whitespace-nowrap">
+                          <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1E5BFF] shrink-0" />
+                          <span className="whitespace-nowrap">{item.category}</span>
                         </span>
 
                         {/* Verified Badge */}
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" />
-                          <span className="hidden sm:inline">Verified</span>
+                        <span className="px-1.5 sm:px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1 shrink-0 whitespace-nowrap">
+                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                          <span className="hidden min-[420px]:inline">Verified</span>
                         </span>
                       </div>
 
@@ -508,12 +508,12 @@ export default function CoworkingLocationsSection() {
                     {/* Card Content - Clean & Compact */}
                     <div className="p-3 sm:p-4 space-y-1.5">
                       {/* Category Pill Tag & Vendor Brand */}
-                      <div className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0A1F66] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
-                          <Building2 className="w-2.5 h-2.5 text-[#1E5BFF]" />
-                          <span>{item.category}</span>
+                      <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0A1F66] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60 shrink-0 whitespace-nowrap">
+                          <Building2 className="w-2.5 h-2.5 text-[#1E5BFF] shrink-0" />
+                          <span className="whitespace-nowrap">{item.category}</span>
                         </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#1E5BFF] truncate">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#1E5BFF] truncate min-w-0 flex-1">
                           {item.vendorName}
                         </span>
                       </div>
