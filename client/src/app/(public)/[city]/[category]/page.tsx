@@ -115,15 +115,38 @@ export default async function CategoryListingPage({ params, searchParams }: Prop
     return `/${normalizedCity}/${normalizedCategory}?${params.toString()}`;
   };
 
-  const distinctAreas = [
-    "Cyber City",
-    "Golf Course Road",
-    "Sohna Road",
-    "MG Road",
-    "Udyog Vihar",
-    "Golf Course Ext.",
-    "Sector 48",
-  ];
+  const defaultCityAreas: Record<string, string[]> = {
+    gurugram: [
+      "Sohna Road, Sector 48",
+      "Sector 38, Medicity, Near Medanta",
+      "Cyber City",
+      "Golf Course Road",
+      "Sector 48",
+    ],
+    delhi: [
+      "Saket / Westend Marg / Saidulajab",
+      "Karol Bagh",
+      "Yusuf Sarai, Green Park",
+      "Bara Hindu Rao",
+    ],
+    noida: [
+      "Sector 63, Noida",
+      "Sector 62",
+      "Sector 16",
+    ],
+  };
+
+  const dbAreas = Array.from(
+    new Set(
+      dbListings
+        .map((l: any) => l.location?.area)
+        .filter(Boolean)
+    )
+  );
+
+  const distinctAreas = Array.from(
+    new Set([...dbAreas, ...(defaultCityAreas[normalizedCity] || [])])
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

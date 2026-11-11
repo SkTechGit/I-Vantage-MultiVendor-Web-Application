@@ -170,7 +170,47 @@ export default function MarketplaceFilterSidebar({
         )}
       </div>
 
-      {/* 2. Micro-Locations Dropdown + Quick Pills */}
+      {/* 2. City Switcher */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Building2 size={13} className="text-[#1E5BFF]" />
+            <span>Select City</span>
+          </span>
+          <span className="text-[10px] text-slate-400 font-semibold capitalize">
+            {city}
+          </span>
+        </label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { label: "Gurugram", slug: "gurugram" },
+            { label: "Delhi", slug: "delhi" },
+            { label: "Noida", slug: "noida" },
+          ].map((c) => {
+            const isCurrent = city.toLowerCase() === c.slug;
+            return (
+              <button
+                key={c.slug}
+                type="button"
+                onClick={() => {
+                  if (!isCurrent) {
+                    router.push(`/${c.slug}`);
+                  }
+                }}
+                className={`py-1.5 px-1 rounded-lg text-xs font-bold text-center transition border ${
+                  isCurrent
+                    ? "bg-[#0A1F66] text-white border-[#0A1F66] shadow-xs"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Micro-Locations Dropdown + Quick Pills */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
           <MapPin size={13} className="text-[#1E5BFF]" />

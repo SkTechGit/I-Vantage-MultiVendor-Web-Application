@@ -138,19 +138,22 @@ export default function MarketplaceListingCards({
                       priority={idx < 2}
                       loading={idx < 2 ? "eager" : "lazy"}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-                      className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out z-1 relative"
+                      className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out z-0"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 group-hover:opacity-90" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 group-hover:opacity-90 z-1 pointer-events-none" />
 
-                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-2xs">
+                    {/* Category Floating Pill Badge */}
+                    <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm border border-slate-200/60">
                       {item.categoryId?.name || "Workspace"}
                     </div>
 
-                    <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                    {/* Verified Partner Badge */}
+                    <div className="absolute top-3 right-3 z-10 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                       <ShieldCheck className="w-3 h-3" /> Verified
                     </div>
 
-                    <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">
+                    {/* Dynamic Base Price Badge */}
+                    <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-xs text-[#0A1F66] text-xs font-black px-2.5 py-1 rounded-lg shadow-sm border border-slate-200/60">
                       ₹{item.pricing?.basePrice?.toLocaleString("en-IN")}{" "}
                       <span className="text-[10px] font-medium text-slate-500">
                         /{item.pricing?.unit?.replace("per-", "") || "month"}
@@ -159,7 +162,7 @@ export default function MarketplaceListingCards({
 
                     {/* Dynamic Photo Count Badge */}
                     {photoCount > 0 && (
-                      <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                      <div className="absolute bottom-3 right-3 z-10 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                         <Camera className="w-3 h-3 text-white" />
                         <span>
                           {photoCount} {photoCount === 1 ? "Photo" : "Photos"}
@@ -170,6 +173,14 @@ export default function MarketplaceListingCards({
 
                   {/* Details */}
                   <div className="p-5 space-y-2">
+                    {/* Category Badge In Details Body */}
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A1F66] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/60">
+                        <Building2 className="w-3 h-3 text-[#1E5BFF]" />
+                        <span>{item.categoryId?.name || "Coworking Space"}</span>
+                      </span>
+                    </div>
+
                     <h3 className="font-bold text-slate-900 text-base line-clamp-1 group-hover:text-[#1E5BFF] transition-colors duration-300">
                       <Link href={detailUrl}>{item.title}</Link>
                     </h3>
