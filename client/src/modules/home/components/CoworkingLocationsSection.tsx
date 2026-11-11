@@ -402,8 +402,8 @@ export default function CoworkingLocationsSection() {
                   />
 
                   <div>
-                    {/* Compact Card Image */}
-                    <div className="relative h-28 sm:h-44 w-full overflow-hidden bg-slate-900">
+                    {/* Compact Card Image with High-Z Floating Badges */}
+                    <div className="relative h-32 sm:h-44 w-full overflow-hidden bg-slate-900">
                       <Image
                         src={item.image}
                         alt={item.title}
@@ -411,39 +411,45 @@ export default function CoworkingLocationsSection() {
                         priority={idx < 2}
                         loading={idx < 2 ? "eager" : "lazy"}
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-108 z-1 relative"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-108 z-0"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/30 transition-opacity duration-300 group-hover:opacity-90" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 transition-opacity duration-300 group-hover:opacity-90 z-1 pointer-events-none" />
 
-                      {/* Top Badges */}
-                      <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between">
-                        <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-2xs flex items-center gap-0.5 sm:gap-1 border border-white/60">
-                          <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1E5BFF]" />
-                          <span className="truncate max-w-[65px] sm:max-w-none">{item.category}</span>
+                      {/* Top Badges (z-10 so they are 100% visible) */}
+                      <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
+                        {/* Category Floating Pill Badge */}
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/95 text-[#0A1F66] backdrop-blur-md shadow-sm border border-slate-200/60 flex items-center gap-1 uppercase tracking-wider">
+                          <Building2 className="w-3 h-3 text-[#1E5BFF]" />
+                          <span className="truncate max-w-[90px] sm:max-w-none">{item.category}</span>
                         </span>
 
-                        <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-0.5">
-                          <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        {/* Verified Badge */}
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" />
                           <span className="hidden sm:inline">Verified</span>
                         </span>
                       </div>
 
-                      {/* Bottom Image Overlay Info */}
-                      <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between text-white">
-                        <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[11px] font-bold drop-shadow-sm">
-                          <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#F4A900] shrink-0" />
-                          <span className="truncate max-w-[70px] sm:max-w-[130px]">{item.area}</span>
+                      {/* Bottom Image Overlay: Price Tag + Photo/Seat Count (z-10) */}
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
+                        {/* Dynamic Floating Price Badge */}
+                        <div className="bg-white/95 text-[#0A1F66] text-xs font-black px-2 py-0.5 rounded-md shadow-sm border border-slate-200/60 backdrop-blur-xs flex items-center gap-0.5">
+                          <span>₹{item.price.toLocaleString("en-IN")}</span>
+                          <span className="text-[9px] font-medium text-slate-500">
+                            /{item.unit.replace("per-", "")}
+                          </span>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
+                        {/* Photo Count & Capacity */}
+                        <div className="flex items-center gap-1">
                           {item.photoCount > 0 && (
-                            <div className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded-md backdrop-blur-xs border border-white/10">
+                            <div className="flex items-center gap-1 text-[9px] font-bold bg-black/70 text-white px-1.5 py-0.5 rounded-md backdrop-blur-xs shadow-2xs border border-white/10">
                               <Camera className="w-2.5 h-2.5 text-white" />
                               <span>{item.photoCount}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded-md backdrop-blur-xs border border-white/10">
-                            <Users className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-blue-300" />
+                          <div className="flex items-center gap-1 text-[9px] font-bold bg-black/70 text-white px-1.5 py-0.5 rounded-md backdrop-blur-xs shadow-2xs border border-white/10">
+                            <Users className="w-2.5 h-2.5 text-blue-300" />
                             <span>{item.capacity} {item.capacity === 1 ? "Desk" : "Seats"}</span>
                           </div>
                         </div>
@@ -451,10 +457,18 @@ export default function CoworkingLocationsSection() {
                     </div>
 
                     {/* Card Content - Clean & Compact */}
-                    <div className="p-2.5 sm:p-4 space-y-0.5 sm:space-y-1.5">
-                      <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#1E5BFF] truncate">
-                        {item.vendorName}
-                      </p>
+                    <div className="p-3 sm:p-4 space-y-1.5">
+                      {/* Category Pill Tag & Vendor Brand */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0A1F66] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
+                          <Building2 className="w-2.5 h-2.5 text-[#1E5BFF]" />
+                          <span>{item.category}</span>
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#1E5BFF] truncate">
+                          {item.vendorName}
+                        </span>
+                      </div>
+
                       <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-[#1E5BFF] transition-colors duration-300">
                         {item.title}
                       </h3>
