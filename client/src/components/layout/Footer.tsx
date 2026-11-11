@@ -425,7 +425,11 @@ export default function Footer() {
               <p className="text-center sm:text-left">
                 © {new Date().getFullYear()}{" "}
                 <span className="font-semibold text-slate-700">
-                  i-VANTAGE Business Hub Private Limited
+                  i-VANTAGE Business Hub
+                </span>
+                . A Brand Owned By{" "}
+                <span className="font-semibold text-slate-700">
+                  Asset Sense Pvt Ltd
                 </span>
                 . All rights reserved.
               </p>

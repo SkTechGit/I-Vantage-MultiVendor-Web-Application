@@ -142,6 +142,7 @@ export default function VikiBot() {
   const [input, setInput] = useState("");
   const [chatStatus, setChatStatus] = useState<ChatStatus>("closed");
   const [launcherTapped, setLauncherTapped] = useState(false);
+  const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const promptTimerRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -153,7 +154,7 @@ export default function VikiBot() {
     isOpenRef.current = isOpen;
   }, [isOpen]);
 
-  // Teaser visibility
+  // Teaser visibility (closed by default)
   const [isPromptVisible, setIsPromptVisible] =
     useState(false);
 
@@ -188,6 +189,7 @@ export default function VikiBot() {
     }
     markPromptDismissed();
     setLauncherTapped(true);
+    setHasUnreadNotification(false);
     setIsPromptVisible(false);
     setChatStatus("opening");
   };
@@ -200,7 +202,7 @@ export default function VikiBot() {
     }
     promptTimerRef.current = setTimeout(() => {
       if (!isOpenRef.current) {
-        setIsPromptVisible(true);
+        setHasUnreadNotification(true);
       }
     }, TEASER_REAPPEAR_DELAY);
   }, []);
@@ -264,35 +266,48 @@ export default function VikiBot() {
   }, [messages, isLoading, chatStatus]);
 
   /*
-   * Show VIKI teaser:
-   * - First time visitor: shows quickly after initial delay (4 seconds).
-   * - If dismissed/interacted: respects the 5-minute cooldown (300,000 ms),
-   *   even across page navigations or refreshes.
+   * Initialize dynamic red notification dot without popping up the teaser automatically.
    */
   useEffect(() => {
-    let delay = TEASER_INITIAL_DELAY;
-
     try {
       const dismissedAt = localStorage.getItem(DISMISSED_STORAGE_KEY);
       if (dismissedAt) {
         const elapsed = Date.now() - Number(dismissedAt);
         if (elapsed < TEASER_REAPPEAR_DELAY) {
-          // Less than 5 minutes have passed since last dismissal
-          delay = TEASER_REAPPEAR_DELAY - elapsed;
+          setHasUnreadNotification(false);
+          const remaining = TEASER_REAPPEAR_DELAY - elapsed;
+          const timer = setTimeout(() => {
+            if (!isOpenRef.current) {
+              setHasUnreadNotification(true);
+            }
+          }, remaining);
+          return () => clearTimeout(timer);
         }
       }
     } catch {}
-
-    const timer = setTimeout(() => {
-      if (!isOpenRef.current) {
-        setIsPromptVisible(true);
-      }
-    }, delay);
-
-    promptTimerRef.current = timer;
-
-    return () => clearTimeout(timer);
+    setHasUnreadNotification(true);
   }, []);
+
+  /*
+   * Click outside listener to smoothly close prompt teaser
+   */
+  useEffect(() => {
+    if (!isPromptVisible) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      const teaserEl = document.getElementById("viki-prompt-teaser");
+      const launcherEl = document.getElementById("viki-launcher-button");
+      if (
+        teaserEl &&
+        !teaserEl.contains(e.target as Node) &&
+        launcherEl &&
+        !launcherEl.contains(e.target as Node)
+      ) {
+        setIsPromptVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [isPromptVisible]);
 
   /*
    * Rotate teaser questions every 1 minute (60 seconds).
@@ -363,7 +378,7 @@ export default function VikiBot() {
 
   /*
    * Close teaser without opening VIKI.
-   * Enforces full 5-minute cooldown (300,000 ms) before reappearing.
+   * Keeps teaser off and reactivates notification dot after cooldown.
    */
   const closePrompt = () => {
     setIsPromptVisible(false);
@@ -375,7 +390,7 @@ export default function VikiBot() {
 
     promptTimerRef.current = setTimeout(() => {
       if (!isOpenRef.current) {
-        setIsPromptVisible(true);
+        setHasUnreadNotification(true);
       }
     }, TEASER_REAPPEAR_DELAY);
   };
@@ -538,9 +553,13 @@ export default function VikiBot() {
               )}
             </div>
 
-            <p className="mt-2.5 text-center text-[10px] text-slate-400 sm:mt-3">
+            <button
+              type="button"
+              onClick={openChat}
+              className="mt-2.5 w-full text-center text-[10px] text-slate-400 hover:text-[#0759D9] hover:underline sm:mt-3 cursor-pointer transition-colors"
+            >
               Or ask VIKI anything
-            </p>
+            </button>
           </div>
         </div>
       )}
@@ -575,13 +594,19 @@ export default function VikiBot() {
 
       {chatStatus === "closed" && (
         <button
+          id="viki-launcher-button"
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            openChat();
+            if (!isPromptVisible) {
+              setIsPromptVisible(true);
+              setHasUnreadNotification(false);
+            } else {
+              openChat();
+            }
           }}
           aria-label="Open VIKI assistant"
-          aria-expanded={false}
+          aria-expanded={isPromptVisible}
           aria-controls="viki-chat-panel"
           className={`
             group
@@ -613,6 +638,14 @@ export default function VikiBot() {
             ${launcherTapped ? "viki-launcher-tap" : ""}
           `}
         >
+          {/* Dynamic Glowing Red Notification Dot */}
+          {hasUnreadNotification && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 z-20 pointer-events-none">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-80" />
+              <span className="relative inline-flex h-4 w-4 rounded-full bg-red-600 border-2 border-white shadow-[0_0_12px_rgba(239,68,68,1)]" />
+            </span>
+          )}
+
           {/* Subtle pulse ring */}
           <span className="absolute inset-0 rounded-full bg-[#0759D9]/20 animate-ping opacity-30" style={{ animationDuration: "3s" }} />
 
