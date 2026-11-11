@@ -240,7 +240,7 @@ export default function MarketplaceListingCards({
                     </p>
 
                     <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {item.description || "Executive managed workspace equipped with state-of-the-art infrastructure."}
+                      {item.description?.replace(/[*#_~`]/g, "").trim() || "Executive managed workspace equipped with state-of-the-art infrastructure."}
                     </p>
 
                     <div className="pt-2 flex items-center justify-between text-xs text-slate-600 border-t border-slate-100">

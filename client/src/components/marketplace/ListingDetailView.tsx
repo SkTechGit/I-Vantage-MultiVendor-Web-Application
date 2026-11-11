@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ListingEnquiryForm from "@/components/marketplace/ListingEnquiryForm";
 import {
   Building2,
@@ -84,6 +86,16 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
 
   return fallback;
+};
+
+export const formatMarkdownDescription = (rawText: string) => {
+  if (!rawText) return "";
+  return rawText
+    .replace(/\r\n/g, "\n")
+    // When a line is ONLY bold text, e.g. **Heading**, turn it into a clean subheading
+    .replace(/(^|\n)\*\*([^*\n]+)\*\*\s*(\n|$)/g, "$1\n### $2\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 };
 
 interface ListingDetailViewProps {
@@ -1082,14 +1094,48 @@ export default function ListingDetailView({
                 </h3>
               </div>
 
-              <div className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line space-y-3">
-                <p>
-                  {item.description ||
-                    `${item.title} is an ultra-premium managed workspace designed for fast-growing companies, enterprises, and discerning professionals. Featuring soundproof executive suites, ergonomic workstations, and high-speed enterprise fiber connectivity.`}
-                </p>
-                <p>
-                  The center provides seamless hospitality with dedicated business concierge, receptionist greeting, mail management, and curated networking community events.
-                </p>
+              {/* ChatGPT-Grade Formatted Markdown Description */}
+              <div className="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-3">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ node, ...props }) => (
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-3 last:mb-0" {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong className="font-bold text-[#0A1F66] tracking-tight" {...props} />
+                    ),
+                    h1: ({ node, ...props }) => (
+                      <h3 className="text-base sm:text-lg font-black text-[#0A1F66] mt-5 mb-2.5 pt-2 border-t border-slate-100 first:border-t-0 first:pt-0" {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <h4 className="text-sm sm:text-base font-bold text-[#0A1F66] mt-4 mb-2 flex items-center gap-1.5" {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h5 className="text-xs sm:text-sm font-bold text-[#0A1F66] mt-3.5 mb-1.5" {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul className="my-2.5 space-y-1.5 pl-5 list-disc marker:text-[#1E5BFF] text-slate-600 text-xs sm:text-sm" {...props} />
+                    ),
+                    ol: ({ node, ...props }) => (
+                      <ol className="my-2.5 space-y-1.5 pl-5 list-decimal marker:text-[#0A1F66] marker:font-bold text-slate-600 text-xs sm:text-sm" {...props} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li className="leading-relaxed pl-1" {...props} />
+                    ),
+                    blockquote: ({ node, ...props }) => (
+                      <blockquote className="my-3 pl-3.5 border-l-3 border-[#1E5BFF] bg-blue-50/50 py-2 pr-3 rounded-r-lg text-slate-700 italic text-xs" {...props} />
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a className="text-[#1E5BFF] font-semibold underline underline-offset-2 hover:text-[#0A1F66] transition" target="_blank" rel="noopener noreferrer" {...props} />
+                    ),
+                  }}
+                >
+                  {formatMarkdownDescription(
+                    item.description ||
+                      `${item.title} is an ultra-premium managed workspace designed for fast-growing companies, enterprises, and discerning professionals. Featuring soundproof executive suites, ergonomic workstations, and high-speed enterprise fiber connectivity.\n\nThe center provides seamless hospitality with dedicated business concierge, receptionist greeting, mail management, and curated networking community events.`
+                  )}
+                </ReactMarkdown>
               </div>
 
               {/* Workspace Timings Card (Exact myHQ Match) */}
