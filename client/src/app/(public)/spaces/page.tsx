@@ -1,0 +1,204 @@
+import React from "react";
+import Link from "next/link";
+import MarketplaceFilterSidebar from "@/components/marketplace/MarketplaceFilterSidebar";
+import MarketplaceLiveRevalidator from "@/components/marketplace/MarketplaceLiveRevalidator";
+import MarketplaceListingCards from "@/components/marketplace/MarketplaceListingCards";
+import MarketplaceCategoryBar from "@/components/marketplace/MarketplaceCategoryBar";
+import {
+  Building2,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle,
+} from "lucide-react";
+
+interface Props {
+  searchParams: Promise<{
+    city?: string;
+    area?: string;
+    category?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    capacity?: string;
+    amenities?: string;
+    sort?: string;
+    page?: string;
+  }>;
+}
+
+const getApiUrl = () =>
+  (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api/v1").replace(
+    "//localhost",
+    "//127.0.0.1"
+  );
+
+export const metadata = {
+  title: "Verified Coworking Spaces & Managed Offices | i-VANTAGE",
+  description:
+    "Explore verified coworking spaces, private executive cabins, meeting rooms and flexible hot desks across Gurugram, Delhi, and Noida with zero brokerage.",
+};
+
+export default async function AllSpacesPage({ searchParams }: Props) {
+  const sParams = await searchParams;
+  const apiUrl = getApiUrl();
+
+  // 1. Fetch categories from Express backend
+  let allCategories: any[] = [];
+  try {
+    const catRes = await fetch(`${apiUrl}/marketplace-categories`, {
+      cache: "no-store",
+    });
+    if (catRes.ok) {
+      const catJson = await catRes.json();
+      allCategories = catJson.data || [];
+    }
+  } catch (err) {
+    console.error("Error fetching categories from backend:", err);
+  }
+
+  // 2. Fetch all listings from Express backend (matches Home page dynamic inventory)
+  const queryParams = new URLSearchParams();
+  if (sParams.city && sParams.city.toLowerCase() !== "all") {
+    queryParams.set("city", sParams.city.toLowerCase().trim());
+  }
+  if (sParams.category) {
+    const matchedCat = allCategories.find((c) => c.slug === sParams.category);
+    if (matchedCat?._id || matchedCat?.id) {
+      queryParams.set("category", matchedCat._id || matchedCat.id);
+    }
+  }
+  if (sParams.minPrice) queryParams.set("minPrice", sParams.minPrice);
+  if (sParams.maxPrice) queryParams.set("maxPrice", sParams.maxPrice);
+  if (sParams.capacity) queryParams.set("capacity", sParams.capacity);
+  if (sParams.amenities) queryParams.set("amenities", sParams.amenities);
+  if (sParams.page) queryParams.set("page", sParams.page);
+  queryParams.set("limit", "50"); // Load all platform listings dynamically (identical to Home Page)
+
+  let dbListings: any[] = [];
+  let totalCount = 0;
+
+  try {
+    const listRes = await fetch(`${apiUrl}/listings?${queryParams.toString()}`, {
+      cache: "no-store",
+    });
+    if (listRes.ok) {
+      const listJson = await listRes.json();
+      dbListings = listJson.data || [];
+      totalCount = listJson.pagination?.total || dbListings.length || 0;
+    }
+  } catch (err) {
+    console.error("Error fetching listings from backend:", err);
+  }
+
+  const categories = allCategories;
+  const page = Math.max(1, Number(sParams.page) || 1);
+  const limit = 50;
+  const listings = dbListings;
+  const effectiveTotal = totalCount;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / limit));
+
+  // Extract distinct areas dynamically from current listing set
+  const dbAreas = Array.from(
+    new Set(
+      dbListings
+        .map((l: any) => l.location?.area)
+        .filter(Boolean)
+    )
+  );
+
+  const defaultAllAreas = [
+    "Sohna Road, Sector 48",
+    "Sector 38, Medicity",
+    "Cyber City",
+    "Saket",
+    "Karol Bagh",
+    "Green Park",
+    "Bara Hindu Rao",
+    "Sector 63, Noida",
+  ];
+
+  const distinctAreas = Array.from(
+    new Set([...dbAreas, ...defaultAllAreas])
+  );
+
+  const activeCityName = sParams.city && sParams.city.toLowerCase() !== "all"
+    ? sParams.city.charAt(0).toUpperCase() + sParams.city.slice(1)
+    : "All Cities";
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <MarketplaceLiveRevalidator />
+
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-[#0A1F66] via-[#0D257A] to-[#1E5BFF] text-white py-14 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(217,144,0,0.15),transparent_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl space-y-4">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-[#D99000] text-white uppercase tracking-wider shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" /> India&apos;s Verified Coworking Network
+            </span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+              Explore Verified Coworking Spaces in{" "}
+              <span className="bg-gradient-to-r from-[#FFB800] via-[#FFD270] to-[#D99000] bg-clip-text text-transparent font-black drop-shadow-xs">
+                {activeCityName}
+              </span>
+            </h1>
+            <p className="text-sm sm:text-base text-blue-100 font-normal leading-relaxed">
+              Discover verified private cabins, flexible hot desks, team suites, and executive conference rooms across Gurugram, Delhi, and Noida. Zero brokerage, transparent direct partner pricing.
+            </p>
+
+            {/* Quick stats counter */}
+            <div className="pt-3 flex flex-wrap items-center gap-6 text-xs text-blue-200">
+              <span className="flex items-center gap-1.5 font-semibold">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" /> 100% Verified Partners
+              </span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <Building2 className="w-4 h-4 text-[#D99000]" /> {effectiveTotal} Active Spaces Available
+              </span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <CheckCircle className="w-4 h-4 text-blue-300" /> Zero Brokerage Direct Booking
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sticky Categories Showcase Bar */}
+      <MarketplaceCategoryBar
+        normalizedCity="spaces"
+        basePath="/spaces"
+        categories={categories}
+        activeCategorySlug={sParams.category}
+      />
+
+      {/* Main Content: Filter Sidebar + Space Cards Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Filter Sidebar */}
+          <MarketplaceFilterSidebar
+            city={activeCityName}
+            totalResults={effectiveTotal}
+            availableAreas={distinctAreas}
+            categories={categories.map((c: any) => ({
+              _id: c._id?.toString() || c.id,
+              name: c.name,
+              slug: c.slug,
+            }))}
+          />
+
+          {/* Listings Container with Instant Enquiry Modal & Dynamic Cards */}
+          <MarketplaceListingCards
+            listings={listings}
+            cityName={activeCityName}
+            normalizedCity="spaces"
+            effectiveTotal={effectiveTotal}
+            areaFilter={sParams.area}
+            page={page}
+            totalPages={totalPages}
+            basePath="/spaces"
+            searchParams={sParams}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}

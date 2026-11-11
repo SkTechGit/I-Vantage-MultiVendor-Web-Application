@@ -16,7 +16,16 @@ export default function NavLinks({ onClick }: Props) {
   return (
     <>
       {NAVIGATION.map((item) => {
-        const isActive = pathname === item.href;
+        const isCoworking = item.label === "Coworking Spaces";
+        const isActive = isCoworking
+          ? pathname.startsWith("/spaces") ||
+            pathname === "/gurugram" ||
+            pathname.startsWith("/gurugram/") ||
+            pathname === "/delhi" ||
+            pathname.startsWith("/delhi/") ||
+            pathname === "/noida" ||
+            pathname.startsWith("/noida/")
+          : pathname === item.href;
 
         return (
           <Link

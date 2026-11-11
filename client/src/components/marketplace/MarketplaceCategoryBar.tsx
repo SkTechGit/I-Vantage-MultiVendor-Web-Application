@@ -23,12 +23,14 @@ interface Props {
   normalizedCity: string;
   categories: MarketplaceCategoryItem[];
   activeCategorySlug?: string;
+  basePath?: string;
 }
 
 export default function MarketplaceCategoryBar({
   normalizedCity,
   categories,
   activeCategorySlug,
+  basePath,
 }: Props) {
   const displayCategories =
     categories && categories.length > 0
@@ -40,6 +42,10 @@ export default function MarketplaceCategoryBar({
     activeCategorySlug === "all" ||
     activeCategorySlug === "";
 
+  const allSpacesHref = basePath ? basePath : `/${normalizedCity}`;
+  const getCategoryHref = (slug: string) =>
+    basePath ? `${basePath}?category=${slug}` : `/${normalizedCity}/${slug}`;
+
   return (
     <section className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 py-3 sticky top-17 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +56,7 @@ export default function MarketplaceCategoryBar({
 
           {/* All Spaces Pill */}
           <Link
-            href={`/${normalizedCity}`}
+            href={allSpacesHref}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 shrink-0 ${
               isAllSpacesActive
                 ? "bg-[#0A1F66] text-white shadow-xs"
@@ -70,7 +76,7 @@ export default function MarketplaceCategoryBar({
             return (
               <Link
                 key={catId}
-                href={`/${normalizedCity}/${cat.slug}`}
+                href={getCategoryHref(cat.slug)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 shrink-0 ${
                   isActive
                     ? "bg-[#0A1F66] text-white shadow-xs"

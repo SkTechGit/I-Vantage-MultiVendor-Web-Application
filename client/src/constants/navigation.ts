@@ -5,7 +5,7 @@ export const NAVIGATION = [
   },
   {
     label: "Coworking Spaces",
-    href: "/gurugram",
+    href: "/spaces",
   },
   {
     label: "About",

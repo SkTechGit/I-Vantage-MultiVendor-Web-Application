@@ -38,7 +38,7 @@ const navItems = [
   {
     num: "02",
     label: "Coworking Spaces",
-    href: "/gurugram",
+    href: "/spaces",
     icon: Building2,
     description: "Explore verified desks & cabins",
   },

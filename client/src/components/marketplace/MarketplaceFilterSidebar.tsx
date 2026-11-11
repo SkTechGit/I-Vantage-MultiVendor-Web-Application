@@ -181,23 +181,27 @@ export default function MarketplaceFilterSidebar({
             {city}
           </span>
         </label>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-4 gap-1">
           {[
-            { label: "Gurugram", slug: "gurugram" },
-            { label: "Delhi", slug: "delhi" },
-            { label: "Noida", slug: "noida" },
+            { label: "All Cities", slug: "all", href: "/spaces" },
+            { label: "Gurugram", slug: "gurugram", href: "/gurugram" },
+            { label: "Delhi", slug: "delhi", href: "/delhi" },
+            { label: "Noida", slug: "noida", href: "/noida" },
           ].map((c) => {
-            const isCurrent = city.toLowerCase() === c.slug;
+            const isCurrent =
+              (c.slug === "all" && (city.toLowerCase() === "all cities" || city.toLowerCase() === "all" || pathname === "/spaces")) ||
+              city.toLowerCase() === c.slug;
+
             return (
               <button
                 key={c.slug}
                 type="button"
                 onClick={() => {
                   if (!isCurrent) {
-                    router.push(`/${c.slug}`);
+                    router.push(c.href);
                   }
                 }}
-                className={`py-1.5 px-1 rounded-lg text-xs font-bold text-center transition border ${
+                className={`py-1.5 px-0.5 rounded-lg text-[10.5px] font-bold text-center transition border ${
                   isCurrent
                     ? "bg-[#0A1F66] text-white border-[#0A1F66] shadow-xs"
                     : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"

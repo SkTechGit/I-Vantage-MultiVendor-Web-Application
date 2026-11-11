@@ -562,10 +562,10 @@ export default function CoworkingLocationsSection() {
         {/* View All Spaces Link */}
         <div className="text-center mb-14">
           <Link
-            href="/gurugram"
+            href="/spaces"
             className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-white border border-slate-200/90 text-[#0A1F66] text-xs sm:text-sm font-extrabold shadow-2xs hover:border-[#1E5BFF] hover:text-[#1E5BFF] hover:shadow-sm transition-all duration-200"
           >
-            <span>Explore All 50+ Verified Hubs in Gurugram</span>
+            <span>Explore All {spaces.length} Verified Coworking Spaces</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
