@@ -84,10 +84,10 @@ export default function ProfileServicesGrid({ professional, onSelectService }: P
     <section id="services-section" className="space-y-6 pt-6 border-t border-slate-200">
       <div className="space-y-1">
         <span className="text-[11px] font-black uppercase tracking-wider text-[#1E5BFF]">
-          Practice Offerings
+          Fee Schedule &amp; Engagement
         </span>
         <h2 className="text-xl sm:text-2xl font-black text-[#0A1F66] tracking-tight">
-          Services Offered
+          Consultation Services &amp; Pricing
         </h2>
         <p className="text-xs sm:text-sm text-slate-500">
           Transparent pricing and direct engagement models for all corporate, statutory, and tax requirements.

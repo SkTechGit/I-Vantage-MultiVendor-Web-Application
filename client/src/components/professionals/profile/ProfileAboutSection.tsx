@@ -4,14 +4,10 @@ import React, { useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Building2,
-  Users2,
   MapPin,
   ShieldCheck,
   FileCheck,
   CheckCircle2,
-  Award,
-  Landmark,
   Check,
   Download,
   ExternalLink,
@@ -22,6 +18,8 @@ import {
   ChevronUp,
   Scale,
   Sparkles,
+  Calculator,
+  Briefcase,
 } from "lucide-react";
 import type { ProfessionalProfileItem } from "@/lib/professionals.api";
 
@@ -29,72 +27,266 @@ interface Props {
   professional: ProfessionalProfileItem;
 }
 
+interface ParsedProfileContent {
+  pureBio: string;
+  services: Array<{ title: string; description: string }>;
+  industries: string[];
+  serviceAreas: string[];
+  firmName?: string;
+  phone?: string;
+  email?: string;
+}
+
 /**
- * Smart pre-processor to format raw bio narrative:
- * 1. Converts unformatted section titles ("About ...", "Services Offered", etc.) to H2/H3 markdown headings.
- * 2. Cleans duplicate header lines (e.g. repeated name/title at top).
- * 3. Sanitizes bullet lines and eliminates excessive blank lines.
+ * Intelligent content extractor:
+ * 1. Safely parses unstructured or structured bio narratives.
+ * 2. If a bio contains embedded section headers ("Services Offered", "Industries Served", etc.),
+ *    it cleanly separates them into structured cards/chips so they never render as plain text or bullet points.
+ * 3. Falls back smoothly to structured database fields for maximum resilience across all professional categories.
  */
-function normalizeBioMarkdown(raw: string, fullName: string = ""): string {
-  if (!raw) return "";
+function extractStructuredProfile(p: ProfessionalProfileItem): ParsedProfileContent {
+  const raw = p.aboutMd || "";
+  const lines = raw.split(/\r?\n/).map((l) => l.trim());
+  const lowerName = (p.fullName || "").toLowerCase();
 
-  const lines = raw.split(/\r?\n/);
-  const processed: string[] = [];
-  const lowerName = fullName.toLowerCase();
+  const aboutRegex = /^about\s+/i;
+  const servicesRegex = /^services\s+offered/i;
+  const industriesRegex = /^industries\s+served/i;
+  const areasRegex = /^service\s+areas/i;
+  const contactRegex = /^contact\s+(&|\+)\s+consultation/i;
 
-  const sectionHeadings = [
-    /^about\s+/i,
-    /^services\s+offered/i,
-    /^industries\s+served/i,
-    /^service\s+areas/i,
-    /^practice\s+areas/i,
-    /^areas\s+of\s+expertise/i,
-    /^statutory\s+compliance/i,
-    /^key\s+competencies/i,
-    /^client\s+profile/i,
-    /^why\s+choose/i,
-    /^contact\s+(&|\+)\s+consultation/i,
-  ];
+  const hasMarkers = lines.some((l) =>
+    aboutRegex.test(l) ||
+    servicesRegex.test(l) ||
+    industriesRegex.test(l) ||
+    areasRegex.test(l) ||
+    contactRegex.test(l)
+  );
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) {
-      processed.push("");
-      continue;
-    }
+  let pureBio = "";
+  const parsedServices: Array<{ title: string; description: string }> = [];
+  let parsedIndustries: string[] = [];
+  let parsedAreas: string[] = [];
+  let parsedFirm = "";
+  let parsedPhone = "";
+  let parsedEmail = "";
 
-    // Skip redundant top lines that merely repeat name or tagline
-    if (
-      i < 6 &&
-      (line.toLowerCase() === lowerName ||
-        line.toLowerCase().includes("gst & taxation consultant") ||
-        line.toLowerCase().includes("taxora premium services ·") ||
-        line.toLowerCase() === "gst compliance" ||
-        line.toLowerCase() === "bookkeeping")
-    ) {
-      continue;
-    }
+  if (hasMarkers) {
+    let currentSection: "header" | "bio" | "services" | "industries" | "areas" | "contact" = "header";
+    const sectionLines: Record<string, string[]> = {
+      bio: [],
+      services: [],
+      industries: [],
+      areas: [],
+      contact: [],
+    };
 
-    // Auto-detect section headings if not already markdown headings
-    if (!line.startsWith("#")) {
-      const isHeading = sectionHeadings.some((regex) => regex.test(line));
-      if (isHeading) {
-        processed.push(`### ${line}`);
+    for (const line of lines) {
+      if (!line) continue;
+
+      if (aboutRegex.test(line)) {
+        currentSection = "bio";
         continue;
+      }
+      if (servicesRegex.test(line)) {
+        currentSection = "services";
+        continue;
+      }
+      if (industriesRegex.test(line)) {
+        currentSection = "industries";
+        continue;
+      }
+      if (areasRegex.test(line)) {
+        currentSection = "areas";
+        continue;
+      }
+      if (contactRegex.test(line)) {
+        currentSection = "contact";
+        continue;
+      }
+
+      if (currentSection === "header") {
+        if (
+          line.toLowerCase() === lowerName ||
+          line.toLowerCase().includes("taxation consultant") ||
+          line.toLowerCase().includes("consultant") ||
+          line.toLowerCase().includes("taxora premium") ||
+          line.toLowerCase().includes("compliance") ||
+          line.toLowerCase().includes("bookkeeping")
+        ) {
+          continue;
+        }
+        sectionLines.bio.push(line);
+      } else {
+        sectionLines[currentSection].push(line);
       }
     }
 
-    // Bullet formatting
-    if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
-      processed.push(`- ${line.replace(/^[•\-\*]\s*/, "")}`);
-      continue;
+    pureBio = sectionLines.bio.join("\n\n");
+
+    // Parse services pairs (Title followed by Description)
+    const sLines = sectionLines.services;
+    for (let i = 0; i < sLines.length; i += 2) {
+      const title = sLines[i];
+      const description = sLines[i + 1] || "";
+      if (title) {
+        parsedServices.push({ title, description });
+      }
     }
 
-    processed.push(line);
+    // Parse industries
+    parsedIndustries = sectionLines.industries.flatMap((line) =>
+      line
+        .split(/\s*·\s*|\s*,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
+
+    // Parse areas
+    parsedAreas = sectionLines.areas.flatMap((line) =>
+      line
+        .split(/\s*·\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
+
+    // Parse contact
+    for (const line of sectionLines.contact) {
+      if (line.includes("@")) {
+        parsedEmail = line;
+      } else if (/\d{7,}/.test(line)) {
+        parsedPhone = line;
+      } else if (!parsedFirm && line.length > 2) {
+        parsedFirm = line;
+      }
+    }
+  } else {
+    // If no section markers, clean bio by stripping duplicate name repetition at top
+    const cleanLines = lines.filter((line, i) => {
+      if (i === 0 && line.toLowerCase() === lowerName) return false;
+      return true;
+    });
+    pureBio = cleanLines.join("\n\n").trim();
   }
 
-  // Compress 3+ consecutive newlines to double newlines
-  return processed.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  // Fallback to summary if pureBio is empty
+  if (!pureBio && p.summary) {
+    pureBio = p.summary;
+  }
+
+  // Consolidate Services: Prefer DB services if available, fallback to parsedServices, then specializations
+  let finalServices: Array<{ title: string; description: string }> = [];
+  if (Array.isArray(p.services) && p.services.length > 0) {
+    finalServices = p.services
+      .filter((s) => s.isActive !== false)
+      .map((s) => ({
+        title: s.title,
+        description: s.description || "",
+      }));
+  } else if (parsedServices.length > 0) {
+    finalServices = parsedServices;
+  } else if (Array.isArray(p.specializations) && p.specializations.length > 0) {
+    finalServices = p.specializations.slice(0, 4).map((spec) => ({
+      title: spec,
+      description: `Professional advisory, statutory compliance, and documentation assistance for ${spec}.`,
+    }));
+  }
+
+  // Consolidate Industries: Prefer parsedIndustries if found in bio, or p.industries
+  let finalIndustries: string[] = [];
+  if (parsedIndustries.length > 0) {
+    finalIndustries = parsedIndustries;
+  } else if (Array.isArray(p.industries) && p.industries.length > 0) {
+    finalIndustries = p.industries;
+  } else {
+    finalIndustries = [
+      "Startups & Tech",
+      "SMEs",
+      "Retail & E-commerce",
+      "Traders",
+      "Service Businesses",
+    ];
+  }
+
+  // Consolidate Service Areas
+  let finalAreas: string[] = [];
+  if (parsedAreas.length > 0) {
+    finalAreas = parsedAreas;
+  } else if (Array.isArray(p.servesAreas) && p.servesAreas.length > 0) {
+    finalAreas = p.servesAreas;
+  } else {
+    finalAreas = [
+      p.city || "Gurugram",
+      "Delhi NCR",
+      "Remote consultations across India, subject to availability",
+    ];
+  }
+
+  return {
+    pureBio,
+    services: finalServices,
+    industries: finalIndustries,
+    serviceAreas: finalAreas,
+    firmName:
+      p.firmName ||
+      parsedFirm ||
+      (p.headline && p.headline.includes("TAXORA")
+        ? "TAXORA PREMIUM SERVICES"
+        : undefined),
+    phone: p.contactPhone || parsedPhone || undefined,
+    email: p.contactEmail || parsedEmail || undefined,
+  };
+}
+
+/**
+ * Returns a contextual icon for each service title.
+ */
+function getCompactServiceIcon(title: string = "") {
+  const t = title.toLowerCase();
+  if (
+    t.includes("registration") ||
+    t.includes("incorporat") ||
+    t.includes("license") ||
+    t.includes("setup")
+  ) {
+    return FileCheck;
+  }
+  if (
+    t.includes("return") ||
+    t.includes("filing") ||
+    t.includes("gstr") ||
+    t.includes("compliance")
+  ) {
+    return FileText;
+  }
+  if (
+    t.includes("reconcil") ||
+    t.includes("law") ||
+    t.includes("dispute") ||
+    t.includes("litigat") ||
+    t.includes("notice") ||
+    t.includes("audit")
+  ) {
+    return Scale;
+  }
+  if (
+    t.includes("bookkeeping") ||
+    t.includes("account") ||
+    t.includes("bank") ||
+    t.includes("ledger") ||
+    t.includes("tax")
+  ) {
+    return Calculator;
+  }
+  if (
+    t.includes("consult") ||
+    t.includes("advisory") ||
+    t.includes("strategy") ||
+    t.includes("planning")
+  ) {
+    return Sparkles;
+  }
+  return Briefcase;
 }
 
 export default function ProfileAboutSection({ professional }: Props) {
@@ -114,70 +306,49 @@ export default function ProfileAboutSection({ professional }: Props) {
 
   const hasGST = Boolean(p.gstin);
 
-  const formattedBio = useMemo(() => {
-    return normalizeBioMarkdown(p.aboutMd, p.fullName);
-  }, [p.aboutMd, p.fullName]);
+  const content = useMemo(() => {
+    return extractStructuredProfile(p);
+  }, [p]);
 
-  const isBioLong = formattedBio.length > 450;
+  const isBioLong = content.pureBio.length > 380;
 
   return (
     <section id="overview-section" className="space-y-6 pt-2">
-      {/* Section Heading & Executive Summary Box */}
-      <div className="space-y-3">
-        <h2 className="text-xl sm:text-2xl font-black text-[#0A1F66] tracking-tight">
-          About {p.fullName}
-        </h2>
-        {p.summary && (
-          <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium bg-blue-50/50 p-4 sm:p-5 rounded-2xl border border-blue-100/80 shadow-2xs">
-            {p.summary}
-          </div>
-        )}
-      </div>
+      {/* Primary Executive Profile Overview Card */}
+      <div className="rounded-2xl bg-white border border-[#DCE5F5] p-6 sm:p-8 shadow-xs">
+        
+        {/* 1. About Section */}
+        <div className="space-y-2.5">
+          <h2 className="text-base sm:text-lg font-black text-[#0A1F66] tracking-tight">
+            About {p.fullName}
+          </h2>
 
-      {/* Main Bio / Narrative with ReactMarkdown */}
-      {formattedBio && (
-        <div className="bg-white rounded-2xl border border-[#DCE5F5] p-5 sm:p-6 shadow-2xs space-y-3">
           <div
             className={`relative transition-all duration-300 ${
-              !isBioExpanded && isBioLong ? "max-h-64 overflow-hidden" : ""
+              !isBioExpanded && isBioLong ? "max-h-36 overflow-hidden" : ""
             }`}
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                h1: ({ children }) => (
-                  <h2 className="text-lg sm:text-xl font-black text-[#0A1F66] mt-5 mb-2 pb-1 border-b border-slate-100 flex items-center gap-2">
-                    {children}
-                  </h2>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-base sm:text-lg font-black text-[#0A1F66] mt-4 mb-2 pb-1 border-b border-slate-100 flex items-center gap-2">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-sm sm:text-base font-bold text-[#0A1F66] mt-3.5 mb-1.5 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#1E5BFF]" />
-                    {children}
-                  </h3>
-                ),
                 p: ({ children }) => (
-                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed mb-3 font-normal">
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal mb-2 last:mb-0">
                     {children}
                   </p>
                 ),
-                ul: ({ children }) => (
-                  <ul className="space-y-1.5 my-3 pl-1">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal space-y-1.5 my-3 pl-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                h3: ({ children }) => (
+                  <h3 className="text-sm font-bold text-[#0A1F66] mt-3 mb-1">
                     {children}
-                  </ol>
+                  </h3>
+                ),
+                ul: ({ children }) => (
+                  <ul className="space-y-1 my-2 pl-4 list-disc text-xs sm:text-sm text-slate-700">
+                    {children}
+                  </ul>
                 ),
                 li: ({ children }) => (
-                  <li className="text-xs sm:text-sm text-slate-700 flex items-start gap-2 leading-relaxed">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#1E5BFF] mt-1.5 shrink-0" />
-                    <span className="flex-1">{children}</span>
+                  <li className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                    {children}
                   </li>
                 ),
                 strong: ({ children }) => (
@@ -185,37 +356,176 @@ export default function ProfileAboutSection({ professional }: Props) {
                 ),
               }}
             >
-              {formattedBio}
+              {content.pureBio}
             </ReactMarkdown>
 
             {/* Gradient Overlay when collapsed */}
             {!isBioExpanded && isBioLong && (
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
             )}
           </div>
 
           {/* Read More / Read Less Toggle */}
           {isBioLong && (
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => setIsBioExpanded(!isBioExpanded)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E5BFF] hover:text-[#0A1F66] transition-colors cursor-pointer py-1"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#1E5BFF] hover:text-[#0A1F66] transition-colors cursor-pointer"
               >
                 <span>{isBioExpanded ? "Read Less" : "Read Full Biography"}</span>
                 {isBioExpanded ? (
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-3.5 h-3.5" />
                 ) : (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5" />
                 )}
               </button>
-              <span className="text-[10px] text-slate-400 font-medium">
-                Verified Practice Narrative
-              </span>
             </div>
           )}
         </div>
-      )}
+
+        {/* Divider */}
+        {content.services.length > 0 && (
+          <hr className="border-slate-100 my-6 sm:my-7" />
+        )}
+
+        {/* 2. Services Offered */}
+        {content.services.length > 0 && (
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-[#0A1F66] tracking-tight mb-4">
+              Services Offered
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+              {content.services.map((service, idx) => {
+                const ServiceIcon = getCompactServiceIcon(service.title);
+                return (
+                  <div key={idx} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50/80 border border-blue-100/80 flex items-center justify-center shrink-0 mt-0.5 text-[#1E5BFF]">
+                      <ServiceIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                        {service.title}
+                      </h3>
+                      {service.description && (
+                        <p className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                          {service.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Divider */}
+        {content.industries.length > 0 && (
+          <hr className="border-slate-100 my-6 sm:my-7" />
+        )}
+
+        {/* 3. Industries Served */}
+        {content.industries.length > 0 && (
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-[#0A1F66] tracking-tight mb-3">
+              Industries Served
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {content.industries.map((ind, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-blue-50/50 hover:text-[#1E5BFF] hover:border-blue-200 transition-colors"
+                >
+                  {ind}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Divider */}
+        {content.serviceAreas.length > 0 && (
+          <hr className="border-slate-100 my-6 sm:my-7" />
+        )}
+
+        {/* 4. Service Areas */}
+        {content.serviceAreas.length > 0 && (
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-[#0A1F66] tracking-tight mb-3">
+              Service Areas
+            </h2>
+            <div className="flex flex-wrap gap-2 items-center">
+              {content.serviceAreas.map((area, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200/80 hover:bg-emerald-50/40 hover:text-emerald-700 hover:border-emerald-200 transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  {area}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Divider */}
+        {(content.firmName || content.phone || content.email) && (
+          <hr className="border-slate-100 my-6 sm:my-7" />
+        )}
+
+        {/* 5. Contact & Consultation */}
+        {(content.firmName || content.phone || content.email) && (
+          <div className="space-y-3">
+            <h2 className="text-base sm:text-lg font-black text-[#0A1F66] tracking-tight">
+              Contact &amp; Consultation
+            </h2>
+
+            {content.firmName && (
+              <div className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">
+                {content.firmName}
+              </div>
+            )}
+
+            <div className="space-y-2 pt-0.5">
+              {content.phone && (
+                <div>
+                  <a
+                    href={`tel:${content.phone.replace(/\D/g, "")}`}
+                    className="inline-flex items-center gap-2.5 text-sm sm:text-base font-bold text-slate-900 hover:text-[#1E5BFF] transition-colors font-mono tracking-tight group"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E5BFF] flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                      <Phone className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{content.phone}</span>
+                  </a>
+                </div>
+              )}
+
+              {content.email && (
+                <div>
+                  <a
+                    href={`mailto:${content.email}`}
+                    className="inline-flex items-center gap-2.5 text-xs sm:text-sm font-medium text-slate-700 hover:text-[#1E5BFF] transition-colors truncate group"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E5BFF] flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                      <Mail className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="truncate">{content.email}</span>
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Available for enquiries
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Statutory Credentials & Regulatory Compliance Card (Strictly Verified Only) */}
       {(hasGST || isCA || isLegal || p.registrationNumber) && (
@@ -356,93 +666,6 @@ export default function ProfileAboutSection({ professional }: Props) {
           )}
         </div>
       )}
-
-      {/* Industries Served Section (Matching User Image 2) */}
-      {Array.isArray(p.industries) && p.industries.length > 0 && (
-        <div className="rounded-2xl bg-white border border-[#DCE5F5] p-5 sm:p-6 shadow-2xs space-y-3">
-          <h3 className="text-sm sm:text-base font-black text-[#0A1F66] flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#1E5BFF]" />
-            <span>Industries Served</span>
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
-            {p.industries.join(" · ")}
-          </p>
-        </div>
-      )}
-
-      {/* Service Areas Section (Matching User Image 2) */}
-      {Array.isArray(p.servesAreas) && p.servesAreas.length > 0 && (
-        <div className="rounded-2xl bg-white border border-[#DCE5F5] p-5 sm:p-6 shadow-2xs space-y-3">
-          <h3 className="text-sm sm:text-base font-black text-[#0A1F66] flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-emerald-600" />
-            <span>Service Areas</span>
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
-            {p.servesAreas.join(" · ")}
-          </p>
-        </div>
-      )}
-
-      {/* Contact & Consultation Card (Matching User Image 2) */}
-      <div className="rounded-2xl bg-white border border-[#DCE5F5] p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="space-y-0.5">
-            <h3 className="text-sm sm:text-base font-black text-[#0A1F66]">
-              Contact &amp; Consultation
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Direct communication for prospective clients and business enquiries
-            </p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Available for enquiries
-          </span>
-        </div>
-
-        <div className="space-y-2.5">
-          {/* Practice / Firm Name */}
-          {(p.firmName || p.headline) && (
-            <div className="text-xs font-bold text-slate-800">
-              {p.firmName || "TAXORA PREMIUM SERVICES"}
-            </div>
-          )}
-
-          {/* Contact Phone with 1-Click Call */}
-          {p.contactPhone && (
-            <div className="flex items-center justify-between gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-              <div className="flex items-center gap-2.5 text-slate-800 font-semibold font-mono">
-                <Phone className="w-4 h-4 text-[#1E5BFF]" />
-                <span>{p.contactPhone}</span>
-              </div>
-              <a
-                href={`tel:${p.contactPhone.replace(/\D/g, "")}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0A1F66] text-white text-xs font-bold hover:bg-[#1E5BFF] transition-colors shadow-2xs"
-              >
-                <Phone className="w-3 h-3" />
-                <span>Call Now</span>
-              </a>
-            </div>
-          )}
-
-          {/* Contact Email with 1-Click Email */}
-          {p.contactEmail && (
-            <div className="flex items-center justify-between gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-              <div className="flex items-center gap-2.5 text-slate-800 font-medium truncate">
-                <Mail className="w-4 h-4 text-[#1E5BFF] shrink-0" />
-                <span className="truncate">{p.contactEmail}</span>
-              </div>
-              <a
-                href={`mailto:${p.contactEmail}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[#0A1F66] text-xs font-bold hover:bg-slate-100 transition-colors shadow-2xs shrink-0"
-              >
-                <Mail className="w-3 h-3" />
-                <span>Send Email</span>
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Practice Portfolio & Capability Deck (Optional Showcase) */}
       {(p.portfolioFileUrl || p.portfolioExternalUrl) && (
