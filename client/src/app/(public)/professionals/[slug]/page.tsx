@@ -23,17 +23,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!p) return { title: "Professional Not Found | i-VANTAGE" };
 
     const categoryName = p.categoryId?.label || p.categoryId?.name || "Professional";
-    const credentials = p.designation ? ` (${p.designation})` : p.qualification ? ` (${p.qualification})` : "";
-    const title = `${p.fullName}${credentials} - Verified ${categoryName} in ${p.city} | i-VANTAGE`;
+    const categorySlug = p.categoryId?.slug || "";
+    const isTaxOrGST = categorySlug.includes("tax") || categorySlug.includes("gst") || Boolean(p.gstin);
+    const roleTitle = p.designation || (isTaxOrGST ? "GST & Taxation Consultant" : categoryName);
     
-    const specialties = Array.isArray(p.specializations) && p.specializations.length > 0
-      ? p.specializations.slice(0, 3).join(", ")
+    // Exact SEO format: {Role} in {City} – {FullName} | i-VANTAGE
+    const title = `${roleTitle} in ${p.city} – ${p.fullName} | i-VANTAGE`;
+    
+    // Dynamic high-converting SEO description
+    const servicesSummary = Array.isArray(p.services) && p.services.length > 0
+      ? p.services.map((s) => s.title).slice(0, 4).join(", ")
+      : Array.isArray(p.specializations) && p.specializations.length > 0
+      ? p.specializations.slice(0, 4).join(", ")
       : p.headline;
-    const description = `Consult ${p.fullName}, verified ${categoryName} in ${p.city}, ${p.state || "India"}. Expertise in ${specialties}. Direct advisory, verified statutory credentials, and zero brokerage on i-VANTAGE.`.slice(0, 160);
+
+    const description = `${servicesSummary} in ${p.city}. Consult ${p.fullName}${p.firmName ? ` (${p.firmName})` : ""}, verified ${categoryName} on i-VANTAGE. Direct advisory, verified statutory credentials, and zero brokerage.`.slice(0, 160);
 
     const canonicalUrl = `https://i-vantage.in/professionals/${decodedSlug}`;
     const ogImages = p.photoUrl
-      ? [{ url: p.photoUrl, width: 800, height: 800, alt: `${p.fullName} - ${categoryName} in ${p.city}` }]
+      ? [{ url: p.photoUrl, width: 800, height: 800, alt: `${p.fullName} - Verified ${categoryName} in ${p.city}` }]
       : [];
 
     return {
@@ -185,6 +193,24 @@ export default async function ProfessionalProfilePage({ params }: Props) {
                 name: area,
               }))
             : { "@type": "City", name: p.city },
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "Professional Advisory Services",
+          itemListElement: (Array.isArray(p.services) && p.services.length > 0 ? p.services : (p.specializations || []).slice(0, 4).map(s => ({ title: s, description: `Statutory compliance and advisory for ${s}`, priceInr: p.consultationFeeInr }))).map((s: any, idx: number) => ({
+            "@type": "Offer",
+            position: idx + 1,
+            itemOffered: {
+              "@type": "Service",
+              name: s.title,
+              description: s.description,
+              provider: {
+                "@id": `https://i-vantage.in/professionals/${p.slug}#person`,
+              },
+            },
+            price: s.priceInr || p.consultationFeeInr,
+            priceCurrency: "INR",
+          })),
+        },
         address: {
           "@type": "PostalAddress",
           streetAddress: p.officeAddress || undefined,

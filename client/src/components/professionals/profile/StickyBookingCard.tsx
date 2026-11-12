@@ -118,10 +118,18 @@ export default function StickyBookingCard({ professional, onBookClick }: Props) 
           <ArrowRight className="w-4 h-4 ml-1" />
         </button>
 
-        {/* Direct Contact Options if contactMode is direct */}
-        {p.contactMode === "direct" && (p.contactWhatsapp || p.contactPhone) && (
+        {/* Direct Contact Options */}
+        {(p.contactWhatsapp || p.contactPhone || p.contactEmail) && (
           <div className="grid grid-cols-2 gap-2 pt-1">
-            {p.contactWhatsapp && (
+            {p.contactPhone ? (
+              <a
+                href={`tel:${p.contactPhone.replace(/\D/g, "")}`}
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold hover:bg-white hover:border-[#1E5BFF] hover:text-[#1E5BFF] transition-colors shadow-2xs"
+              >
+                <Phone className="w-3.5 h-3.5 text-[#1E5BFF]" />
+                <span>Call Direct</span>
+              </a>
+            ) : p.contactWhatsapp ? (
               <a
                 href={`https://wa.me/${p.contactWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
                   `Hi ${p.fullName}, I found your verified profile on I-VANTAGE and would like to consult with you.`
@@ -133,17 +141,29 @@ export default function StickyBookingCard({ professional, onBookClick }: Props) 
                 <FaWhatsapp className="w-4 h-4 text-emerald-600" />
                 <span>WhatsApp</span>
               </a>
-            )}
+            ) : null}
 
-            {p.contactPhone && (
+            {p.contactEmail ? (
               <a
-                href={`tel:${p.contactPhone.replace(/\D/g, "")}`}
+                href={`mailto:${p.contactEmail}`}
                 className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold hover:bg-white hover:border-slate-300 transition-colors shadow-2xs"
               >
-                <Phone className="w-3.5 h-3.5 text-slate-600" />
-                <span>Call Direct</span>
+                <MessageSquare className="w-3.5 h-3.5 text-slate-600" />
+                <span>Email Firm</span>
               </a>
-            )}
+            ) : p.contactWhatsapp ? (
+              <a
+                href={`https://wa.me/${p.contactWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                  `Hi ${p.fullName}, I found your verified profile on I-VANTAGE and would like to consult with you.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors shadow-2xs"
+              >
+                <FaWhatsapp className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp</span>
+              </a>
+            ) : null}
           </div>
         )}
 

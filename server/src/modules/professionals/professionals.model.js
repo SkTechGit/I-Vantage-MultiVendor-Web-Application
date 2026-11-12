@@ -370,6 +370,7 @@ const professionalProfileSchema = new mongoose.Schema(
     documents: [documentSubSchema],
 
     /* Designation & Professional Credentials */
+    firmName: { type: String, trim: true, default: "" },
     designation: { type: String, trim: true, default: "" },
     enrollmentDate: { type: String, trim: true, default: "" },
     copNumber: { type: String, trim: true, default: "" },

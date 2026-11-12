@@ -14,7 +14,7 @@ export interface ProfessionalCategoryItem {
 }
 
 export interface ServiceItem {
-  _id: string;
+  _id?: string;
   title: string;
   slug?: string;
   description?: string;
@@ -115,6 +115,7 @@ export interface ProfessionalProfileItem {
   documents?: ProfileDocumentItem[];
 
   /* Credentials & Practice */
+  firmName?: string;
   designation?: string;
   enrollmentDate?: string;
   copNumber?: string;

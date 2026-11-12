@@ -128,6 +128,7 @@ export const contentUpdateSchema = z
     contactPhone: z.string().optional().nullable(),
     contactWhatsapp: z.string().optional().nullable(),
     contactEmail: z.string().optional().nullable(),
+    firmName: z.string().max(160).optional().default(""),
     designation: z.string().max(120).optional().default(""),
     enrollmentDate: z.string().max(60).optional().default(""),
     copNumber: z.string().max(80).optional().default(""),

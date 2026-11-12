@@ -115,7 +115,9 @@ export default function ProfileConsultationForm({ professional, preselectedServi
     setMessage("");
   };
 
-  const services = Array.isArray(p.services) ? p.services.filter((s) => s.isActive !== false) : [];
+  const services = Array.isArray(p.services) && p.services.length > 0
+    ? p.services.filter((s) => s.isActive !== false)
+    : (p.specializations || []).map((spec) => ({ title: spec, priceInr: p.consultationFeeInr }));
 
   return (
     <section id="consultation-section" className="pt-6 border-t border-slate-200">
