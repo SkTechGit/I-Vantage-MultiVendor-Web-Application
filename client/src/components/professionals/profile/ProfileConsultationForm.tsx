@@ -1,15 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Calendar,
-  Clock,
   Video,
   Building,
   Phone,
-  Mail,
-  User,
-  Building2,
   Send,
   Loader2,
   CheckCircle2,
@@ -27,6 +22,14 @@ export default function ProfileConsultationForm({ professional, preselectedServi
   const p = professional;
 
   const [serviceTitle, setServiceTitle] = useState<string>(preselectedService || "");
+  const [prevPreselected, setPrevPreselected] = useState(preselectedService);
+
+  // Sync state when preselectedService prop changes (React recommended pattern)
+  if (preselectedService !== prevPreselected) {
+    setPrevPreselected(preselectedService);
+    setServiceTitle(preselectedService || "");
+  }
+
   const [mode, setMode] = useState<"ONLINE" | "IN_PERSON" | "AUDIO">("ONLINE");
   const [preferredDate, setPreferredDate] = useState<string>("");
   const [preferredSlot, setPreferredSlot] = useState<"MORNING" | "AFTERNOON" | "EVENING">("AFTERNOON");
@@ -40,15 +43,12 @@ export default function ProfileConsultationForm({ professional, preselectedServi
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<{ referenceNumber?: string; message: string } | null>(null);
 
-  // Sync preselected service from props
-  useEffect(() => {
-    if (preselectedService) {
-      setServiceTitle(preselectedService);
-    }
-  }, [preselectedService]);
-
-  // Set default minimum date to tomorrow
-  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  // Set default minimum date to tomorrow (pure initializer)
+  const [tomorrowStr] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,9 +98,11 @@ export default function ProfileConsultationForm({ professional, preselectedServi
       } else {
         setErrorMsg(res?.message || "Failed to submit enquiry. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       setErrorMsg(
-        err?.response?.data?.message ||
+        error?.response?.data?.message ||
+          error?.message ||
           "Could not send enquiry due to a network or server issue. Please try again."
       );
     } finally {
@@ -279,7 +281,7 @@ export default function ProfileConsultationForm({ professional, preselectedServi
                   </label>
                   <select
                     value={preferredSlot}
-                    onChange={(e) => setPreferredSlot(e.target.value as any)}
+                    onChange={(e) => setPreferredSlot(e.target.value as "MORNING" | "AFTERNOON" | "EVENING")}
                     className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#1E5BFF] focus:ring-2 focus:ring-[#1E5BFF]/10"
                   >
                     <option value="MORNING">Morning (10:00 AM – 1:00 PM)</option>
