@@ -59,6 +59,9 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   ) {
     return "day";
   }
+  if (lower.includes("per-year") || lower.includes("yearly") || lower.includes("annual") || lower.includes("/year") || lower.includes("/yr")) {
+    return "year";
+  }
   if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
     return "month";
   }
@@ -75,7 +78,12 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
   // 6. Dedicated Seat / Desk -> per month
   if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
-  // 7. Private Cabin -> per month
+  // 7. Virtual Office -> per month (or year if specified)
+  if (lower.includes("virtual office") || lower.includes("virtual")) {
+    if (lower.includes("annual") || lower.includes("year")) return "year";
+    return "month";
+  }
+  // 8. Private Cabin -> per month
   if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
 
   const catLower = String(categoryName || "").toLowerCase();
@@ -83,6 +91,7 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   if (catLower.includes("conference") || catLower.includes("confference")) return "hour";
   if (catLower.includes("day pass") || catLower.includes("daypass")) return "day";
   if (catLower.includes("event")) return "day";
+  if (catLower.includes("virtual")) return "month";
   if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
 
   return fallback;
@@ -303,6 +312,51 @@ export default function ListingDetailView({
             "Complimentary 1 hr meeting room access",
           ],
           statusLabel: "Save 16%",
+        },
+      ];
+    }
+
+    // Default Virtual Office Plans
+    if (catLower.includes("virtual")) {
+      const annualPrice = baseUnit === "year" ? basePrice : Math.round(basePrice * 10);
+      return [
+        {
+          id: "virtual-office-gst",
+          name: "Virtual Office with GST Registration",
+          subtitle: "Official commercial address for GST & ROC filing with NOC",
+          capacityLabel: "GST & ROC Eligible",
+          image: fullGallery[0] || primaryImage,
+          price: baseUnit === "year" ? annualPrice : basePrice,
+          originalPrice: Math.round((baseUnit === "year" ? annualPrice : basePrice) * 1.25),
+          unit: baseUnit,
+          discountCode: "VIRTUAL10",
+          features: [
+            "Prestigious commercial business address in prime hub",
+            "NOC, Electricity Bill & Rent Agreement provided",
+            "Full GST registration & ROC compliance assistance",
+            "Courier & mail handling with instant digital notifications",
+          ],
+          isPopular: true,
+          statusLabel: "Most Popular for GST",
+        },
+        {
+          id: "virtual-office-business",
+          name: "Business Mailing Address & Reception",
+          subtitle: "Corporate address for website, letterheads & correspondence",
+          capacityLabel: "Mailing & Branding",
+          image: fullGallery[1 % fullGallery.length] || primaryImage,
+          price: Math.round((baseUnit === "year" ? annualPrice : basePrice) * 0.7),
+          originalPrice: Math.round(baseUnit === "year" ? annualPrice : basePrice),
+          unit: baseUnit,
+          discountCode: "BIZ10",
+          features: [
+            "Prime commercial address for branding & letterheads",
+            "Dedicated receptionist to handle parcels & mail",
+            "Complimentary meeting room credits included monthly",
+            "Zero operational overheads & lock-in flexibility",
+          ],
+          isPopular: false,
+          statusLabel: "Zero Lock-in",
         },
       ];
     }

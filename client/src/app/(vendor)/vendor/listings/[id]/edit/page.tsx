@@ -312,6 +312,8 @@ export default function EditVendorListingPage({
                       catLower.includes("event")
                     ) {
                       setPricingUnit("per-day");
+                    } else if (catLower.includes("virtual")) {
+                      setPricingUnit("per-month");
                     } else {
                       setPricingUnit("per-month");
                     }
@@ -439,6 +441,7 @@ export default function EditVendorListingPage({
                 className="w-full text-xs font-semibold px-3 py-2.5 border rounded-xl bg-white"
               >
                 <option value="per-month">Per Month</option>
+                <option value="per-year">Per Year</option>
                 <option value="per-day">Per Day</option>
                 <option value="per-hour">Per Hour</option>
                 <option value="per-seat">Per Seat</option>

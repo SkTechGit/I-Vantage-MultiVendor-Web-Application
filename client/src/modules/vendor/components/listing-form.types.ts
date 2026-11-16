@@ -18,7 +18,7 @@ export interface MediaUploadItem {
   order: number;
 }
 
-export type PricingUnit = "per-month" | "per-day" | "per-hour" | "per-seat";
+export type PricingUnit = "per-month" | "per-day" | "per-hour" | "per-seat" | "per-year";
 
 export interface StepItem {
   id: number;

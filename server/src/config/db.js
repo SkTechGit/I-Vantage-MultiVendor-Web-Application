@@ -23,6 +23,7 @@ function getEffectiveUri(uri) {
 }
 
 import { seedProfessionals } from "../modules/professionals/professionals.seed.js";
+import { seedMarketplaceCategories } from "../modules/marketplace-categories/category.seed.js";
 
 const connectDB = async () => {
   try {
@@ -31,6 +32,7 @@ const connectDB = async () => {
     try {
       await mongoose.connect(rawUri, { serverSelectionTimeoutMS: 8000 });
       console.log("MongoDB connected successfully");
+      seedMarketplaceCategories().catch((err) => console.error("Categories seed error:", err));
       seedProfessionals().catch((err) => console.error("Professionals seed error:", err));
       return;
     } catch (firstErr) {
@@ -38,6 +40,7 @@ const connectDB = async () => {
       if (altUri !== rawUri) {
         await mongoose.connect(altUri, { serverSelectionTimeoutMS: 10000 });
         console.log("MongoDB connected successfully via fallback URI");
+        seedMarketplaceCategories().catch((err) => console.error("Categories seed error:", err));
         seedProfessionals().catch((err) => console.error("Professionals seed error:", err));
         return;
       }

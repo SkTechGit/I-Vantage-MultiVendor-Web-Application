@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Listing from "./listing.model.js";
+import MarketplaceCategory from "../marketplace-categories/category.model.js";
 import Service from "../marketplace-services/service.model.js";
 import { inferServiceUnit } from "../marketplace-services/service.controller.js";
 import AuditLog from "../auth/audit-log.model.js";
@@ -149,7 +150,21 @@ export const getPublicListings = async (query = {}) => {
   }
 
   if (category) {
-    filter.categoryId = category;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      filter.categoryId = category;
+    } else {
+      const catDoc = await MarketplaceCategory.findOne({
+        $or: [
+          { slug: category.toLowerCase().trim() },
+          { name: new RegExp(`^${category.trim()}$`, "i") },
+        ],
+      }).select("_id");
+      if (catDoc) {
+        filter.categoryId = catDoc._id;
+      } else {
+        filter.categoryId = null;
+      }
+    }
   }
 
   if (minPrice || maxPrice) {

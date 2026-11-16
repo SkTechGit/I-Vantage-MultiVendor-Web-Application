@@ -36,6 +36,9 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   ) {
     return "day";
   }
+  if (lower.includes("per-year") || lower.includes("yearly") || lower.includes("annual") || lower.includes("/year") || lower.includes("/yr")) {
+    return "year";
+  }
   if (lower.includes("per-month") || lower.includes("monthly") || lower.includes("/month")) {
     return "month";
   }
@@ -52,7 +55,12 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   if (lower.includes("coworking") || lower.includes("hot desk") || lower.includes("flexi desk") || lower.includes("open desk")) return "month";
   // 6. Dedicated Seat / Desk -> per month
   if (lower.includes("dedicated") || lower.includes("fixed")) return "month";
-  // 7. Private Cabin -> per month
+  // 7. Virtual Office -> per month (or year if specified)
+  if (lower.includes("virtual office") || lower.includes("virtual")) {
+    if (lower.includes("annual") || lower.includes("year")) return "year";
+    return "month";
+  }
+  // 8. Private Cabin -> per month
   if (lower.includes("cabin") || lower.includes("office") || lower.includes("suite")) return "month";
 
   const catLower = String(categoryName || "").toLowerCase();
@@ -60,6 +68,7 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
   if (catLower.includes("conference") || catLower.includes("confference")) return "hour";
   if (catLower.includes("day pass") || catLower.includes("daypass")) return "day";
   if (catLower.includes("event")) return "day";
+  if (catLower.includes("virtual")) return "month";
   if (catLower.includes("coworking") || catLower.includes("desk") || catLower.includes("cabin")) return "month";
 
   return fallback;

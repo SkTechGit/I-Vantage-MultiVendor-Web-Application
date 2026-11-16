@@ -18,6 +18,12 @@ import {
   Loader2,
   AlertCircle,
   X,
+  Users,
+  Presentation,
+  Laptop,
+  Calendar,
+  Monitor,
+  Globe,
 } from "lucide-react";
 
 import {
@@ -29,6 +35,56 @@ import {
 } from "./listing-form.types";
 import StepProgressIndicator from "./StepProgressIndicator";
 import ListingReviewStep from "./ListingReviewStep";
+
+const getCategoryDetails = (name: string = "") => {
+  const lower = name.toLowerCase();
+  if (lower.includes("private cabin") || lower.includes("cabin")) {
+    return {
+      icon: Building2,
+      description: "Lockable private office suite for focused teams",
+    };
+  }
+  if (lower.includes("meeting room") || lower.includes("meeting")) {
+    return {
+      icon: Users,
+      description: "On-demand client meeting & collaboration space",
+    };
+  }
+  if (lower.includes("conference") || lower.includes("boardroom")) {
+    return {
+      icon: Presentation,
+      description: "High-capacity boardroom with AV & conferencing",
+    };
+  }
+  if (lower.includes("coworking seat") || lower.includes("hot desk")) {
+    return {
+      icon: Laptop,
+      description: "Flexible shared seating in premium open workspace",
+    };
+  }
+  if (lower.includes("day pass") || lower.includes("daypass")) {
+    return {
+      icon: Calendar,
+      description: "Single-day access pass with high-speed WiFi & coffee",
+    };
+  }
+  if (lower.includes("dedicated desk") || lower.includes("dedicated")) {
+    return {
+      icon: Monitor,
+      description: "Reserved personal desk with lockable storage",
+    };
+  }
+  if (lower.includes("virtual office") || lower.includes("virtual")) {
+    return {
+      icon: Globe,
+      description: "Prime business address, GST registration & mail handling",
+    };
+  }
+  return {
+    icon: Tag,
+    description: "Standard coworking classification",
+  };
+};
 
 export default function CreateListingForm() {
   const router = useRouter();
@@ -349,6 +405,9 @@ export default function CreateListingForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {categories.map((cat) => {
                   const isSelected = categoryId === cat._id;
+                  const catDetails = getCategoryDetails(cat.name);
+                  const CatIcon = catDetails.icon;
+
                   return (
                     <div
                       key={cat._id}
@@ -367,6 +426,8 @@ export default function CreateListingForm() {
                           catLower.includes("event")
                         ) {
                           setPricingUnit("per-day");
+                        } else if (catLower.includes("virtual")) {
+                          setPricingUnit("per-month");
                         } else {
                           setPricingUnit("per-month");
                         }
@@ -379,13 +440,13 @@ export default function CreateListingForm() {
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                             isSelected
                               ? "bg-[#1E5BFF] text-white"
-                              : "bg-slate-100 text-slate-600"
+                              : "bg-blue-50/70 text-[#1E5BFF]"
                           }`}
                         >
-                          <Tag className="w-5 h-5" />
+                          <CatIcon className="w-5 h-5" />
                         </div>
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
@@ -401,8 +462,8 @@ export default function CreateListingForm() {
                         <h4 className="font-bold text-slate-900 text-base">
                           {cat.name}
                         </h4>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Standard coworking classification
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          {catDetails.description}
                         </p>
                       </div>
                     </div>
@@ -591,6 +652,7 @@ export default function CreateListingForm() {
                   className="w-full text-sm font-semibold px-4 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#1E5BFF] outline-none bg-white"
                 >
                   <option value="per-month">Per Month</option>
+                  <option value="per-year">Per Year (Annual Contract)</option>
                   <option value="per-day">Per Day</option>
                   <option value="per-hour">Per Hour</option>
                   <option value="per-seat">Per Seat / Month</option>

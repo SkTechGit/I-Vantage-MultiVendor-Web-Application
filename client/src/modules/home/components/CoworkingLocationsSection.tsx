@@ -309,6 +309,9 @@ export default function CoworkingLocationsSection() {
                   <option value="dedicated-desk">Dedicated Desk</option>
                   <option value="meeting-room">Meeting Room</option>
                   <option value="coworking-seat">Coworking Seat</option>
+                  <option value="conference-room">Conference Room</option>
+                  <option value="day-pass">Day Pass</option>
+                  <option value="virtual-office">Virtual Office</option>
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>

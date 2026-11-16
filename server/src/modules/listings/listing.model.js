@@ -80,7 +80,7 @@ const listingSchema = new mongoose.Schema(
       },
       unit: {
         type: String,
-        enum: ["per-day", "per-hour", "per-month", "per-seat"],
+        enum: ["per-day", "per-hour", "per-month", "per-seat", "per-year"],
         default: "per-month",
       },
     },

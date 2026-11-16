@@ -17,6 +17,7 @@ export const DEFAULT_MARKETPLACE_CATEGORIES: MarketplaceCategoryItem[] = [
   { _id: "cat-4", name: "Coworking Seat", slug: "coworking-seat" },
   { _id: "cat-5", name: "Day Pass", slug: "day-pass" },
   { _id: "cat-6", name: "Dedicated Desk", slug: "dedicated-desk" },
+  { _id: "cat-7", name: "Virtual Office", slug: "virtual-office" },
 ];
 
 interface Props {
