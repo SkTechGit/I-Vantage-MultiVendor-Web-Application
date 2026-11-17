@@ -7,6 +7,7 @@ import AuditLog from "../auth/audit-log.model.js";
 import realtimeHub from "../realtime/realtime.hub.js";
 import slugify from "slugify";
 import User from "../users/user.model.js";
+import Auth from "../auth/auth.model.js";
 import { createNotification } from "../notifications/notification.service.js";
 import {
   sendListingSubmissionNotifications,
@@ -64,8 +65,10 @@ export const toPublicListingDTO = (listing) => {
     publishedAt: l.publishedAt,
     createdAt: l.createdAt,
     vendorId: {
-      name: l.vendorId?.name || l.vendorId?.fullName || "Verified Partner",
-      businessName: l.vendorId?.businessName || "i-VANTAGE Verified Partner",
+      _id: l.vendorId?._id?.toString() || l.vendorId?.toString?.() || l.vendorId,
+      name: l.vendorId?.businessName || l.vendorId?.name || l.vendorId?.fullName || "Verified Partner",
+      businessName: l.vendorId?.businessName || l.vendorId?.name || "i-VANTAGE Verified Partner",
+      email: l.vendorId?.email || "",
     },
   };
 };
@@ -120,10 +123,28 @@ export const toAdminListingDTO = (listing) => {
   if (!listing) return null;
   const l = listing.toObject ? listing.toObject() : listing;
   const idStr = l._id?.toString() || l.id?.toString();
+
+  // Normalize vendor details for accurate display across Admin tables
+  const rawVendor = l.vendorId;
+  let formattedVendor = null;
+
+  if (rawVendor && typeof rawVendor === "object") {
+    formattedVendor = {
+      _id: rawVendor._id?.toString() || rawVendor.id?.toString(),
+      id: rawVendor._id?.toString() || rawVendor.id?.toString(),
+      name: rawVendor.businessName || rawVendor.name || rawVendor.fullName || "Verified Coworking Partner",
+      fullName: rawVendor.fullName || rawVendor.name || "Verified Coworking Partner",
+      businessName: rawVendor.businessName || rawVendor.name || rawVendor.fullName || "Verified Coworking Partner",
+      email: rawVendor.email || "",
+      phone: rawVendor.phone || "",
+    };
+  }
+
   return {
     ...l,
     _id: idStr,
     id: idStr,
+    vendorId: formattedVendor || l.vendorId,
   };
 };
 
@@ -138,12 +159,26 @@ export const getPublicListings = async (query = {}) => {
     maxPrice,
     capacity,
     amenities,
+    search,
+    q,
     page = 1,
     limit = 12,
     sort = "-createdAt",
   } = query;
 
   const filter = { isLive: true, status: "approved" };
+
+  const searchQuery = (search || q || "").trim();
+  if (searchQuery) {
+    const s = searchQuery;
+    filter.$or = [
+      { title: { $regex: s, $options: "i" } },
+      { "location.city": { $regex: s, $options: "i" } },
+      { "location.area": { $regex: s, $options: "i" } },
+      { "location.address": { $regex: s, $options: "i" } },
+      { description: { $regex: s, $options: "i" } },
+    ];
+  }
 
   if (city) {
     filter["location.city"] = { $regex: new RegExp(`^${city.trim()}$`, "i") };
@@ -189,8 +224,9 @@ export const getPublicListings = async (query = {}) => {
   const skip = (Math.max(1, Number(page)) - 1) * Math.max(1, Number(limit));
   const numericLimit = Math.min(50, Math.max(1, Number(limit)));
 
-  const [listings, total] = await Promise.all([
+  const [rawListings, total] = await Promise.all([
     Listing.find(filter)
+      .populate("vendorId", "businessName name fullName")
       .populate("categoryId", "name slug icon")
       .populate("amenityIds", "name icon")
       .populate("media.mediaId", "secureUrl")
@@ -199,6 +235,8 @@ export const getPublicListings = async (query = {}) => {
       .limit(numericLimit),
     Listing.countDocuments(filter),
   ]);
+
+  const listings = await attachVendorDetails(rawListings);
 
   return {
     listings: listings.map(toPublicListingDTO),
@@ -225,29 +263,82 @@ export const getPublicListingBySlug = async (slug) => {
     isLive: true,
   };
 
-  const listing = await Listing.findOne(query)
+  const rawListing = await Listing.findOne(query)
+    .populate("vendorId", "businessName name fullName email")
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
     .populate("serviceIds", "name size price unit description isGlobal")
     .populate("media.mediaId", "secureUrl width height format");
 
-  if (!listing) return null;
+  if (!rawListing) return null;
+  const [listing] = await attachVendorDetails([rawListing]);
   return toPublicListingDTO(listing);
+};
+
+/**
+ * Resolves all associated ObjectIds for a vendor account
+ * Gracefully bridges dual collections (Marketplace User & Auth collections)
+ */
+export const resolveVendorIds = async (vendorId, userObj = null) => {
+  const ids = new Set();
+  if (vendorId) {
+    if (mongoose.Types.ObjectId.isValid(vendorId)) {
+      ids.add(new mongoose.Types.ObjectId(vendorId));
+    } else {
+      ids.add(vendorId);
+    }
+  }
+
+  let email = userObj?.email;
+  if (!email && vendorId && mongoose.Types.ObjectId.isValid(vendorId)) {
+    const [u, a] = await Promise.all([
+      User.findById(vendorId).select("email").lean(),
+      Auth.findById(vendorId).select("email").lean(),
+    ]);
+    email = u?.email || a?.email;
+  }
+
+  if (email) {
+    const normalizedEmail = email.toLowerCase().trim();
+    const [uList, aList] = await Promise.all([
+      User.find({ email: normalizedEmail }).select("_id").lean(),
+      Auth.find({ email: normalizedEmail }).select("_id").lean(),
+    ]);
+    uList.forEach((item) => ids.add(item._id));
+    aList.forEach((item) => ids.add(item._id));
+  }
+
+  return Array.from(ids);
 };
 
 /**
  * Vendor: Get own listings
  */
-export const getVendorListings = async (vendorId, query = {}) => {
-  const { page = 1, limit = 20, status } = query;
-  const filter = { vendorId };
+export const getVendorListings = async (vendorId, query = {}, user = null) => {
+  const { page = 1, limit = 100, status, search } = query;
+  const vendorIds = await resolveVendorIds(vendorId, user);
+  const filter = {
+    vendorId: vendorIds.length > 1 ? { $in: vendorIds } : vendorIds[0] || vendorId,
+  };
 
-  if (status) {
+  if (status && status !== "all") {
     filter.status = status;
   }
 
-  const skip = (Math.max(1, Number(page)) - 1) * Math.max(1, Number(limit));
-  const numericLimit = Math.min(50, Math.max(1, Number(limit)));
+  if (search && String(search).trim()) {
+    const s = String(search).trim();
+    filter.$or = [
+      { title: { $regex: s, $options: "i" } },
+      { "location.city": { $regex: s, $options: "i" } },
+      { "location.area": { $regex: s, $options: "i" } },
+    ];
+  }
+
+  const numericPage = Math.max(1, Number(page) || 1);
+  const requestedLimit = Number(limit);
+  // Default to 100 listings so vendors can view all properties smoothly without cutoffs, maximum 500
+  const numericLimit = requestedLimit > 0 ? Math.min(500, requestedLimit) : 100;
+  const skip = (numericPage - 1) * numericLimit;
 
   const [listings, total] = await Promise.all([
     Listing.find(filter)
@@ -263,8 +354,8 @@ export const getVendorListings = async (vendorId, query = {}) => {
     listings: listings.map(toVendorListingDTO),
     pagination: {
       total,
-      page: Number(page),
-      pages: Math.ceil(total / numericLimit),
+      page: numericPage,
+      pages: Math.ceil(total / numericLimit) || 1,
       limit: numericLimit,
     },
   };
@@ -380,8 +471,12 @@ export const createVendorListing = async (vendorId, data, user) => {
  * Vendor: Update own listing
  * Non-negotiable: If already live, editing forces status="pending_review" and isLive=false
  */
-export const updateVendorListing = async (listingId, vendorId, data, user) => {
-  const listing = await Listing.findOne({ _id: listingId, vendorId });
+export const updateVendorListing = async (listingId, vendorId, data, user = null) => {
+  const vendorIds = await resolveVendorIds(vendorId, user);
+  const listing = await Listing.findOne({
+    _id: listingId,
+    vendorId: vendorIds.length > 1 ? { $in: vendorIds } : vendorIds[0] || vendorId,
+  });
   if (!listing) {
     throw new Error("Listing not found or access denied.");
   }
@@ -390,7 +485,9 @@ export const updateVendorListing = async (listingId, vendorId, data, user) => {
 
   // Apply updates
   Object.assign(listing, data);
-  listing.vendorId = vendorId; // ensure vendorId cannot be tampered
+  if (!listing.vendorId || !vendorIds.some((vId) => vId.toString() === listing.vendorId.toString())) {
+    listing.vendorId = vendorId;
+  }
   listing.lastEditedBy = vendorId;
 
   // If it was live, demote to pending review
@@ -429,6 +526,70 @@ export const updateVendorListing = async (listingId, vendorId, data, user) => {
 };
 
 /**
+ * Ensures vendor details (name, businessName, email, phone) are accurately resolved
+ * across MarketplaceUser and Auth collections for all listings.
+ */
+export const attachVendorDetails = async (listings) => {
+  if (!listings || !listings.length) return listings;
+
+  const missingVendorIds = [];
+  for (const l of listings) {
+    const v = l.vendorId;
+    if (
+      !v ||
+      mongoose.Types.ObjectId.isValid(v) ||
+      typeof v === "string" ||
+      (!v.businessName && !v.name && !v.fullName)
+    ) {
+      const rawId = v?._id || v;
+      if (rawId && mongoose.Types.ObjectId.isValid(rawId)) {
+        missingVendorIds.push(new mongoose.Types.ObjectId(rawId));
+      }
+    }
+  }
+
+  if (missingVendorIds.length > 0) {
+    const [mUsers, aUsers] = await Promise.all([
+      User.find({ _id: { $in: missingVendorIds } }).select("fullName name email businessName phone").lean(),
+      Auth.find({ _id: { $in: missingVendorIds } }).select("fullName name email businessName phone").lean(),
+    ]);
+
+    const vendorMap = new Map();
+    for (const u of aUsers) {
+      vendorMap.set(u._id.toString(), {
+        _id: u._id.toString(),
+        id: u._id.toString(),
+        name: u.businessName || u.fullName || u.name || "Verified Coworking Partner",
+        fullName: u.fullName || u.name || "Verified Coworking Partner",
+        businessName: u.businessName || u.fullName || u.name || "Verified Coworking Partner",
+        email: u.email || "",
+        phone: u.phone || "",
+      });
+    }
+    for (const u of mUsers) {
+      vendorMap.set(u._id.toString(), {
+        _id: u._id.toString(),
+        id: u._id.toString(),
+        name: u.businessName || u.name || u.fullName || "Verified Coworking Partner",
+        fullName: u.name || u.fullName || "Verified Coworking Partner",
+        businessName: u.businessName || u.name || u.fullName || "Verified Coworking Partner",
+        email: u.email || "",
+        phone: u.phone || "",
+      });
+    }
+
+    for (const l of listings) {
+      const rawId = (l.vendorId?._id || l.vendorId)?.toString();
+      if (rawId && vendorMap.has(rawId)) {
+        l.vendorId = vendorMap.get(rawId);
+      }
+    }
+  }
+
+  return listings;
+};
+
+/**
  * SuperAdmin: Get all listings
  */
 export const getAdminListings = async (query = {}) => {
@@ -437,18 +598,48 @@ export const getAdminListings = async (query = {}) => {
 
   if (status) filter.status = status;
   if (isLive !== undefined) filter.isLive = isLive === "true" || isLive === true;
-  if (search) {
+
+  if (search && String(search).trim()) {
+    const s = String(search).trim();
     filter.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { "location.city": { $regex: search, $options: "i" } },
-      { "location.area": { $regex: search, $options: "i" } },
+      { title: { $regex: s, $options: "i" } },
+      { "location.city": { $regex: s, $options: "i" } },
+      { "location.area": { $regex: s, $options: "i" } },
     ];
+
+    // Also match listings whose vendor name or email matches the search query
+    try {
+      const [matchedUsers, matchedAuths] = await Promise.all([
+        User.find({
+          $or: [
+            { name: { $regex: s, $options: "i" } },
+            { businessName: { $regex: s, $options: "i" } },
+            { email: { $regex: s, $options: "i" } },
+          ],
+        }).select("_id").lean(),
+        Auth.find({
+          $or: [
+            { fullName: { $regex: s, $options: "i" } },
+            { name: { $regex: s, $options: "i" } },
+            { businessName: { $regex: s, $options: "i" } },
+            { email: { $regex: s, $options: "i" } },
+          ],
+        }).select("_id").lean(),
+      ]);
+      const matchedVendorIds = [
+        ...matchedUsers.map((u) => u._id),
+        ...matchedAuths.map((a) => a._id),
+      ];
+      if (matchedVendorIds.length > 0) {
+        filter.$or.push({ vendorId: { $in: matchedVendorIds } });
+      }
+    } catch {}
   }
 
   const skip = (Math.max(1, Number(page)) - 1) * Math.max(1, Number(limit));
   const numericLimit = Math.min(100, Math.max(1, Number(limit)));
 
-  const [listings, total] = await Promise.all([
+  const [rawListings, total] = await Promise.all([
     Listing.find(filter)
       .populate("vendorId", "fullName name email businessName phone")
       .populate("categoryId", "name slug icon")
@@ -458,6 +649,8 @@ export const getAdminListings = async (query = {}) => {
       .limit(numericLimit),
     Listing.countDocuments(filter),
   ]);
+
+  const listings = await attachVendorDetails(rawListings);
 
   return {
     listings: listings.map(toAdminListingDTO),
@@ -662,8 +855,12 @@ export const deleteListingByAdmin = async (listingId, adminUser) => {
 /**
  * Vendor: Get single listing by ID
  */
-export const getVendorListingById = async (listingId, vendorId) => {
-  const listing = await Listing.findOne({ _id: listingId, vendorId })
+export const getVendorListingById = async (listingId, vendorId, user = null) => {
+  const vendorIds = await resolveVendorIds(vendorId, user);
+  const listing = await Listing.findOne({
+    _id: listingId,
+    vendorId: vendorIds.length > 1 ? { $in: vendorIds } : vendorIds[0] || vendorId,
+  })
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
     .populate("serviceIds", "name size price unit description isGlobal")
@@ -679,16 +876,17 @@ export const getVendorListingById = async (listingId, vendorId) => {
  * SuperAdmin: Get single listing by ID (full details)
  */
 export const getAdminListingById = async (listingId) => {
-  const listing = await Listing.findById(listingId)
+  const rawListing = await Listing.findById(listingId)
     .populate("vendorId", "fullName name email businessName phone")
     .populate("categoryId", "name slug icon")
     .populate("amenityIds", "name icon")
     .populate("serviceIds", "name size price unit description isGlobal")
     .populate("media.mediaId", "secureUrl width height format");
 
-  if (!listing) {
+  if (!rawListing) {
     throw new Error("Listing not found.");
   }
+  const [listing] = await attachVendorDetails([rawListing]);
   return toAdminListingDTO(listing);
 };
 
@@ -731,21 +929,22 @@ export const createAdminListing = async (data, adminUser) => {
 /**
  * Vendor: Analytics
  */
-export const getVendorAnalytics = async (vendorId) => {
-  const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
+export const getVendorAnalytics = async (vendorId, user = null) => {
+  const vendorIds = await resolveVendorIds(vendorId, user);
+  const vendorFilter = vendorIds.length > 1 ? { $in: vendorIds } : vendorIds[0] || vendorId;
 
   const [totalListings, liveListings, pendingListings, totalServices] =
     await Promise.all([
-      Listing.countDocuments({ vendorId: vendorObjectId }),
-      Listing.countDocuments({ vendorId: vendorObjectId, isLive: true }),
-      Listing.countDocuments({ vendorId: vendorObjectId, status: "pending_review" }),
+      Listing.countDocuments({ vendorId: vendorFilter }),
+      Listing.countDocuments({ vendorId: vendorFilter, isLive: true }),
+      Listing.countDocuments({ vendorId: vendorFilter, status: "pending_review" }),
       Service.countDocuments({
-        $or: [{ vendorId: vendorObjectId }, { isGlobal: true }],
+        $or: [{ vendorId: vendorFilter }, { isGlobal: true }],
         isActive: true,
       }).catch(() => 0),
     ]);
 
-  const recentListings = await Listing.find({ vendorId: vendorObjectId })
+  const recentListings = await Listing.find({ vendorId: vendorFilter })
     .populate("categoryId", "name")
     .sort({ updatedAt: -1 })
     .limit(5)

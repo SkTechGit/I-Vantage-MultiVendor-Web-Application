@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import "../users/user.model.js";
+import "../auth/auth.model.js";
 
 const marketplaceServiceSchema = new mongoose.Schema(
   {
@@ -33,7 +35,7 @@ const marketplaceServiceSchema = new mongoose.Schema(
     },
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
+      ref: "MarketplaceUser",
       default: null,
     },
     isActive: {
@@ -42,7 +44,7 @@ const marketplaceServiceSchema = new mongoose.Schema(
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
+      ref: "MarketplaceUser",
       required: true,
     },
   },

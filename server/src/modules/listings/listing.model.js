@@ -3,12 +3,14 @@ import "../marketplace-categories/category.model.js";
 import "../amenities/amenity.model.js";
 import "../marketplace-services/service.model.js";
 import "../media/media.model.js";
+import "../users/user.model.js";
+import "../auth/auth.model.js";
 
 const listingSchema = new mongoose.Schema(
   {
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
+      ref: "MarketplaceUser",
       required: true,
       index: true,
     },

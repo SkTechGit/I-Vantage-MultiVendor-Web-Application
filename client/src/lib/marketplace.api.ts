@@ -108,8 +108,13 @@ export const marketplaceApi = {
   },
 
   // Vendor Listings
-  getVendorListings: async () => {
-    const { data } = await api.get("/vendor/listings");
+  getVendorListings: async (params?: { page?: number; limit?: number; status?: string; search?: string }) => {
+    const { data } = await api.get("/vendor/listings", {
+      params: {
+        limit: 100,
+        ...params,
+      },
+    });
     return data.data;
   },
   getVendorListingById: async (id: string) => {

@@ -47,7 +47,8 @@ export const getVendorListings = async (req, res, next) => {
   try {
     const result = await listingService.getVendorListings(
       req.user._id,
-      req.query
+      req.query,
+      req.user
     );
     res.status(200).json({
       success: true,
@@ -200,7 +201,7 @@ export const deleteListingByAdmin = async (req, res, next) => {
 export const getVendorListingById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const listing = await listingService.getVendorListingById(id, req.user._id);
+    const listing = await listingService.getVendorListingById(id, req.user._id, req.user);
     res.status(200).json({
       success: true,
       data: listing,
@@ -247,7 +248,7 @@ export const createAdminListing = async (req, res, next) => {
  */
 export const getVendorAnalytics = async (req, res, next) => {
   try {
-    const data = await listingService.getVendorAnalytics(req.user._id);
+    const data = await listingService.getVendorAnalytics(req.user._id, req.user);
     res.status(200).json({
       success: true,
       data,

@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import "../users/user.model.js";
+import "../auth/auth.model.js";
 
 const marketplaceLeadSchema = new mongoose.Schema(
   {
@@ -10,7 +12,7 @@ const marketplaceLeadSchema = new mongoose.Schema(
     },
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Auth",
+      ref: "MarketplaceUser",
       index: true,
       default: null,
     },

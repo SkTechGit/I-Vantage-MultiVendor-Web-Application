@@ -10,6 +10,7 @@ import ProfessionalProfile from "../professionals/professionals.model.js";
 import ProfessionalCategory from "../professionals/professionals.category.model.js";
 import { generateUniqueSlug } from "../professionals/professionals.service.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
+import { attachVendorDetails } from "../listings/listing.service.js";
 import bcrypt from "bcryptjs";
 
 export const getDashboardStats = async () => {
@@ -49,12 +50,14 @@ export const getMarketplaceAnalytics = async () => {
     MarketplaceLead.countDocuments({ status: "new" }),
   ]);
 
-  const pendingListings = await Listing.find({ status: "pending_review" })
+  const rawPendingListings = await Listing.find({ status: "pending_review" })
     .populate("vendorId", "name businessName email phone")
     .populate("categoryId", "name")
     .sort({ createdAt: -1 })
     .limit(6)
     .lean();
+
+  const pendingListings = await attachVendorDetails(rawPendingListings);
 
   return {
     stats: {

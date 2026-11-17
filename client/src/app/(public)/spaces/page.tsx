@@ -22,6 +22,8 @@ interface Props {
     amenities?: string;
     sort?: string;
     page?: string;
+    search?: string;
+    q?: string;
   }>;
 }
 
@@ -57,6 +59,9 @@ export default async function AllSpacesPage({ searchParams }: Props) {
 
   // 2. Fetch all listings from Express backend (matches Home page dynamic inventory)
   const queryParams = new URLSearchParams();
+  if (sParams.search || sParams.q) {
+    queryParams.set("search", (sParams.search || sParams.q || "").trim());
+  }
   if (sParams.city && sParams.city.toLowerCase() !== "all") {
     queryParams.set("city", sParams.city.toLowerCase().trim());
   }

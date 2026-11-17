@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { marketplaceApi } from "@/lib/marketplace.api";
 import { useRealtimeEvent, useRealtime } from "@/context/RealtimeContext";
@@ -19,6 +19,8 @@ import {
   Loader2,
   ShieldCheck,
   Filter,
+  X,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -134,30 +136,72 @@ export default function AdminListingsPage() {
     }
   };
 
-  const filtered = listings.filter((item) => {
-    const term = search.toLowerCase();
-    const matchesSearch =
-      item.title.toLowerCase().includes(term) ||
-      item.vendorId?.name?.toLowerCase().includes(term) ||
-      item.vendorId?.businessName?.toLowerCase().includes(term) ||
-      item.location?.city?.toLowerCase().includes(term) ||
-      item.location?.area?.toLowerCase().includes(term);
+  const counts = useMemo(() => {
+    return {
+      all: listings.length,
+      live: listings.filter((l) => l.isLive).length,
+      pending: listings.filter((l) => l.status === "pending_review").length,
+      approved: listings.filter((l) => l.status === "approved").length,
+      rejected: listings.filter((l) => l.status === "rejected").length,
+    };
+  }, [listings]);
 
-    if (statusFilter === "all") return matchesSearch;
-    if (statusFilter === "live") return matchesSearch && item.isLive;
-    if (statusFilter === "pending") return matchesSearch && item.status === "pending_review";
-    if (statusFilter === "approved") return matchesSearch && item.status === "approved";
-    if (statusFilter === "rejected") return matchesSearch && item.status === "rejected";
-    return matchesSearch;
-  });
+  const adminQuickTags = [
+    { label: "Founder Quest", icon: "⚡" },
+    { label: "Get Set Office", icon: "🏢" },
+    { label: "REEON SPACES", icon: "🏢" },
+    { label: "Saket", icon: "📍" },
+    { label: "Green Park", icon: "📍" },
+    { label: "Gurugram", icon: "📍" },
+    { label: "Delhi", icon: "📍" },
+    { label: "Noida", icon: "📍" },
+  ];
+
+  const filtered = useMemo(() => {
+    const term = search.toLowerCase().trim();
+    return listings.filter((item) => {
+      const title = item.title?.toLowerCase() || "";
+      const vendorName = item.vendorId?.name?.toLowerCase() || "";
+      const vendorBiz = item.vendorId?.businessName?.toLowerCase() || "";
+      const vendorEmail = item.vendorId?.email?.toLowerCase() || "";
+      const city = item.location?.city?.toLowerCase() || "";
+      const area = item.location?.area?.toLowerCase() || "";
+      const address = item.location?.address?.toLowerCase() || "";
+      const category = item.categoryId?.name?.toLowerCase() || "";
+
+      const matchesSearch =
+        !term ||
+        title.includes(term) ||
+        vendorName.includes(term) ||
+        vendorBiz.includes(term) ||
+        vendorEmail.includes(term) ||
+        city.includes(term) ||
+        area.includes(term) ||
+        address.includes(term) ||
+        category.includes(term);
+
+      if (!matchesSearch) return false;
+      if (statusFilter === "all") return true;
+      if (statusFilter === "live") return item.isLive;
+      if (statusFilter === "pending") return item.status === "pending_review";
+      if (statusFilter === "approved") return item.status === "approved";
+      if (statusFilter === "rejected") return item.status === "rejected";
+      return true;
+    });
+  }, [listings, search, statusFilter]);
 
   return (
     <div className="space-y-6 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-[#0A1F66]">
-            All Coworking Properties (Cross-Vendor)
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-black text-[#0A1F66]">
+              All Coworking Properties (Cross-Vendor)
+            </h2>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#1E5BFF] border border-blue-200">
+              {listings.length} Total Spaces
+            </span>
+          </div>
           <p className="text-xs text-slate-500 mt-1">
             SuperAdmin central database of all partner spaces across all cities with full CRUD & live toggle permissions.
           </p>
@@ -167,43 +211,94 @@ export default function AdminListingsPage() {
           href="/admin/approvals"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#D99000] text-white text-xs font-bold hover:brightness-110 transition shadow-sm self-start sm:self-auto"
         >
-          <Clock className="w-4 h-4" /> Review Queue ({listings.filter((l) => l.status === "pending_review").length})
+          <Clock className="w-4 h-4" /> Review Queue ({counts.pending})
         </Link>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by property, vendor, city, area..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full text-xs pl-10 pr-4 py-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-[#1E5BFF]"
-          />
+      {/* Ultra-Premium Search and Filter Control Center */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xs border border-slate-200/90 space-y-3.5">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
+          <div className="relative w-full lg:max-w-md">
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-[#1E5BFF]" />
+            <input
+              type="text"
+              placeholder="Search by property title, vendor name, email, city, area..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full text-xs sm:text-sm pl-10 pr-24 py-2.5 sm:py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#1E5BFF] focus:border-[#1E5BFF] transition-all bg-slate-50/70 focus:bg-white font-medium"
+            />
+            <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5">
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#0A1F66] text-white">
+                {filtered.length} found
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto">
+            {[
+              { id: "all", label: "All Properties", count: counts.all },
+              { id: "live", label: "Live Online", count: counts.live },
+              { id: "pending", label: "Pending Review", count: counts.pending },
+              { id: "approved", label: "Approved", count: counts.approved },
+              { id: "rejected", label: "Rejected", count: counts.rejected },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+                  statusFilter === tab.id
+                    ? "bg-[#0A1F66] text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-100 border border-transparent"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    statusFilter === tab.id
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-          {[
-            { id: "all", label: "All Properties" },
-            { id: "live", label: "Live Online" },
-            { id: "pending", label: "Pending Review" },
-            { id: "approved", label: "Approved" },
-            { id: "rejected", label: "Rejected" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                statusFilter === tab.id
-                  ? "bg-[#0A1F66] text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Quick Filter Tag Chips */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-2.5 border-t border-slate-100 text-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-[#D99000]" /> Quick Search:
+          </span>
+          {adminQuickTags.map((item) => {
+            const isActive = search.toLowerCase().trim() === item.label.toLowerCase();
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => setSearch(isActive ? "" : item.label)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                  isActive
+                    ? "bg-[#1E5BFF] text-white font-bold"
+                    : "bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#1E5BFF] border border-transparent hover:border-blue-200"
+                }`}
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -270,11 +365,13 @@ export default function AdminListingsPage() {
                       </td>
 
                       <td className="p-4">
-                        <div className="font-bold text-slate-900">
-                          {item.vendorId?.businessName || item.vendorId?.name || "Unknown Vendor"}
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="truncate max-w-[220px]" title={item.vendorId?.businessName || item.vendorId?.name || "Verified Coworking Partner"}>
+                            {item.vendorId?.businessName || item.vendorId?.name || "Verified Coworking Partner"}
+                          </span>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          {item.vendorId?.email}
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          {item.vendorId?.email || "Coworking Partner"}
                         </div>
                       </td>
 

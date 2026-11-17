@@ -1,4 +1,6 @@
 import MarketplaceService from "./service.model.js";
+import User from "../users/user.model.js";
+import Auth from "../auth/auth.model.js";
 
 /**
  * Infer billing unit dynamically per platform rules:
@@ -57,8 +59,19 @@ export const inferServiceUnit = (name = "", categoryName = "", fallback = "month
  */
 export const getVendorServices = async (req, res, next) => {
   try {
+    const vendorIds = [req.user._id];
+    if (req.user?.email) {
+      const normalizedEmail = req.user.email.toLowerCase().trim();
+      const [uList, aList] = await Promise.all([
+        User.find({ email: normalizedEmail }).select("_id").lean(),
+        Auth.find({ email: normalizedEmail }).select("_id").lean(),
+      ]);
+      uList.forEach((u) => vendorIds.push(u._id));
+      aList.forEach((a) => vendorIds.push(a._id));
+    }
+
     const services = await MarketplaceService.find({
-      $or: [{ isGlobal: true }, { vendorId: req.user._id }],
+      $or: [{ isGlobal: true }, { vendorId: { $in: vendorIds } }],
       isActive: true,
     }).sort("-createdAt");
 
