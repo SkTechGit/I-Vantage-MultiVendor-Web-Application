@@ -75,8 +75,10 @@ export default async function AllSpacesPage({ searchParams }: Props) {
   if (sParams.maxPrice) queryParams.set("maxPrice", sParams.maxPrice);
   if (sParams.capacity) queryParams.set("capacity", sParams.capacity);
   if (sParams.amenities) queryParams.set("amenities", sParams.amenities);
-  if (sParams.page) queryParams.set("page", sParams.page);
-  queryParams.set("limit", "50"); // Load all platform listings dynamically (identical to Home Page)
+  const PAGE_LIMIT = 12;
+  const page = Math.max(1, Number(sParams.page) || 1);
+  queryParams.set("page", String(page));
+  queryParams.set("limit", String(PAGE_LIMIT));
 
   let dbListings: any[] = [];
   let totalCount = 0;
@@ -95,11 +97,9 @@ export default async function AllSpacesPage({ searchParams }: Props) {
   }
 
   const categories = allCategories;
-  const page = Math.max(1, Number(sParams.page) || 1);
-  const limit = 50;
   const listings = dbListings;
   const effectiveTotal = totalCount;
-  const totalPages = Math.max(1, Math.ceil(effectiveTotal / limit));
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / PAGE_LIMIT));
 
   // Extract distinct areas dynamically from current listing set
   const dbAreas = Array.from(

@@ -428,50 +428,91 @@ export default function MarketplaceListingCards({
       )}
 
       {/* Numbered Pagination Bar */}
-      {totalPages > 1 && (
-        <div className="pt-8 flex items-center justify-center gap-2">
-          {/* Previous */}
-          {page > 1 ? (
-            <Link
-              href={buildPageUrl(page - 1)}
-              className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1 shadow-2xs"
-            >
-              <ChevronLeft className="w-4 h-4" /> Previous
-            </Link>
-          ) : (
-            <span className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-300 text-xs font-bold flex items-center gap-1 cursor-not-allowed">
-              <ChevronLeft className="w-4 h-4" /> Previous
-            </span>
-          )}
+      {totalPages > 1 && !searchQuery && (
+        <div className="pt-8 flex flex-col items-center gap-4">
+          {/* Page Info */}
+          <p className="text-xs text-slate-500 font-medium">
+            Page <span className="font-bold text-slate-800">{page}</span> of{" "}
+            <span className="font-bold text-slate-800">{totalPages}</span>
+            {" · "}showing <span className="font-bold text-slate-800">{listings.length}</span> of{" "}
+            <span className="font-bold text-slate-800">{effectiveTotal}</span> spaces
+          </p>
 
-          {/* Numbered Pages */}
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={buildPageUrl(p)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition ${
-                page === p
-                  ? "bg-[#0A1F66] text-white shadow-md shadow-blue-900/20"
-                  : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-2xs"
-              }`}
-            >
-              {p}
-            </Link>
-          ))}
+          {/* Pagination Controls */}
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {/* Previous */}
+            {page > 1 ? (
+              <Link
+                href={buildPageUrl(page - 1)}
+                className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] text-xs font-bold flex items-center gap-1 shadow-2xs transition-all duration-200"
+              >
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </Link>
+            ) : (
+              <span className="px-3 py-2 rounded-xl border border-slate-100 bg-slate-50 text-slate-300 text-xs font-bold flex items-center gap-1 cursor-not-allowed select-none">
+                <ChevronLeft className="w-4 h-4" /> Previous
+              </span>
+            )}
 
-          {/* Next */}
-          {page < totalPages ? (
-            <Link
-              href={buildPageUrl(page + 1)}
-              className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1 shadow-2xs"
-            >
-              Next <ChevronRight className="w-4 h-4" />
-            </Link>
-          ) : (
-            <span className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-300 text-xs font-bold flex items-center gap-1 cursor-not-allowed">
-              Next <ChevronRight className="w-4 h-4" />
-            </span>
-          )}
+            {/* Smart Page Numbers with Ellipsis */}
+            {(() => {
+              const delta = 2; // pages to show around current
+              const pages: (number | "...")[] = [];
+              const addPage = (n: number) => {
+                if (!pages.includes(n)) pages.push(n);
+              };
+
+              addPage(1);
+              for (let i = Math.max(2, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
+                addPage(i);
+              }
+              if (totalPages > 1) addPage(totalPages);
+
+              const result: (number | "...")[] = [];
+              let prev: number | "..." | null = null;
+              for (const p of pages) {
+                if (prev !== null && typeof p === "number" && typeof prev === "number" && p - prev > 1) {
+                  result.push("...");
+                }
+                result.push(p);
+                prev = p;
+              }
+
+              return result.map((p, i) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${i}`} className="w-9 h-9 flex items-center justify-center text-xs text-slate-400 select-none">
+                    …
+                  </span>
+                ) : (
+                  <Link
+                    key={p}
+                    href={buildPageUrl(p)}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                      page === p
+                        ? "bg-[#0A1F66] text-white shadow-md shadow-blue-900/20 scale-105"
+                        : "bg-white border border-slate-200 text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] shadow-2xs"
+                    }`}
+                  >
+                    {p}
+                  </Link>
+                )
+              );
+            })()}
+
+            {/* Next */}
+            {page < totalPages ? (
+              <Link
+                href={buildPageUrl(page + 1)}
+                className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] text-xs font-bold flex items-center gap-1 shadow-2xs transition-all duration-200"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="px-3 py-2 rounded-xl border border-slate-100 bg-slate-50 text-slate-300 text-xs font-bold flex items-center gap-1 cursor-not-allowed select-none">
+                Next <ChevronRight className="w-4 h-4" />
+              </span>
+            )}
+          </div>
         </div>
       )}
 
