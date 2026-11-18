@@ -1,13 +1,24 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import Container from "@/components/common/Container";
+import DirectoryExplorer from "@/components/professionals/listing/DirectoryExplorer";
 import ProfileHero from "@/components/professionals/profile/ProfileHero";
 import ProfileDetailView from "@/components/professionals/profile/ProfileDetailView";
 import { professionalsApi, ProfessionalProfileItem } from "@/lib/professionals.api";
+import { ChevronRight, ShieldCheck } from "lucide-react";
 
 export const revalidate = 60;
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{
+    page?: string;
+    city?: string;
+    q?: string;
+    mode?: string;
+    sort?: string;
+  }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -19,6 +30,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   try {
+    // 1. Check if this slug is a Category first
+    const categories = (await professionalsApi.getCategories().catch(() => [])) || [];
+    const matchedCategory = categories.find((c: any) => c.slug === decodedSlug);
+
+    if (matchedCategory) {
+      const categoryTitle =
+        matchedCategory.label ||
+        matchedCategory.name ||
+        decodedSlug.replace(/-/g, " ").toUpperCase();
+      const categoryDesc =
+        matchedCategory.description ||
+        `Connect directly with vetted ${categoryTitle} across India. Statutorily verified credentials, transparent advisory fee ranges, and boardroom consultations with zero brokerage.`;
+
+      const title = `Top Verified ${categoryTitle} in India | i-VANTAGE Network`;
+      const description = categoryDesc.slice(0, 160);
+      const canonicalUrl = `https://i-vantage.in/professionals/${decodedSlug}`;
+
+      return {
+        title,
+        description,
+        alternates: {
+          canonical: canonicalUrl,
+        },
+        robots: {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+          },
+        },
+        openGraph: {
+          title,
+          description,
+          url: canonicalUrl,
+          siteName: "i-VANTAGE Business Hub",
+          locale: "en_IN",
+          type: "website",
+        },
+        twitter: {
+          card: "summary_large_image",
+          title,
+          description,
+        },
+      };
+    }
+
+    // 2. Otherwise check for Individual Professional profile
     const p = await professionalsApi.getBySlug(decodedSlug);
     if (!p) return { title: "Professional Not Found | i-VANTAGE" };
 
@@ -26,10 +88,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const categorySlug = p.categoryId?.slug || "";
     const isTaxOrGST = categorySlug.includes("tax") || categorySlug.includes("gst") || Boolean(p.gstin);
     const roleTitle = p.designation || (isTaxOrGST ? "GST & Taxation Consultant" : categoryName);
-    
+
     // Exact SEO format: {Role} in {City} – {FullName} | i-VANTAGE
     const title = `${roleTitle} in ${p.city} – ${p.fullName} | i-VANTAGE`;
-    
+
     // Dynamic high-converting SEO description
     const servicesSummary = Array.isArray(p.services) && p.services.length > 0
       ? p.services.map((s) => s.title).slice(0, 4).join(", ")
@@ -85,14 +147,176 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ProfessionalProfilePage({ params }: Props) {
+export default async function ProfessionalProfileOrCategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sParams = searchParams ? await searchParams : {};
   const decodedSlug = decodeURIComponent(slug).trim();
 
   if (decodedSlug === "location" || decodedSlug === "category") {
     redirect("/professionals");
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Branch 1: Check if the slug matches a Professional Category
+  // ─────────────────────────────────────────────────────────────────────────
+  let categories: any[] = [];
+  try {
+    categories = (await professionalsApi.getCategories()) || [];
+  } catch (err) {
+    console.error("Failed to load categories:", err);
+  }
+
+  const categoryDoc = categories.find((c: any) => c.slug === decodedSlug);
+
+  if (categoryDoc) {
+    const initialPage = Math.max(1, parseInt(sParams?.page || "1", 10) || 1);
+    let initialProfessionals: any[] = [];
+    let initialTotal = 0;
+    let facets = { cities: ["Gurugram", "Delhi", "Noida", "Bengaluru", "Mumbai"] };
+
+    try {
+      const [listRes, facetRes] = await Promise.all([
+        professionalsApi.list({
+          category: decodedSlug,
+          limit: 12,
+          page: initialPage,
+          city: sParams?.city,
+          q: sParams?.q,
+          mode: sParams?.mode,
+          sort: sParams?.sort,
+        }),
+        professionalsApi.getFacets().catch(() => null),
+      ]);
+
+      if (listRes && listRes.data) {
+        initialProfessionals = listRes.data;
+        initialTotal = listRes.meta?.total ?? listRes.total ?? listRes.data.length ?? 0;
+      }
+      if (facetRes) {
+        facets = facetRes;
+      }
+    } catch (err) {
+      console.error("Error fetching category professionals:", err);
+    }
+
+    const categoryTitle =
+      categoryDoc.label || categoryDoc.name || decodedSlug.replace(/-/g, " ").toUpperCase();
+    const categoryDesc =
+      categoryDoc.description ||
+      `Explore top vetted ${categoryTitle} across India with verified credentials and transparent consultation pricing.`;
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          "@id": `https://i-vantage.in/professionals/${decodedSlug}`,
+          name: `Verified ${categoryTitle} in India`,
+          description: categoryDesc,
+          url: `https://i-vantage.in/professionals/${decodedSlug}`,
+          mainEntity: {
+            "@type": "ItemList",
+            itemListElement: initialProfessionals.map((item, idx) => ({
+              "@type": "ListItem",
+              position: idx + 1,
+              url: `https://i-vantage.in/professionals/${item.slug}`,
+              name: item.fullName,
+            })),
+          },
+        },
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://i-vantage.in",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Professionals Network",
+              item: "https://i-vantage.in/professionals",
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: categoryTitle,
+              item: `https://i-vantage.in/professionals/${decodedSlug}`,
+            },
+          ],
+        },
+      ],
+    };
+
+    return (
+      <div className="bg-[#F8FAFC] min-h-screen pb-24">
+        {/* Schema.org Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
+        {/* Category Header */}
+        <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-[#F8FAFC] border-b border-slate-200/70 pt-8 pb-12 sm:pt-10 sm:pb-14">
+          <Container>
+            {/* Breadcrumbs */}
+            <nav aria-label="Breadcrumb" className="mb-4">
+              <ol className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <li>
+                  <Link href="/" className="hover:text-[#1E5BFF] transition-colors">
+                    Home
+                  </Link>
+                </li>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                <li>
+                  <Link href="/professionals" className="hover:text-[#1E5BFF] transition-colors">
+                    Professionals
+                  </Link>
+                </li>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                <li className="text-[#0A1F66] font-bold truncate max-w-[200px]">
+                  {categoryTitle}
+                </li>
+              </ol>
+            </nav>
+
+            <div className="max-w-3xl space-y-3">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/80 bg-blue-50/80 px-3 py-1 text-xs font-bold text-[#1E5BFF]">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>VERIFIED PRACTICE DIRECTORY</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0A1F66] tracking-tight">
+                Verified {categoryTitle}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
+                {categoryDesc}
+              </p>
+            </div>
+          </Container>
+        </section>
+
+        {/* Main Directory Area */}
+        <Container className="mt-8">
+          <DirectoryExplorer
+            initialProfessionals={initialProfessionals}
+            initialTotal={initialTotal}
+            categories={categories}
+            facets={facets}
+            defaultCategorySlug={decodedSlug}
+            initialPage={initialPage}
+          />
+        </Container>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Branch 2: Individual Professional Profile
+  // ─────────────────────────────────────────────────────────────────────────
   let professional: ProfessionalProfileItem | null = null;
   let relatedProfessionals: ProfessionalProfileItem[] = [];
 
@@ -196,7 +420,14 @@ export default async function ProfessionalProfilePage({ params }: Props) {
         hasOfferCatalog: {
           "@type": "OfferCatalog",
           name: "Professional Advisory Services",
-          itemListElement: (Array.isArray(p.services) && p.services.length > 0 ? p.services : (p.specializations || []).slice(0, 4).map(s => ({ title: s, description: `Statutory compliance and advisory for ${s}`, priceInr: p.consultationFeeInr }))).map((s: any, idx: number) => ({
+          itemListElement: (Array.isArray(p.services) && p.services.length > 0
+            ? p.services
+            : (p.specializations || []).slice(0, 4).map((s) => ({
+                title: s,
+                description: `Statutory compliance and advisory for ${s}`,
+                priceInr: p.consultationFeeInr,
+              }))
+          ).map((s: any, idx: number) => ({
             "@type": "Offer",
             position: idx + 1,
             itemOffered: {
@@ -242,7 +473,7 @@ export default async function ProfessionalProfilePage({ params }: Props) {
                   "@type": "ListItem",
                   position: 3,
                   name: categoryName,
-                  item: `https://i-vantage.in/professionals/category/${categorySlug}`,
+                  item: `https://i-vantage.in/professionals/${categorySlug}`,
                 },
                 {
                   "@type": "ListItem",

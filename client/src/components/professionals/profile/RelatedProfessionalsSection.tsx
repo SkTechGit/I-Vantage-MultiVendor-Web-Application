@@ -76,7 +76,7 @@ export default function RelatedProfessionalsSection({
         <div className="flex items-center gap-3">
           {categorySlug && (
             <Link
-              href={`/professionals/category/${categorySlug}`}
+              href={`/professionals/${categorySlug}`}
               className="inline-flex items-center gap-1 text-xs font-bold text-[#1E5BFF] hover:text-[#0A1F66] transition-colors whitespace-nowrap"
             >
               <span>View All {categoryName}</span>

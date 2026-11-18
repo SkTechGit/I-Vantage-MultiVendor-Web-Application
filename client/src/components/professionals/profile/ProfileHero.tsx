@@ -111,7 +111,7 @@ export default function ProfileHero({ professional, onBookClick }: Props) {
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
                 <li>
                   <Link
-                    href={`/professionals/category/${categorySlug}`}
+                    href={`/professionals/${categorySlug}`}
                     className="hover:text-[#1E5BFF] transition-colors"
                   >
                     {categoryName}

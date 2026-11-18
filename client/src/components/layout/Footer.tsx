@@ -41,12 +41,12 @@ const WORKSPACES = [
 
 // Curated Business & Legal Services (SEO Category Linking)
 const BUSINESS_SERVICES = [
-  { label: "Chartered Accountants (CA)", href: "/professionals/category/chartered-accountant" },
-  { label: "Corporate Lawyers & Advocates", href: "/professionals/category/legal-consultant" },
-  { label: "Tax & GST Consultants", href: "/professionals/category/tax-gst-consultant" },
-  { label: "Company Secretaries (CS)", href: "/professionals/category/company-secretary" },
-  { label: "Virtual CFOs & Advisors", href: "/professionals/category/virtual-cfo-advisor" },
-  { label: "HR & Compliance Advisors", href: "/professionals/category/hr-professional" },
+  { label: "Chartered Accountants (CA)", href: "/professionals/chartered-accountant" },
+  { label: "Corporate Lawyers & Advocates", href: "/professionals/legal-consultant" },
+  { label: "Tax & GST Consultants", href: "/professionals/tax-gst-consultant" },
+  { label: "Company Secretaries (CS)", href: "/professionals/company-secretary" },
+  { label: "Virtual CFOs & Advisors", href: "/professionals/virtual-cfo-advisor" },
+  { label: "HR & Compliance Advisors", href: "/professionals/hr-professional" },
   { label: "All Verified Professionals", href: "/professionals" },
 ];
 
