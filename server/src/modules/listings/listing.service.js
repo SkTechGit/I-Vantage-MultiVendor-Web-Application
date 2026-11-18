@@ -33,11 +33,21 @@ export const toPublicListingDTO = (listing) => {
   });
 
   const formattedServices = (l.serviceIds || []).map((s) => {
-    if (!s || typeof s !== "object") return s;
+    if (
+      !s ||
+      typeof s !== "object" ||
+      s instanceof mongoose.Types.ObjectId ||
+      s._bsontype === "ObjectID" ||
+      !s.name
+    ) {
+      return s?._id?.toString() || s?.toString?.() || s;
+    }
     const sObj = s.toObject ? s.toObject() : s;
     const unit = sObj.unit || inferServiceUnit(sObj.name, l.categoryId?.name);
     return {
       ...sObj,
+      _id: sObj._id?.toString?.() || sObj._id,
+      id: sObj._id?.toString?.() || sObj.id,
       unit,
     };
   });
@@ -82,11 +92,21 @@ export const toVendorListingDTO = (listing) => {
   const idStr = l._id?.toString() || l.id?.toString();
 
   const formattedServices = (l.serviceIds || []).map((s) => {
-    if (!s || typeof s !== "object") return s;
+    if (
+      !s ||
+      typeof s !== "object" ||
+      s instanceof mongoose.Types.ObjectId ||
+      s._bsontype === "ObjectID" ||
+      !s.name
+    ) {
+      return s?._id?.toString() || s?.toString?.() || s;
+    }
     const sObj = s.toObject ? s.toObject() : s;
     const unit = sObj.unit || inferServiceUnit(sObj.name, l.categoryId?.name);
     return {
       ...sObj,
+      _id: sObj._id?.toString?.() || sObj._id,
+      id: sObj._id?.toString?.() || sObj.id,
       unit,
     };
   });
@@ -464,6 +484,13 @@ export const createVendorListing = async (vendorId, data, user) => {
     vendorEmail: user?.email,
   }).catch((mailErr) => console.error("Listing submission email error:", mailErr.message));
 
+  await newListing.populate([
+    { path: "categoryId", select: "name slug icon" },
+    { path: "serviceIds", select: "name size price unit description isGlobal" },
+    { path: "amenityIds", select: "name icon" },
+    { path: "media.mediaId", select: "secureUrl width height format" },
+  ]);
+
   return toVendorListingDTO(newListing);
 };
 
@@ -521,6 +548,13 @@ export const updateVendorListing = async (listingId, vendorId, data, user = null
       });
     } catch {}
   }
+
+  await listing.populate([
+    { path: "categoryId", select: "name slug icon" },
+    { path: "serviceIds", select: "name size price unit description isGlobal" },
+    { path: "amenityIds", select: "name icon" },
+    { path: "media.mediaId", select: "secureUrl width height format" },
+  ]);
 
   return toVendorListingDTO(listing);
 };
@@ -869,6 +903,7 @@ export const getVendorListingById = async (listingId, vendorId, user = null) => 
   if (!listing) {
     throw new Error("Listing not found or access denied.");
   }
+
   return toVendorListingDTO(listing);
 };
 

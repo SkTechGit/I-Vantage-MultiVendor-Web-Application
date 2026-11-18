@@ -11,6 +11,33 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Mongoose Schema Validation Error
+  if (err.name === "ValidationError") {
+    const message =
+      Object.values(err.errors || {})
+        .map((e) => e.message)
+        .join(", ") || err.message;
+    return res.status(400).json({
+      success: false,
+      code: "VALIDATION_ERROR",
+      message,
+    });
+  }
+
+  // Common Business / Access Errors (Avoid generic 500)
+  if (
+    err.message &&
+    (err.message.includes("not found") ||
+      err.message.includes("access denied") ||
+      err.message.includes("Access denied"))
+  ) {
+    return res.status(404).json({
+      success: false,
+      code: "NOT_FOUND_OR_DENIED",
+      message: err.message,
+    });
+  }
+
   // Custom API Error
   if (err.statusCode) {
     return res.status(err.statusCode).json({
