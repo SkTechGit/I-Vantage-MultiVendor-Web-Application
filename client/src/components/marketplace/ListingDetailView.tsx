@@ -530,14 +530,16 @@ export default function ListingDetailView({
   );
 
   const scrollToForm = () => {
-    const el = document.getElementById("enquiry-booking-section");
+    const el =
+      document.getElementById("sticky-lead-form-wrapper") ||
+      document.getElementById("enquiry-booking-section");
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-32 sm:pb-28 lg:pb-16 text-slate-800 overflow-x-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] pb-32 sm:pb-28 lg:pb-16 text-slate-800 overflow-x-clip">
       {/* 1. Breadcrumbs Bar */}
       <div className="bg-white border-b border-slate-200/80 py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -871,7 +873,7 @@ export default function ListingDetailView({
         </div>
 
         {/* 4. Two-Column Layout (Left: Content Sections, Right: Sticky Booking/Enquiry) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           {/* LEFT COLUMN: Seating Options, Why Us, Location, Amenities, House Rules, FAQs */}
           <div className="lg:col-span-2 space-y-10">
             {/* A. SELECT A SEATING OPTION (myHQ Core Component) */}
@@ -1437,10 +1439,10 @@ export default function ListingDetailView({
             </section>
           </div>
 
-          {/* RIGHT COLUMN: Sticky Booking / Enquiry Widget (Exact myHQ Structure) */}
+          {/* RIGHT COLUMN: Booking & Sticky Lead Enquiry Column */}
           <div
             id="enquiry-booking-section"
-            className="lg:sticky lg:top-24 space-y-4"
+            className="lg:col-span-1 self-stretch flex flex-col space-y-4 scroll-mt-20"
           >
             {/* Widget 1: Dynamic Plan Booking Summary Card */}
             <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-md space-y-4">
@@ -1563,14 +1565,19 @@ export default function ListingDetailView({
               </div>
             </div>
 
-            {/* Widget 3: Direct Partner Enquiry Form (Pre-populated with activePlan) */}
-            <ListingEnquiryForm
-              listingId={item._id ? item._id.toString() : String(item.id)}
-              listingTitle={item.title}
-              selectedPlan={activePlan.name}
-              planPrice={activePlan.price}
-              planUnit={activePlan.unit}
-            />
+            {/* Widget 3: Direct Partner Enquiry Lead Form (Sticky at main navbar top margin) */}
+            <div
+              id="sticky-lead-form-wrapper"
+              className="lg:sticky lg:top-[76px] z-20 space-y-4 max-h-[calc(100vh-86px)] overflow-y-auto no-scrollbar scroll-mt-20 transition-all duration-200"
+            >
+              <ListingEnquiryForm
+                listingId={item._id ? item._id.toString() : String(item.id)}
+                listingTitle={item.title}
+                selectedPlan={activePlan.name}
+                planPrice={activePlan.price}
+                planUnit={activePlan.unit}
+              />
+            </div>
           </div>
         </div>
       </div>
