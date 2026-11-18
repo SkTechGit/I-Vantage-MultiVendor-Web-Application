@@ -9,6 +9,7 @@ export const revalidate = 60;
 
 interface Props {
   params: Promise<{ city: string }>;
+  searchParams?: Promise<{ page?: string; category?: string; q?: string }>;
 }
 
 const POPULAR_HUBS = [
@@ -74,8 +75,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function LocationProfessionalsPage({ params }: Props) {
+export default async function LocationProfessionalsPage({ params, searchParams }: Props) {
   const { city } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const initialPage = Math.max(1, parseInt(sParams?.page || "1", 10) || 1);
   const cityName = formatCityName(city);
 
   let categories: any[] = [];
@@ -87,21 +90,27 @@ export default async function LocationProfessionalsPage({ params }: Props) {
   try {
     const [catRes, listRes, facetRes] = await Promise.all([
       professionalsApi.getCategories(),
-      professionalsApi.list({ city: cityName, limit: 12 }),
+      professionalsApi.list({
+        city: cityName,
+        limit: 12,
+        page: initialPage,
+        category: sParams?.category,
+        q: sParams?.q,
+      }),
       professionalsApi.getFacets().catch(() => null),
     ]);
 
     categories = catRes || [];
     if (listRes && listRes.data && listRes.data.length > 0) {
       initialProfessionals = listRes.data;
-      initialTotal = listRes.total || listRes.data.length;
+      initialTotal = listRes.meta?.total ?? listRes.total ?? listRes.data.length ?? 0;
     } else {
       // Graceful fallback: If no local practitioners are registered yet in this city,
       // load verified practitioners offering Pan-India online consultation for clients in this city!
-      const onlineFallbackRes = await professionalsApi.list({ limit: 12, mode: "ONLINE" }).catch(() => null);
+      const onlineFallbackRes = await professionalsApi.list({ limit: 12, mode: "ONLINE", page: initialPage }).catch(() => null);
       if (onlineFallbackRes && onlineFallbackRes.data && onlineFallbackRes.data.length > 0) {
         initialProfessionals = onlineFallbackRes.data;
-        initialTotal = onlineFallbackRes.total || onlineFallbackRes.data.length;
+        initialTotal = onlineFallbackRes.meta?.total ?? onlineFallbackRes.total ?? onlineFallbackRes.data.length ?? 0;
         isFallbackOnline = true;
       }
     }
@@ -249,6 +258,7 @@ export default async function LocationProfessionalsPage({ params }: Props) {
           categories={categories}
           facets={facets}
           defaultCity={isFallbackOnline ? "" : cityName}
+          initialPage={initialPage}
         />
       </Container>
     </div>

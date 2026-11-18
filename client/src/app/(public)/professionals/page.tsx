@@ -41,7 +41,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function ProfessionalsPage() {
+interface Props {
+  searchParams?: Promise<{
+    page?: string;
+    category?: string;
+    city?: string;
+    q?: string;
+  }>;
+}
+
+export default async function ProfessionalsPage({ searchParams }: Props) {
+  const sParams = searchParams ? await searchParams : {};
+  const initialPage = Math.max(1, parseInt(sParams?.page || "1", 10) || 1);
+
   // Fetch initial directory data on server
   let initialProfessionals = [];
   let initialTotal = 0;
@@ -50,14 +62,20 @@ export default async function ProfessionalsPage() {
 
   try {
     const [listRes, catRes, facetRes] = await Promise.all([
-      professionalsApi.list({ limit: 12 }),
+      professionalsApi.list({
+        limit: 12,
+        page: initialPage,
+        category: sParams?.category,
+        city: sParams?.city,
+        q: sParams?.q,
+      }),
       professionalsApi.getCategories(),
       professionalsApi.getFacets().catch(() => null),
     ]);
 
     if (listRes && listRes.data) {
       initialProfessionals = listRes.data;
-      initialTotal = listRes.total || listRes.data.length;
+      initialTotal = listRes.meta?.total ?? listRes.total ?? listRes.data.length ?? 0;
     }
     if (catRes) {
       categories = catRes;
@@ -195,6 +213,7 @@ export default async function ProfessionalsPage() {
           initialTotal={initialTotal}
           categories={categories}
           facets={facets}
+          initialPage={initialPage}
         />
       </Container>
     </div>

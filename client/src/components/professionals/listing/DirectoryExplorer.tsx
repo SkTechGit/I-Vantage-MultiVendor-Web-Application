@@ -7,7 +7,7 @@ import CardSkeleton from "./CardSkeleton";
 import EmptyState from "./EmptyState";
 import FilterBar, { FilterState } from "./FilterBar";
 import { professionalsApi, ProfessionalProfileItem, ProfessionalCategoryItem } from "@/lib/professionals.api";
-import { Users, Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
+import { Users, Sparkles, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -17,6 +17,7 @@ interface Props {
   facets?: any;
   defaultCategorySlug?: string;
   defaultCity?: string;
+  initialPage?: number;
 }
 
 export default function DirectoryExplorer({
@@ -26,6 +27,7 @@ export default function DirectoryExplorer({
   facets,
   defaultCategorySlug = "",
   defaultCity = "",
+  initialPage = 1,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,7 +43,10 @@ export default function DirectoryExplorer({
   const [professionals, setProfessionals] = useState<ProfessionalProfileItem[]>(initialProfessionals);
   const [total, setTotal] = useState<number>(initialTotal);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(() => {
+    const urlPage = searchParams.get("page");
+    return urlPage ? Math.max(1, parseInt(urlPage, 10)) : initialPage;
+  });
   const limit = 12;
 
   // Available cities from facets or fallback
@@ -64,7 +69,8 @@ export default function DirectoryExplorer({
 
       if (res && res.data) {
         setProfessionals(res.data);
-        setTotal(res.total || 0);
+        const resolvedTotal = res.meta?.total ?? res.total ?? res.data.length;
+        setTotal(resolvedTotal);
         setPage(targetPage);
       }
     } catch (err) {
@@ -74,9 +80,10 @@ export default function DirectoryExplorer({
     }
   }, []);
 
-  // Handle filter changes
+  // Handle filter changes (resets to page 1)
   const handleFilterChange = (nextFilters: FilterState) => {
     setFilters(nextFilters);
+    setPage(1);
     fetchResults(nextFilters, 1);
 
     // Update query params in URL without full reload
@@ -92,6 +99,31 @@ export default function DirectoryExplorer({
     window.history.replaceState(null, "", newPath);
   };
 
+  const handlePageChange = (targetPage: number) => {
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    if (targetPage < 1 || targetPage > totalPages || targetPage === page) return;
+
+    fetchResults(filters, targetPage);
+
+    // Update query params in URL without full reload
+    const params = new URLSearchParams(window.location.search);
+    if (targetPage > 1) {
+      params.set("page", String(targetPage));
+    } else {
+      params.delete("page");
+    }
+
+    const queryStr = params.toString();
+    const newPath = queryStr ? `?${queryStr}` : window.location.pathname;
+    window.history.replaceState(null, "", newPath);
+
+    // Scroll smoothly to results container
+    const el = document.getElementById("directory-results-container");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   const handleReset = () => {
     handleFilterChange({
       q: "",
@@ -101,6 +133,10 @@ export default function DirectoryExplorer({
       sort: "recommended",
     });
   };
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
 
   return (
     <div className="space-y-8">
@@ -116,12 +152,20 @@ export default function DirectoryExplorer({
       </div>
 
       {/* Results Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
-        <div className="flex items-center gap-2">
+      <div
+        id="directory-results-container"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1 scroll-mt-24"
+      >
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-slate-500">Showing</span>
           <span className="text-sm font-black text-[#0A1F66]">
             {total} Verified {total === 1 ? "Professional" : "Professionals"}
           </span>
+          {totalPages > 1 && (
+            <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 rounded-full">
+              Page {page} of {totalPages}
+            </span>
+          )}
           {filters.category && (
             <span className="inline-flex items-center text-xs font-semibold text-[#1E5BFF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
               {categories.find((c) => c.slug === filters.category)?.label || filters.category}
@@ -150,6 +194,100 @@ export default function DirectoryExplorer({
         </div>
       ) : (
         <EmptyState onReset={handleReset} />
+      )}
+
+      {/* Numbered Pagination Bar */}
+      {!isLoading && totalPages > 1 && (
+        <div className="pt-6 flex flex-col items-center gap-4">
+          {/* Page Info */}
+          <p className="text-xs text-slate-500 font-medium">
+            Page <span className="font-bold text-slate-800">{page}</span> of{" "}
+            <span className="font-bold text-slate-800">{totalPages}</span>
+            {" · "}showing <span className="font-bold text-slate-800">{startItem}–{endItem}</span> of{" "}
+            <span className="font-bold text-slate-800">{total}</span> verified professionals
+          </p>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {/* Previous */}
+            <button
+              type="button"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1 || isLoading}
+              className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all duration-200 ${
+                page > 1 && !isLoading
+                  ? "border-slate-200 bg-white text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] shadow-2xs cursor-pointer active:scale-95"
+                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed select-none"
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous
+            </button>
+
+            {/* Smart Numbered Pages with Ellipsis */}
+            {(() => {
+              const delta = 2;
+              const pages: (number | "...")[] = [];
+              const addPage = (n: number) => {
+                if (!pages.includes(n)) pages.push(n);
+              };
+
+              addPage(1);
+              for (let i = Math.max(2, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
+                addPage(i);
+              }
+              if (totalPages > 1) addPage(totalPages);
+
+              const result: (number | "...")[] = [];
+              let prev: number | "..." | null = null;
+              for (const p of pages) {
+                if (prev !== null && typeof p === "number" && typeof prev === "number" && p - prev > 1) {
+                  result.push("...");
+                }
+                result.push(p);
+                prev = p;
+              }
+
+              return result.map((p, i) =>
+                p === "..." ? (
+                  <span
+                    key={`ellipsis-${i}`}
+                    className="w-9 h-9 flex items-center justify-center text-xs text-slate-400 select-none"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handlePageChange(p)}
+                    disabled={isLoading}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 cursor-pointer ${
+                      page === p
+                        ? "bg-[#0A1F66] text-white shadow-md shadow-blue-900/20 scale-105"
+                        : "bg-white border border-slate-200 text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] shadow-2xs active:scale-95"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              );
+            })()}
+
+            {/* Next */}
+            <button
+              type="button"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= totalPages || isLoading}
+              className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all duration-200 ${
+                page < totalPages && !isLoading
+                  ? "border-slate-200 bg-white text-slate-700 hover:bg-[#0A1F66] hover:text-white hover:border-[#0A1F66] shadow-2xs cursor-pointer active:scale-95"
+                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed select-none"
+              }`}
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Join the Network Banner */}

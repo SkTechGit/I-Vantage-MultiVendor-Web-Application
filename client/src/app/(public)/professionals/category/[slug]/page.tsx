@@ -10,6 +10,7 @@ export const revalidate = 60;
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ page?: string; city?: string; q?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -65,8 +66,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryProfessionalsPage({ params }: Props) {
+export default async function CategoryProfessionalsPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const initialPage = Math.max(1, parseInt(sParams?.page || "1", 10) || 1);
 
   let categories: any[] = [];
   let currentCategory: any = null;
@@ -77,7 +80,13 @@ export default async function CategoryProfessionalsPage({ params }: Props) {
   try {
     const [catRes, listRes, facetRes] = await Promise.all([
       professionalsApi.getCategories(),
-      professionalsApi.list({ category: slug, limit: 12 }),
+      professionalsApi.list({
+        category: slug,
+        limit: 12,
+        page: initialPage,
+        city: sParams?.city,
+        q: sParams?.q,
+      }),
       professionalsApi.getFacets().catch(() => null),
     ]);
 
@@ -90,7 +99,7 @@ export default async function CategoryProfessionalsPage({ params }: Props) {
 
     if (listRes && listRes.data) {
       initialProfessionals = listRes.data;
-      initialTotal = listRes.total || listRes.data.length;
+      initialTotal = listRes.meta?.total ?? listRes.total ?? listRes.data.length ?? 0;
     }
     if (facetRes) {
       facets = facetRes;
@@ -203,6 +212,7 @@ export default async function CategoryProfessionalsPage({ params }: Props) {
           categories={categories}
           facets={facets}
           defaultCategorySlug={slug}
+          initialPage={initialPage}
         />
       </Container>
     </div>
