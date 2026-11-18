@@ -18,7 +18,10 @@ export default function MobileActionBar({ professional, onBookClick }: Props) {
       onBookClick();
       return;
     }
-    const target = document.getElementById("consultation-section");
+    const target =
+      document.getElementById("consultation-section-mobile") ||
+      document.getElementById("consultation-section") ||
+      document.getElementById("sticky-lead-form-wrapper");
     if (target) {
       target.scrollIntoView({ behavior: "smooth" });
     }

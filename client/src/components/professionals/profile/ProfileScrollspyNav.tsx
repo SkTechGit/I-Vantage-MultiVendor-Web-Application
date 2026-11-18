@@ -29,11 +29,19 @@ export default function ProfileScrollspyNav({ hasVideos = false }: Props) {
       const scrollPosition = window.scrollY + 140;
 
       for (let i = tabs.length - 1; i >= 0; i--) {
-        const el = document.getElementById(tabs[i].id);
+        const tabId = tabs[i].id;
+        const targetId =
+          tabId === "consultation-section" && window.innerWidth >= 1024
+            ? "sticky-lead-form-wrapper"
+            : tabId === "consultation-section"
+            ? "consultation-section-mobile"
+            : tabId;
+
+        const el = document.getElementById(targetId) || document.getElementById(tabId);
         if (el) {
           const top = el.offsetTop;
           if (scrollPosition >= top) {
-            setActiveTab(tabs[i].id);
+            setActiveTab(tabId);
             break;
           }
         }
@@ -45,9 +53,17 @@ export default function ProfileScrollspyNav({ hasVideos = false }: Props) {
   }, [tabs]);
 
   const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+    const targetId =
+      id === "consultation-section"
+        ? isDesktop
+          ? "sticky-lead-form-wrapper"
+          : "consultation-section-mobile"
+        : id;
+
+    const el = document.getElementById(targetId) || document.getElementById(id);
     if (el) {
-      const yOffset = -90;
+      const yOffset = -85;
       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
       setActiveTab(id);
@@ -55,7 +71,7 @@ export default function ProfileScrollspyNav({ hasVideos = false }: Props) {
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
+    <div className="relative z-10 bg-white border-b border-slate-200/80 shadow-2xs">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2.5 scrollbar-none no-scrollbar">
           {tabs.map((tab) => {

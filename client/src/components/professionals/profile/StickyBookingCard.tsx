@@ -28,14 +28,17 @@ export default function StickyBookingCard({ professional, onBookClick }: Props) 
       onBookClick();
       return;
     }
-    const target = document.getElementById("consultation-section");
+    const target =
+      document.getElementById("sticky-lead-form-wrapper") ||
+      document.getElementById("consultation-section") ||
+      document.getElementById("consultation-section-mobile");
     if (target) {
       target.scrollIntoView({ behavior: "smooth" });
     }
   };
 
   return (
-    <div className="sticky top-24 rounded-3xl bg-white border border-[#DCE5F5] p-6 shadow-[0_4px_20px_rgba(10,31,102,0.08)] space-y-6">
+    <div className="rounded-3xl bg-white border border-[#DCE5F5] p-6 shadow-[0_4px_20px_rgba(10,31,102,0.08)] space-y-6">
       {/* Top Pricing Header */}
       <div className="space-y-2 pb-5 border-b border-slate-100">
         <div className="flex items-center justify-between gap-2">
