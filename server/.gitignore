@@ -1,11 +1,66 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment files & Secrets
 .env
 .env*
+*.env
+*.env.json
+ENV_CREDENTIALS*
+secrets*
+passwords*
+credentials*.json
+client_secret*.json
+service-account*.json
+service_account*.json
 !.env.example
+
+# Private Keys & Certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.id_rsa
+id_rsa*
+id_ed25519*
+
+# Database Dumps & Backups
+*.sql
+*.dump
+*.sqlite
+*.sqlite3
+dump/
+data/
+
+# Logs
+*.log
+*.log.*
+logs/
+npm-debug.log*
 
 # Master documentation files (only README.md permitted)
 scripts/generate-master-doc.js
 scripts/master-doc.html
 *.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.csv
+docs/
+*.md
+!README.md
+
+# Testing & Scratch files
 test.html
 *.test.js
+test/
+tests/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
