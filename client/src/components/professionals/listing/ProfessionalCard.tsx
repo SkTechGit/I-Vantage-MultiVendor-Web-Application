@@ -19,7 +19,7 @@ export default function ProfessionalCard({ professional }: Props) {
   return (
     <Link
       href={`/professionals/${p.slug}`}
-      className="group flex flex-col justify-between rounded-2xl bg-white border border-[#DCE5F5] p-5 shadow-[0_1px_3px_rgba(10,31,102,0.06)] hover:shadow-[0_12px_28px_-6px_rgba(10,31,102,0.14)] hover:border-blue-200 hover:-translate-y-0.5 transition-all duration-200"
+      className="group h-full w-full flex flex-col justify-between rounded-2xl bg-white border border-[#DCE5F5] p-5 shadow-[0_1px_3px_rgba(10,31,102,0.06)] hover:shadow-[0_12px_28px_-6px_rgba(10,31,102,0.14)] hover:border-blue-200 hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="space-y-4">
         {/* Header: Photo + Category + Name */}
