@@ -49,6 +49,12 @@ export default function DirectoryExplorer({
   });
   const limit = 12;
 
+  useEffect(() => {
+    setProfessionals(initialProfessionals);
+    setTotal(initialTotal);
+    setPage(initialPage);
+  }, [initialProfessionals, initialTotal, initialPage]);
+
   // Available cities from facets or fallback
   const availableCities = facets?.cities?.length
     ? facets.cities
@@ -197,7 +203,7 @@ export default function DirectoryExplorer({
       )}
 
       {/* Numbered Pagination Bar */}
-      {!isLoading && totalPages > 1 && (
+      {!isLoading && total > 0 && (
         <div className="pt-6 flex flex-col items-center gap-4">
           {/* Page Info */}
           <p className="text-xs text-slate-500 font-medium">
