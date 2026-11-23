@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useTransition } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -113,10 +114,68 @@ export default function MarketplaceListingCards({
   basePath,
   searchParams,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentUrlParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
   const [enquiryTarget, setEnquiryTarget] = useState<EnquiryListingTarget | null>(null);
-  const [searchQuery, setSearchQuery] = useState(
-    (searchParams?.search || searchParams?.q || "").trim()
+
+  const urlSearchTerm = (
+    searchParams?.search ||
+    searchParams?.q ||
+    currentUrlParams.get("search") ||
+    currentUrlParams.get("q") ||
+    ""
+  ).trim();
+
+  const [searchQuery, setSearchQuery] = useState(urlSearchTerm);
+
+  // Sync internal state if URL query changes
+  useEffect(() => {
+    setSearchQuery(urlSearchTerm);
+  }, [urlSearchTerm]);
+
+  const updateSearchParam = useCallback(
+    (term: string) => {
+      const params = new URLSearchParams(currentUrlParams.toString());
+      const cleanTerm = term.trim();
+      if (cleanTerm) {
+        params.set("search", cleanTerm);
+        params.delete("q");
+      } else {
+        params.delete("search");
+        params.delete("q");
+      }
+      params.set("page", "1");
+      const targetBase = basePath || pathname;
+      startTransition(() => {
+        router.push(`${targetBase}?${params.toString()}`);
+      });
+    },
+    [basePath, pathname, currentUrlParams, router]
   );
+
+  const handleChipClick = (label: string) => {
+    const isActive = searchQuery.toLowerCase().trim() === label.toLowerCase().trim();
+    const nextVal = isActive ? "" : label;
+    setSearchQuery(nextVal);
+    updateSearchParam(nextVal);
+  };
+
+  const handleClear = () => {
+    setSearchQuery("");
+    updateSearchParam("");
+  };
+
+  // Debounced auto-sync to URL after typing stops
+  useEffect(() => {
+    if (searchQuery.trim() === urlSearchTerm) return;
+    const timer = setTimeout(() => {
+      updateSearchParam(searchQuery.trim());
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [searchQuery, urlSearchTerm, updateSearchParam]);
 
   const popularKeywords = [
     { label: "Founder Quest", icon: "⚡" },
@@ -140,13 +199,17 @@ export default function MarketplaceListingCards({
       const cat = item.categoryId?.name?.toLowerCase() || "";
       const vendor = item.vendorId?.businessName?.toLowerCase() || "";
       const desc = item.description?.toLowerCase() || "";
+      const slug = item.slug?.toLowerCase() || "";
+      const price = String(item.pricing?.basePrice || "");
       return (
         title.includes(q) ||
         area.includes(q) ||
         address.includes(q) ||
         cat.includes(q) ||
         vendor.includes(q) ||
-        desc.includes(q)
+        desc.includes(q) ||
+        slug.includes(q) ||
+        price.includes(q)
       );
     });
   }, [listings, searchQuery]);
@@ -177,6 +240,11 @@ export default function MarketplaceListingCards({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateSearchParam(searchQuery);
+              }
+            }}
             placeholder="Search workspaces by name, brand, location, metro, or desk type (e.g., Founder Quest, Saket, Private Cabin)..."
             className="w-full pl-11 pr-28 py-3 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 bg-slate-50/80 hover:bg-slate-50 focus:bg-white rounded-xl outline-none border border-slate-200 focus:border-[#1E5BFF] focus:ring-3 focus:ring-[#1E5BFF]/15 transition-all shadow-2xs"
           />
@@ -185,7 +253,7 @@ export default function MarketplaceListingCards({
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={handleClear}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                 title="Clear search"
               >
@@ -209,7 +277,7 @@ export default function MarketplaceListingCards({
               <button
                 key={item.label}
                 type="button"
-                onClick={() => setSearchQuery(isActive ? "" : item.label)}
+                onClick={() => handleChipClick(item.label)}
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                   isActive
                     ? "bg-[#1E5BFF] text-white shadow-2xs font-bold"
@@ -236,9 +304,9 @@ export default function MarketplaceListingCards({
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Showing {filteredListings.length} of {effectiveTotal} verified coworking spaces
-            {searchQuery && (
+            {filteredListings.length < listings.length && (
               <span className="ml-1.5 font-medium text-slate-600">
-                (filtered from total {listings.length})
+                (filtered from {listings.length} on this page)
               </span>
             )}
           </p>
@@ -247,7 +315,7 @@ export default function MarketplaceListingCards({
         <div className="flex items-center gap-2 flex-wrap">
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={handleClear}
               className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition"
             >
               <X className="w-3.5 h-3.5" /> Clear Search

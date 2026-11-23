@@ -29,6 +29,8 @@ interface Props {
     amenities?: string;
     sort?: string;
     page?: string;
+    search?: string;
+    q?: string;
   }>;
 }
 
@@ -67,6 +69,9 @@ export default async function CityCoworkingPage({ params, searchParams }: Props)
   // 2. Fetch listings from Express backend
   const queryParams = new URLSearchParams();
   queryParams.set("city", normalizedCity);
+  if (sParams.search || sParams.q) {
+    queryParams.set("search", (sParams.search || sParams.q || "").trim());
+  }
   if (sParams.category) {
     const matchedCat = allCategories.find((c) => c.slug === sParams.category);
     if (matchedCat?._id || matchedCat?.id) {

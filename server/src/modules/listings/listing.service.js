@@ -193,11 +193,44 @@ export const getPublicListings = async (query = {}) => {
     const s = searchQuery;
     filter.$or = [
       { title: { $regex: s, $options: "i" } },
+      { slug: { $regex: s, $options: "i" } },
       { "location.city": { $regex: s, $options: "i" } },
       { "location.area": { $regex: s, $options: "i" } },
       { "location.address": { $regex: s, $options: "i" } },
       { description: { $regex: s, $options: "i" } },
     ];
+
+    const num = Number(s.replace(/[^0-9]/g, ""));
+    if (!isNaN(num) && num > 0) {
+      filter.$or.push({ "pricing.basePrice": num });
+    }
+
+    // Also match listings whose vendor name or email matches the search query
+    try {
+      const [matchedUsers, matchedAuths] = await Promise.all([
+        User.find({
+          $or: [
+            { fullName: { $regex: s, $options: "i" } },
+            { name: { $regex: s, $options: "i" } },
+            { email: { $regex: s, $options: "i" } },
+            { businessName: { $regex: s, $options: "i" } },
+          ],
+        }).select("_id"),
+        Auth.find({
+          $or: [
+            { name: { $regex: s, $options: "i" } },
+            { email: { $regex: s, $options: "i" } },
+          ],
+        }).select("_id"),
+      ]);
+      const userIds = [
+        ...matchedUsers.map((u) => u._id),
+        ...matchedAuths.map((a) => a._id),
+      ];
+      if (userIds.length > 0) {
+        filter.$or.push({ vendorId: { $in: userIds } });
+      }
+    } catch (_) {}
   }
 
   if (city) {

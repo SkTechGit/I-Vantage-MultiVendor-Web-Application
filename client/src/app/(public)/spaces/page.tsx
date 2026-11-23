@@ -75,7 +75,7 @@ export default async function AllSpacesPage({ searchParams }: Props) {
   if (sParams.maxPrice) queryParams.set("maxPrice", sParams.maxPrice);
   if (sParams.capacity) queryParams.set("capacity", sParams.capacity);
   if (sParams.amenities) queryParams.set("amenities", sParams.amenities);
-  const PAGE_LIMIT = 12;
+  const PAGE_LIMIT = 24;
   const page = Math.max(1, Number(sParams.page) || 1);
   queryParams.set("page", String(page));
   queryParams.set("limit", String(PAGE_LIMIT));
