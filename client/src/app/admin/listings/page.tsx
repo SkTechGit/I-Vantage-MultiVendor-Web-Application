@@ -34,6 +34,7 @@ interface ListingItem {
   pricing: { basePrice: number; currency: string; unit: string };
   capacity?: number;
   media: Array<{ mediaId: { secureUrl: string }; order: number }>;
+  serviceIds?: Array<{ _id: string; name: string; price: number; unit?: string; size?: string }>;
   status: "draft" | "pending_review" | "approved" | "rejected";
   isLive: boolean;
   createdAt: string;
@@ -50,7 +51,7 @@ export default function AdminListingsPage() {
   const fetchAllListings = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const data = await marketplaceApi.getAdminListings();
+      const data = await marketplaceApi.getAdminListings({ limit: 100 });
       setListings(data || []);
     } catch (err: any) {
       console.error("Failed to load admin listings:", err);
@@ -61,7 +62,7 @@ export default function AdminListingsPage() {
 
   useEffect(() => {
     let ignore = false;
-    marketplaceApi.getAdminListings()
+    marketplaceApi.getAdminListings({ limit: 100 })
       .then((data) => {
         if (!ignore) setListings(data || []);
       })
@@ -161,6 +162,8 @@ export default function AdminListingsPage() {
     const term = search.toLowerCase().trim();
     return listings.filter((item) => {
       const title = item.title?.toLowerCase() || "";
+      const slug = item.slug?.toLowerCase() || "";
+      const basePrice = String(item.pricing?.basePrice || "");
       const vendorName = item.vendorId?.name?.toLowerCase() || "";
       const vendorBiz = item.vendorId?.businessName?.toLowerCase() || "";
       const vendorEmail = item.vendorId?.email?.toLowerCase() || "";
@@ -169,16 +172,25 @@ export default function AdminListingsPage() {
       const address = item.location?.address?.toLowerCase() || "";
       const category = item.categoryId?.name?.toLowerCase() || "";
 
+      const servicesMatch = item.serviceIds?.some(
+        (svc) =>
+          svc.name?.toLowerCase().includes(term) ||
+          String(svc.price).includes(term)
+      );
+
       const matchesSearch =
         !term ||
         title.includes(term) ||
+        slug.includes(term) ||
+        basePrice.includes(term) ||
         vendorName.includes(term) ||
         vendorBiz.includes(term) ||
         vendorEmail.includes(term) ||
         city.includes(term) ||
         area.includes(term) ||
         address.includes(term) ||
-        category.includes(term);
+        category.includes(term) ||
+        servicesMatch;
 
       if (!matchesSearch) return false;
       if (statusFilter === "all") return true;
@@ -349,7 +361,7 @@ export default function AdminListingsPage() {
                             />
                           </div>
                           <div>
-                            <span className="font-bold text-slate-900 block text-sm line-clamp-1">
+                            <span className="font-bold text-slate-900 block text-sm line-clamp-1" title={item.title}>
                               {item.title}
                             </span>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -359,6 +371,11 @@ export default function AdminListingsPage() {
                               <span className="text-[10px] text-slate-400 font-medium">
                                 • {item.media?.length || 0} {item.media?.length === 1 ? "photo" : "photos"}
                               </span>
+                              {item.slug && (
+                                <span className="text-[10px] text-slate-400 font-mono hidden sm:inline-block max-w-[180px] truncate" title={item.slug}>
+                                  • /{item.slug}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -387,10 +404,15 @@ export default function AdminListingsPage() {
 
                       <td className="p-4">
                         <div className="font-bold text-[#0A1F66]">
-                          ₹{item.pricing?.basePrice?.toLocaleString("en-IN")}/{item.pricing?.unit?.replace("per-", "")}
+                          ₹{item.pricing?.basePrice?.toLocaleString("en-IN")}/{item.pricing?.unit?.replace("per-", "") || "month"}
                         </div>
-                        <div className="text-[11px] text-slate-500">
-                          {item.capacity || 1} Seats
+                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                          <span>{item.capacity || 1} Seats</span>
+                          {item.serviceIds && item.serviceIds.length > 0 && (
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded" title={item.serviceIds.map(s => `${s.name}: ₹${s.price}`).join(", ")}>
+                              +{item.serviceIds.length} plans
+                            </span>
+                          )}
                         </div>
                       </td>
 

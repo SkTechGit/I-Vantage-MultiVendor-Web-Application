@@ -627,19 +627,26 @@ export const attachVendorDetails = async (listings) => {
  * SuperAdmin: Get all listings
  */
 export const getAdminListings = async (query = {}) => {
-  const { page = 1, limit = 30, status, isLive, search } = query;
+  const { page = 1, limit = 100, status, isLive, search } = query;
   const filter = {};
 
-  if (status) filter.status = status;
-  if (isLive !== undefined) filter.isLive = isLive === "true" || isLive === true;
+  if (status && status !== "all") filter.status = status;
+  if (isLive !== undefined && isLive !== "") filter.isLive = isLive === "true" || isLive === true;
 
   if (search && String(search).trim()) {
     const s = String(search).trim();
     filter.$or = [
       { title: { $regex: s, $options: "i" } },
+      { slug: { $regex: s, $options: "i" } },
       { "location.city": { $regex: s, $options: "i" } },
       { "location.area": { $regex: s, $options: "i" } },
+      { "location.address": { $regex: s, $options: "i" } },
     ];
+
+    const num = Number(s.replace(/[^0-9]/g, ""));
+    if (!isNaN(num) && num > 0) {
+      filter.$or.push({ "pricing.basePrice": num });
+    }
 
     // Also match listings whose vendor name or email matches the search query
     try {
@@ -671,13 +678,14 @@ export const getAdminListings = async (query = {}) => {
   }
 
   const skip = (Math.max(1, Number(page)) - 1) * Math.max(1, Number(limit));
-  const numericLimit = Math.min(100, Math.max(1, Number(limit)));
+  const numericLimit = Math.min(200, Math.max(1, Number(limit)));
 
   const [rawListings, total] = await Promise.all([
     Listing.find(filter)
       .populate("vendorId", "fullName name email businessName phone")
       .populate("categoryId", "name slug icon")
       .populate("media.mediaId", "secureUrl")
+      .populate("serviceIds", "name price unit size")
       .sort("-createdAt")
       .skip(skip)
       .limit(numericLimit),

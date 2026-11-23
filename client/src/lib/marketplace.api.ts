@@ -167,10 +167,19 @@ export const marketplaceApi = {
   },
 
   // SuperAdmin Listings & Approvals
-  getAdminListings: async (params?: { status?: string; isLive?: boolean }) => {
+  getAdminListings: async (params?: {
+    status?: string;
+    isLive?: boolean;
+    limit?: number;
+    page?: number;
+    search?: string;
+  }) => {
     const query = new URLSearchParams();
     if (params?.status) query.set("status", params.status);
     if (params?.isLive !== undefined) query.set("isLive", String(params.isLive));
+    query.set("limit", String(params?.limit || 100));
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.search) query.set("search", params.search);
     const { data } = await api.get(`/admin/listings?${query.toString()}`);
     return data.data;
   },
