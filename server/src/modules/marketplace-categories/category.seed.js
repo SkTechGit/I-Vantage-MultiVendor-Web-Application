@@ -24,7 +24,7 @@ export const DEFAULT_CATEGORIES = [
   },
   {
     name: "Coworking Seat",
-    slug: "coworking-seat", 
+    slug: "coworking-seat",
     icon: "Laptop",
     sortOrder: 4,
     isActive: true,

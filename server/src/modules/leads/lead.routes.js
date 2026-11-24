@@ -10,7 +10,7 @@ import {
   addLeadNote,
   addFollowUp,
   completeFollowUp,
-
+  handleInboundWebhook,
 } from "./lead.controller.js";
 
 import { authenticate, authorize } from "../auth/auth.middleware.js";
@@ -19,6 +19,7 @@ const router = Router();
 
 /* Public */
 router.post("/", createLead);
+router.post("/webhook", handleInboundWebhook);
 
 /* Admin & SuperAdmin Only - Strict Role Isolation */
 router.get("/", authenticate, authorize(["super_admin"]), getAllLeads);

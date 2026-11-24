@@ -5,6 +5,7 @@ import { LEAD_MESSAGES } from "./lead.constants.js";
 import { realtimeHub } from "../realtime/realtime.hub.js";
 import { sendGeneralEnquiryNotification } from "../../utils/email.js";
 import { createNotification } from "../notifications/notification.service.js";
+import { dispatchLeadToCRM } from "../../services/crmLeadService.js";
 
 // export const createLead = async (data) => {
 //   const services = await Service.find({
@@ -94,6 +95,31 @@ export const createLead = async (data) => {
   } catch (mailErr) {
     console.error("Error triggering general lead email:", mailErr.message);
   }
+
+  // Asynchronously dispatch lead to Central CRM (resilient & non-blocking)
+  const isPartnerOnboarding = String(lead.location || "").startsWith("Partner Onboarding");
+  dispatchLeadToCRM({
+    sourceForm: isPartnerOnboarding ? "list_your_space_partner_form" : "website_general_lead_form",
+    name: lead.fullName || lead.name,
+    phone: lead.mobile || lead.phone,
+    email: lead.email,
+    companyName: lead.companyName || null,
+    city: lead.city || null,
+    location: lead.location || null,
+    propertyLocation: lead.location || null,
+    propertyDetails: isPartnerOnboarding ? lead.message : null,
+    interestedIn: services && services.length > 0 ? services.map((s) => s.name).join(", ") : "General Enquiry",
+    message: lead.message,
+    website: lead.companyWebsite || null,
+    businessDetails: {
+      role: lead.role,
+      industry: lead.industry,
+      businessSize: lead.businessSize,
+      referralSource: lead.hearAboutUs,
+    },
+    interestedServices: services && services.length > 0 ? services.map((s) => s.name) : ["General Enquiry"],
+    externalId: lead._id ? lead._id.toString() : null,
+  }).catch((crmErr) => console.error("[CRM Dispatch LeadService Error]:", crmErr.message));
 
   return lead;
 };

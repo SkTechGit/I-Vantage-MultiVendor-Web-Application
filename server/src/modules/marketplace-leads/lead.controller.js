@@ -3,6 +3,7 @@ import Listing from "../listings/listing.model.js";
 import realtimeHub from "../realtime/realtime.hub.js";
 import { sendLeadNotifications } from "../../utils/email.js";
 import { createNotification } from "../notifications/notification.service.js";
+import { dispatchLeadToCRM } from "../../services/crmLeadService.js";
 
 /**
  * Public: POST /api/v1/marketplace-leads
@@ -154,6 +155,21 @@ export const createLead = async (req, res, next) => {
       vendorBusinessName,
       leadId: lead._id.toString(),
     }).catch((err) => console.error("Lead email notification error:", err));
+
+    // Asynchronously dispatch lead to Central CRM (resilient & non-blocking)
+    dispatchLeadToCRM({
+      sourceForm: "marketplace_listing_enquiry_modal",
+      name: name.trim(),
+      phone: cleanPhone,
+      email: cleanEmail,
+      location: spaceLocation || null,
+      propertyLocation: spaceLocation || null,
+      propertyDetails: `${listingTitle}${spaceLocation ? ` | Location: ${spaceLocation}` : ""}`,
+      interestedIn: listingTitle || "Coworking Space",
+      message: message || `Inquiry for ${listingTitle}`,
+      interestedServices: [listingTitle].filter(Boolean),
+      externalId: lead._id ? lead._id.toString() : null,
+    }).catch((crmErr) => console.error("[CRM Dispatch MarketplaceLead Error]:", crmErr.message));
 
     res.status(201).json({
       success: true,
