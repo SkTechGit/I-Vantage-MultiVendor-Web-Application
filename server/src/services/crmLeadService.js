@@ -80,9 +80,14 @@ export async function dispatchLeadToCRM(options = {}) {
     };
   }
 
-  const endpoint = baseUrl.endsWith("/api/v1/leads")
-    ? baseUrl
-    : `${baseUrl.replace(/\/+$/, "")}/api/v1/leads`;
+  let cleanUrl = String(baseUrl).trim();
+  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+    cleanUrl = `https://${cleanUrl}`;
+  }
+
+  const endpoint = cleanUrl.endsWith("/api/v1/leads")
+    ? cleanUrl
+    : `${cleanUrl.replace(/\/+$/, "")}/api/v1/leads`;
 
   try {
     // 1. Source block
